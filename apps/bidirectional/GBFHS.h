@@ -61,9 +61,12 @@ public:
         return necessary;
     }
 
+    double getGLimF() { return gLim_f; }
+    double getGLimB() { return gLim_b; }
+
 private:
 
-    void ExtractPath(const priorityQueue &queue, state &collisionState, std::vector <state> &thePath) {
+    void ExtractPath(const priorityQueue &queue, const state &collisionState, std::vector <state> &thePath) {
         thePath.push_back(collisionState);
         auto parent = queue.Lookup(collisionState).parent;
         while (parent != nullptr) {
@@ -75,7 +78,7 @@ private:
 
     void Expand(priorityQueue &current, priorityQueue &opposite,
                 Heuristic <state> *heuristic, Heuristic <state> *reverseHeuristic,
-                const state &target, const state &source);
+                const state &target, const state &source, double gLim = DBL_MAX);
 
     bool UpdateC();
 
@@ -118,12 +121,6 @@ private:
         } else {
             return std::make_pair(gLim_f, gLim_b + epsilon);
         }
-
-//        if (gLim_b >= 5) {
-//            return std::make_pair(gLim_f + epsilon, gLim_b);
-//        } else {
-//            return std::make_pair(gLim_f, gLim_b + epsilon);
-//        }
     }
 
     uint64_t nodesTouched, nodesExpanded;
@@ -219,7 +216,6 @@ void GBFHS<state, action, environment, priorityQueue>::UpdateGLims() {
         std::pair<double, double> limits = SplitFunction();
         gLim_f = limits.first;
         gLim_b = limits.second;
-        if (gLim_f > 50 || gLim_b > 50) exit(0);
     }
 }
 
@@ -243,10 +239,10 @@ bool GBFHS<state, action, environment, priorityQueue>::DoSingleSearchStep(std::v
     bool expandForward = SelectDirection();
 
     if (expandForward) {
-        Expand(forwardQueue, backwardQueue, forwardHeuristic, backwardHeuristic, goal, start);
+        Expand(forwardQueue, backwardQueue, forwardHeuristic, backwardHeuristic, goal, start, gLim_f);
         expandForward = false;
     } else {
-        Expand(backwardQueue, forwardQueue, backwardHeuristic, forwardHeuristic, start, goal);
+        Expand(backwardQueue, forwardQueue, backwardHeuristic, forwardHeuristic, start, goal, gLim_b);
         expandForward = true;
     }
 
@@ -257,10 +253,11 @@ template<class state, class action, class environment, class priorityQueue>
 void GBFHS<state, action, environment, priorityQueue>::Expand(priorityQueue &current, priorityQueue &opposite,
                                                               Heuristic <state> *heuristic,
                                                               Heuristic <state> *reverseHeuristic,
-                                                              const state &target, const state &source) {
-    // keep popping until you get a valid node
-    auto nodePair = current.Pop(C);
-    while (nodePair.first == nullptr) nodePair = current.Pop(C);
+                                                              const state &target,
+                                                              const state &source,
+                                                              double gLim) {
+    auto nodePair = current.Pop(C, gLim);
+    if (nodePair.first == nullptr) return; // if current contains only invalid entries, just return
 
     const auto node = nodePair.first;
     auto nodeG = nodePair.second;
@@ -290,7 +287,6 @@ void GBFHS<state, action, environment, priorityQueue>::Expand(priorityQueue &cur
             if (fgreatereq(collisionCost, currentCost)) { // cost higher than the current solution, discard
                 continue;
             } else if (fless(collisionCost, currentCost)) {
-//                std::cout << "  --  Collision: " << collisionCost << " at " << C << std::endl;
                 currentCost = collisionCost;
                 middleNode = succ;
                 current.AddOpenNode(succ, succG, h, node); // add the node so the plan can be extracted

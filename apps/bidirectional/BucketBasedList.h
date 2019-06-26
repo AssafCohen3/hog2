@@ -45,7 +45,7 @@ public:
 
     virtual void AddOpenNode(const state val, double g, double h, const state *parent = nullptr);
 
-    virtual std::pair<const state *, double> Pop(double f);
+    virtual std::pair<const state *, double> Pop(double fLim = DBL_MAX, double gLim = DBL_MAX);
 
     inline const dataStructure &Lookup(const state &objKey) const { return table.at(objKey); }
 
@@ -110,22 +110,58 @@ void BucketBasedList<state, environment, dataStructure>::AddOpenNode(const state
 // TODO: this method does f-ascending, g-descending, which is likely the best tie-breaker
 // TODO: still, it would be good if this could be parametrized
 template<typename state, class environment, class dataStructure>
-std::pair<const state *, double> BucketBasedList<state, environment, dataStructure>::Pop(double f) {
-    auto &currentFLayer = fLayers.begin()->second;
-    auto bucket_it = std::prev(currentFLayer.end());
-    auto &bucket = bucket_it->second;
-    const state *poppedState = bucket.back();
-    bucket.pop_back();
-    if (bucket.size() == 0) {
-        currentFLayer.erase(bucket_it);
-        if (currentFLayer.begin() == currentFLayer.end()) {
-            fLayers.erase(fLayers.begin());
+std::pair<const state *, double>
+BucketBasedList<state, environment, dataStructure>::Pop(double fLim, double gLim) {
+    const state *poppedState = nullptr;
+
+    auto currentLayerIt = fLayers.begin();
+
+    do {
+        auto &currentFLayer = currentLayerIt->second;
+        auto bucket_it = currentFLayer.rbegin(); // start with the highest g bucket
+
+        // get the position of a bucket with valid entries under the limits
+        while (bucket_it != currentFLayer.rend() && bucket_it->first >= gLim) { // bucket strictly lower than g
+            bucket_it++;
         }
-    }
+
+        // find a bucket with valid entries
+        while (bucket_it != currentFLayer.rend() && poppedState == nullptr) {
+            auto &bucket = bucket_it->second;
+            while (poppedState == nullptr && bucket.size() != 0) {
+                poppedState = bucket.back();  // this may be an invalid entry, (already expanded state with a lower g)
+                bucket.pop_back();
+            }
+
+            // delete bucket if empty
+            if (bucket.size() == 0) {
+                currentFLayer.erase(--bucket_it.base());
+                if (bucket_it != currentFLayer.rend()) {
+                    bucket_it++;
+                }
+            }
+        }
+
+        // if no adequate bucket has been found
+        if (bucket_it == currentFLayer.rend()) {
+            if (currentFLayer.begin() == currentFLayer.end()) { // last bucket in the layer was erased
+                currentLayerIt = fLayers.erase(currentLayerIt);
+                if (fLayers.size() == 0) {
+                    break; // empty open list
+                }
+            } else {
+                currentLayerIt++;
+            }
+        }
+
+
+        // repeat until we find a valid entry or there's none within the limits
+    } while (poppedState == nullptr && currentLayerIt != fLayers.end() && currentLayerIt->first <= fLim);
 
     if (poppedState == nullptr) {
-        return std::make_pair(poppedState, -1); // invalid entry, as this state was already expanded with a lower g
+        return std::make_pair(nullptr, -1); // no valid (expandable) nodes
     }
+
 
     auto &node = table.at(*poppedState);
     node.bucket_index = -1;
@@ -192,7 +228,6 @@ int BucketBasedList<state, environment, dataStructure>::expandableNodes(double f
         }
 
     }
-
 
     return nodeCount;
 
