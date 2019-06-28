@@ -9,7 +9,7 @@
 template<class state, class action, class environment, class priorityQueue = BucketBasedList<state, environment, BucketNodeData<state>>>
 class GBFHS {
 public:
-    GBFHS() {
+    GBFHS(double threshold_ = -1) {
         forwardHeuristic = 0;
         backwardHeuristic = 0;
         env = 0;
@@ -17,6 +17,7 @@ public:
         expandForward = true;
         nodesExpanded = nodesTouched = 0;
         currentCost = DBL_MAX;
+        threshold = threshold_;
     }
 
     virtual ~GBFHS() {}
@@ -61,6 +62,7 @@ public:
         return necessary;
     }
 
+    double getC() { return C; }
     double getGLimF() { return gLim_f; }
     double getGLimB() { return gLim_b; }
 
@@ -113,14 +115,26 @@ private:
     }
 
     std::pair<double, double> SplitFunction() { // TODO: parametrize this
-        int forwardExpandableNodes = forwardQueue.expandableNodes(C, gLim_f + 1);
-        int backwardExpandableNodes = backwardQueue.expandableNodes(C, gLim_b + 1);
 
-        if (forwardExpandableNodes <= backwardExpandableNodes) {
+        if (threshold < 0.0) { // no threshold needed
+            int forwardExpandableNodes = forwardQueue.expandableNodes(C, gLim_f + 1);
+            int backwardExpandableNodes = backwardQueue.expandableNodes(C, gLim_b + 1);
+
+            if (forwardExpandableNodes <= backwardExpandableNodes) {
+                return std::make_pair(gLim_f + epsilon, gLim_b);
+            } else {
+                return std::make_pair(gLim_f, gLim_b + epsilon);
+            }
+        }
+
+        if (gLim_f + 1 <= threshold) {
+//            std::cout << "FW increased: " << threshold << " | " << gLim_f << " + " << gLim_b << std::endl;
             return std::make_pair(gLim_f + epsilon, gLim_b);
         } else {
+//            std::cout << "FW increased: " << threshold << " | " << gLim_f << " + " << gLim_b << std::endl;
             return std::make_pair(gLim_f, gLim_b + epsilon);
         }
+
     }
 
     uint64_t nodesTouched, nodesExpanded;
@@ -140,6 +154,8 @@ private:
     bool updateGLimEagerly = true; // TODO: parametrize this
 
     double C, gLim_f, gLim_b = 0.0;
+
+    double threshold;
 };
 
 template<class state, class action, class environment, class priorityQueue>
@@ -184,6 +200,8 @@ bool GBFHS<state, action, environment, priorityQueue>::InitializeSearch(environm
     backwardQueue.AddOpenNode(goal, 0, goalH);
 
     C = std::max(startH, goalH);
+    gLim_f = 0.0;
+    gLim_b = 0.0;
 
     return true;
 }
@@ -191,31 +209,41 @@ bool GBFHS<state, action, environment, priorityQueue>::InitializeSearch(environm
 template<class state, class action, class environment, class priorityQueue>
 bool GBFHS<state, action, environment, priorityQueue>::UpdateC() {
 
-    bool updateNecessary = !ExpandableNodes();
+    bool updated = false;
 
     while (!ExpandableNodes() && C < currentCost) {
-        UpdateGLims();
-
-        if (!ExpandableNodes()) {
+        if (gLim_f + gLim_b + epsilon - 1 >= C) { // we have to update C
             auto minFF = forwardQueue.getMinF(C);
             auto minFB = backwardQueue.getMinF(C);
             C = std::min(minFF, minFB);
+
+            updated = true;
+
+            // if gLims are to be updated eagerly after C, do it
             if (updateGLimEagerly && C < currentCost) {
                 UpdateGLims();
             }
+        } else { // just updating gLims can make new nodes expandable
+            UpdateGLims();
         }
     }
 
-    return updateNecessary && (C < currentCost);
+    // return whether a better collision is possible after updating (if updated) or not
+    return updated && (gLim_f + gLim_b + epsilon - 1 >= C) && (C < currentCost);
 }
 
 template<class state, class action, class environment, class priorityQueue>
 void GBFHS<state, action, environment, priorityQueue>::UpdateGLims() {
     // update g lims until they reach C eagerly or as long as there are no expandable nodes
-    while (gLim_f + gLim_b + epsilon < C && (updateGLimEagerly || !ExpandableNodes())) {
+    while (gLim_f + gLim_b + epsilon - 1 < C && (updateGLimEagerly || !ExpandableNodes())) {
         std::pair<double, double> limits = SplitFunction();
         gLim_f = limits.first;
         gLim_b = limits.second;
+
+        if (gLim_f + gLim_b > C) {
+            std::cerr << "  Wrong limits!!: " << (gLim_f + gLim_b) << " at " << C << std::endl;
+            exit(0);
+        }
     }
 }
 
@@ -287,6 +315,7 @@ void GBFHS<state, action, environment, priorityQueue>::Expand(priorityQueue &cur
             if (fgreatereq(collisionCost, currentCost)) { // cost higher than the current solution, discard
                 continue;
             } else if (fless(collisionCost, currentCost)) {
+//                std::cout << " Collision found: " << collisionCost << " at " << C << std::endl;
                 currentCost = collisionCost;
                 middleNode = succ;
                 current.AddOpenNode(succ, succG, h, node); // add the node so the plan can be extracted
