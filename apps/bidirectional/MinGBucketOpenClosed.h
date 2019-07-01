@@ -33,7 +33,7 @@ private:
 template<typename state, class environment, class dataStructure>
 void MinGBucketOpenClosed<state, environment, dataStructure>::AddOpenNode(const state val, double g, double h,
                                                                           const state *parent) {
-    BucketBasedList<state, environment, dataStructure>::AddOpenNode(val, g, h, parent);
+    Base::AddOpenNode(val, g, h, parent);
 
     // update minG and minGFLayer if necessary
     double f = g + h;

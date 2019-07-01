@@ -466,7 +466,7 @@ void TestPancakeRandom() {
                     exit(0);
                 }
 
-                if (1) { // test all splits
+                if (0) { // test all splits
 
                     int bestExpanded = INT_MAX;
                     int bestNecessary = INT_MAX;

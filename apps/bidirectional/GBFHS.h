@@ -55,15 +55,18 @@ public:
 
     uint64_t GetNecessaryExpansions() {
         uint64_t necessary = 0;
-        for (const auto &count : counts) {
-            if (count.first < currentCost)
-                necessary += count.second;
+        for (auto &count : counts) {
+            if (count.first < currentCost) {
+                necessary += count.second[true] + count.second[false];
+            }
         }
         return necessary;
     }
 
     double getC() { return C; }
+
     double getGLimF() { return gLim_f; }
+
     double getGLimB() { return gLim_b; }
 
 private:
@@ -80,7 +83,7 @@ private:
 
     void Expand(priorityQueue &current, priorityQueue &opposite,
                 Heuristic <state> *heuristic, Heuristic <state> *reverseHeuristic,
-                const state &target, const state &source, double gLim = DBL_MAX);
+                const state &target, const state &source, double gLim, bool forward);
 
     bool UpdateC();
 
@@ -93,7 +96,7 @@ private:
         return forwardQueue.expandableNodes(C, gLim_f, true) > 0 || backwardQueue.expandableNodes(C, gLim_b, true) > 0;
     }
 
-    // TODO: figure out the correct way, if probing is used alternating is most likely the best way
+    // TODO: figure out the correct way, alternating is most likely the best way
     bool SelectDirection() {
         int forwardExpandableNodes = forwardQueue.expandableNodes(C, gLim_f, true);
         int backwardExpandableNodes = backwardQueue.expandableNodes(C, gLim_b, true);
@@ -108,7 +111,7 @@ private:
         } else if (forwardExpandableNodes == 0) {
             expandForward = false;
         } else {
-            expandForward = !expandForward;
+            expandForward = !expandForward; // alternate direction
         }
 
         return expandForward;
@@ -116,22 +119,25 @@ private:
 
     std::pair<double, double> SplitFunction() { // TODO: parametrize this
 
-        if (threshold < 0.0) { // no threshold needed
-            int forwardExpandableNodes = forwardQueue.expandableNodes(C, gLim_f + 1);
-            int backwardExpandableNodes = backwardQueue.expandableNodes(C, gLim_b + 1);
+        if (threshold < 0.0) { // no threshold inputed
+            int forwardExpandableNodes = forwardQueue.expandableNodes(C, gLim_f + epsilon);
+            int backwardExpandableNodes = backwardQueue.expandableNodes(C, gLim_b + epsilon);
 
-            if (forwardExpandableNodes <= backwardExpandableNodes) {
+            if (forwardExpandableNodes < backwardExpandableNodes) {
                 return std::make_pair(gLim_f + epsilon, gLim_b);
-            } else {
+            } else if (forwardExpandableNodes > backwardExpandableNodes){
                 return std::make_pair(gLim_f, gLim_b + epsilon);
+            } else { // same number of expandable nodes on both sides
+                if (gLim_f <= gLim_b)
+                    return std::make_pair(gLim_f + epsilon, gLim_b);
+                else
+                    return std::make_pair(gLim_f, gLim_b + epsilon);
             }
         }
 
         if (gLim_f + 1 <= threshold) {
-//            std::cout << "FW increased: " << threshold << " | " << gLim_f << " + " << gLim_b << std::endl;
             return std::make_pair(gLim_f + epsilon, gLim_b);
         } else {
-//            std::cout << "FW increased: " << threshold << " | " << gLim_f << " + " << gLim_b << std::endl;
             return std::make_pair(gLim_f, gLim_b + epsilon);
         }
 
@@ -139,7 +145,7 @@ private:
 
     uint64_t nodesTouched, nodesExpanded;
 
-    std::map<double, int> counts;
+    std::map<double, std::map<bool, int>> counts;
 
     state middleNode;
     double currentCost;
@@ -234,16 +240,13 @@ bool GBFHS<state, action, environment, priorityQueue>::UpdateC() {
 
 template<class state, class action, class environment, class priorityQueue>
 void GBFHS<state, action, environment, priorityQueue>::UpdateGLims() {
-    // update g lims until they reach C eagerly or as long as there are no expandable nodes
-    while (gLim_f + gLim_b + epsilon - 1 < C && (updateGLimEagerly || !ExpandableNodes())) {
-        std::pair<double, double> limits = SplitFunction();
-        gLim_f = limits.first;
-        gLim_b = limits.second;
+    std::pair<double, double> limits = SplitFunction();
+    gLim_f = limits.first;
+    gLim_b = limits.second;
 
-        if (gLim_f + gLim_b > C) {
-            std::cerr << "  Wrong limits!!: " << (gLim_f + gLim_b) << " at " << C << std::endl;
-            exit(0);
-        }
+    if (gLim_f + gLim_b + epsilon - 1 > C) {
+        std::cerr << "  Wrong limits!!: " << (gLim_f + gLim_b + epsilon - 1) << " at " << C << std::endl;
+        exit(0);
     }
 }
 
@@ -267,10 +270,10 @@ bool GBFHS<state, action, environment, priorityQueue>::DoSingleSearchStep(std::v
     bool expandForward = SelectDirection();
 
     if (expandForward) {
-        Expand(forwardQueue, backwardQueue, forwardHeuristic, backwardHeuristic, goal, start, gLim_f);
+        Expand(forwardQueue, backwardQueue, forwardHeuristic, backwardHeuristic, goal, start, gLim_f, expandForward);
         expandForward = false;
     } else {
-        Expand(backwardQueue, forwardQueue, backwardHeuristic, forwardHeuristic, start, goal, gLim_b);
+        Expand(backwardQueue, forwardQueue, backwardHeuristic, forwardHeuristic, start, goal, gLim_b, expandForward);
         expandForward = true;
     }
 
@@ -283,14 +286,15 @@ void GBFHS<state, action, environment, priorityQueue>::Expand(priorityQueue &cur
                                                               Heuristic <state> *reverseHeuristic,
                                                               const state &target,
                                                               const state &source,
-                                                              double gLim) {
+                                                              double gLim,
+                                                              bool forward) {
     auto nodePair = current.Pop(C, gLim);
     if (nodePair.first == nullptr) return; // if current contains only invalid entries, just return
 
     const auto node = nodePair.first;
     auto nodeG = nodePair.second;
     nodesExpanded++;
-    counts[C] += 1;
+    counts[C][forward] += 1;
 
     std::vector <state> neighbors;
     env->GetSuccessors(*node, neighbors);
@@ -315,7 +319,6 @@ void GBFHS<state, action, environment, priorityQueue>::Expand(priorityQueue &cur
             if (fgreatereq(collisionCost, currentCost)) { // cost higher than the current solution, discard
                 continue;
             } else if (fless(collisionCost, currentCost)) {
-//                std::cout << " Collision found: " << collisionCost << " at " << C << std::endl;
                 currentCost = collisionCost;
                 middleNode = succ;
                 current.AddOpenNode(succ, succG, h, node); // add the node so the plan can be extracted
