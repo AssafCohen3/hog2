@@ -65,15 +65,15 @@ void TestTOH(int first, int last) {
     //g.Reset();
     //f = BuildPDB<N, pdb1Disks>(g);
 
+    long nodes_NBS, nodes_NBSn, nodes_NBSa, nodes_NBSan, nodes_DVCBS, nodes_DVCBSn, nodes_DVCBSa, nodes_DVCBSan,
+            nodes_NBB, nodes_NBBn, nodes_GBFHS, nodes_GBFHSn, nodes_GBFHSl, nodes_GBFHSln,
+            nodes_GBFHSbest, nodes_GBFHSbestn = 0;
+
     int table[] = {52058078, 116173544, 208694125, 131936966, 141559500, 133800745, 194246206, 50028346, 167007978,
                    207116816, 163867037, 119897198, 201847476, 210859515, 117688410, 121633885};
     int table2[] = {145008714, 165971878, 154717942, 218927374, 182772845, 5808407, 19155194, 137438954, 13143598,
                     124513215, 132635260, 39667704, 2462244, 41006424, 214146208, 54305743};
     for (int count = first; count < last; count++) {
-
-        if (count < 5) {
-            continue;
-        }
 
         //printf("Seed: %d\n", table[count&0xF]^table2[(count>>4)&0xF]);
         srandom(table[count & 0xF] ^ table2[(count >> 4) & 0xF]);
@@ -96,9 +96,8 @@ void TestTOH(int first, int last) {
         f = BuildPDB<N, pdb1Disks>(g);
         Timer timer;
 
-        //if (count <= 20){
-        //	continue;
-        //}
+        std::cout << "-----------------------------" << std::endl;
+        std::cout << "Pancake problem: " << count + 1 << " of " << last << std::endl;
 
         //b = BuildPDB<N, pdb1Disks>(s);
         //printf("Starting heuristics: %f %f\n", f->HCost(s, g), b->HCost(g, s));
@@ -141,6 +140,11 @@ void TestTOH(int first, int last) {
                        dvcbs.getForwardMeetingPoint(), dvcbs.getBackwardMeetingPoint(),
                        dvcbs.getForwardUnnecessaryNodesInPath(), dvcbs.getBackwardUnnecessaryNodesInPath(),
                        dvcbs.GetExpansionUntilFirstSolution());
+
+                nodes_DVCBS += dvcbs.GetNodesExpanded();
+                nodes_DVCBSn += dvcbs.GetNecessaryExpansions();
+
+
             }
             if (1) {
                 DVCBS<TOHState < N>, TOHMove, TOH < N >, DVCBSQueue<TOHState < N>, 1, true >> dvcbs(false, true);
@@ -153,6 +157,9 @@ void TestTOH(int first, int last) {
                        dvcbs.getForwardMeetingPoint(), dvcbs.getBackwardMeetingPoint(),
                        dvcbs.getForwardUnnecessaryNodesInPath(), dvcbs.getBackwardUnnecessaryNodesInPath(),
                        dvcbs.GetExpansionUntilFirstSolution());
+
+                nodes_DVCBSa += dvcbs.GetNodesExpanded();
+                nodes_DVCBSan += dvcbs.GetNecessaryExpansions();
             }
 
             if (0) {
@@ -193,6 +200,9 @@ void TestTOH(int first, int last) {
                        nbsEpsilon.getForwardUnnecessaryNodesInPath(), nbsEpsilon.getBackwardUnnecessaryNodesInPath(),
                        nbsEpsilon.GetExpansionUntilFirstSolution());
 
+                nodes_NBS += nbsEpsilon.GetNodesExpanded();
+                nodes_NBSn += nbsEpsilon.GetNecessaryExpansions();
+
             }
             if (1) {
                 NBS<TOHState < N>, TOHMove, TOH < N >, NBSQueue<TOHState < N>, 1, true >> nbsEpsilon(false, true);
@@ -206,26 +216,48 @@ void TestTOH(int first, int last) {
                        nbsEpsilon.getForwardUnnecessaryNodesInPath(), nbsEpsilon.getBackwardUnnecessaryNodesInPath(),
                        nbsEpsilon.GetExpansionUntilFirstSolution());
 
+                nodes_NBSa += nbsEpsilon.GetNodesExpanded();
+                nodes_NBSan += nbsEpsilon.GetNecessaryExpansions();
+
             }
 
             if (1) {
-                Baseline<TOHState<N>, TOHMove, TOH<N>> baseline;
+                Baseline<TOHState < N>, TOHMove, TOH < N >> baseline;
                 timer.StartTimer();
                 baseline.GetPath(&toh, s, g, f, b, thePath);
                 timer.EndTimer();
                 printf("NBB found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
                        toh.GetPathLength(thePath),
                        baseline.GetNodesExpanded(), baseline.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+                nodes_NBB += baseline.GetNodesExpanded();
+                nodes_NBBn += baseline.GetNecessaryExpansions();
             }
 
             if (1) {
-                GBFHS<TOHState<N>, TOHMove, TOH<N>> gbfhs;
+                GBFHS<TOHState < N>, TOHMove, TOH < N >> gbfhs(true);
                 timer.StartTimer();
                 gbfhs.GetPath(&toh, s, g, f, b, thePath);
                 timer.EndTimer();
-                printf("GBFHS found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                printf("GBFHS-eager found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
                        toh.GetPathLength(thePath),
                        gbfhs.GetNodesExpanded(), gbfhs.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+                nodes_GBFHS += gbfhs.GetNodesExpanded();
+                nodes_GBFHSn += gbfhs.GetNecessaryExpansions();
+            }
+
+            if (1) {
+                GBFHS<TOHState < N>, TOHMove, TOH < N >> gbfhs(false);
+                timer.StartTimer();
+                gbfhs.GetPath(&toh, s, g, f, b, thePath);
+                timer.EndTimer();
+                printf("GBFHS-lazy found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                       toh.GetPathLength(thePath),
+                       gbfhs.GetNodesExpanded(), gbfhs.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+                nodes_GBFHSl += gbfhs.GetNodesExpanded();
+                nodes_GBFHSln += gbfhs.GetNecessaryExpansions();
             }
         }
 
@@ -444,6 +476,27 @@ void TestTOH(int first, int last) {
         }
         delete b;
     }
+
+    printf("+++++++++++++++++++++++++++++++++++++++++\n");
+
+    std::cout << "ToH" << " NBS " << nodes_NBS << " expanded; " << nodes_NBSn
+              << " necessary" << std::endl;
+    std::cout << "ToH" << " NBSa " << nodes_NBSa << " expanded; " << nodes_NBSan
+              << " necessary" << std::endl;
+    std::cout << "ToH" << " DVCBS " << nodes_DVCBS << " expanded; "
+              << nodes_DVCBSn << " necessary" << std::endl;
+    std::cout << "ToH" << " DVCBSa " << nodes_DVCBSa << " expanded; "
+              << nodes_DVCBSan << " necessary" << std::endl;
+    std::cout << "ToH" << " NBB " << nodes_NBB << " expanded; " << nodes_NBBn
+              << " necessary" << std::endl;
+    std::cout << "ToH" << " GBFHS-eager " << nodes_GBFHS << " expanded; "
+              << nodes_GBFHSn << " necessary" << std::endl;
+    std::cout << "ToH" << " GBFHS-lazy " << nodes_GBFHSl << " expanded; "
+              << nodes_GBFHSln << " necessary" << std::endl;
+    std::cout << "ToH" << " GBFHS best " << nodes_GBFHSbest << " expanded; "
+              << nodes_GBFHSbestn << " necessary" << std::endl;
+
+    printf("+++++++++++++++++++++++++++++++++++++++++\n");
 
     while (f->heuristics.size() > 0) {
         delete f->heuristics.back();

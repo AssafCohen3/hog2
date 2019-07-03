@@ -23,8 +23,8 @@ public:
 
 private:
 
-    double minG = DBL_MAX;
-    double minGFLayer = DBL_MAX;
+    double minG = std::numeric_limits<double>::max();
+    double minGFLayer = std::numeric_limits<double>::max();
 
     double currentF = 0.0;
 
@@ -68,8 +68,8 @@ std::pair<const state *, double> MinGBucketOpenClosed<state, environment, dataSt
 template<typename state, class environment, class dataStructure>
 double MinGBucketOpenClosed<state, environment, dataStructure>::getMinG(double f) {
 
-    minG = DBL_MAX;
-    minGFLayer = DBL_MAX;
+    minG = std::numeric_limits<double>::max();
+    minGFLayer = std::numeric_limits<double>::max();
 
     for (auto it = Base::fLayers.begin(); it != Base::fLayers.end() && it->first <= f; it++) {
         auto &currentFLayer = it->second;

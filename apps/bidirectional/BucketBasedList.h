@@ -45,7 +45,8 @@ public:
 
     virtual void AddOpenNode(const state val, double g, double h, const state *parent = nullptr);
 
-    virtual std::pair<const state *, double> Pop(double fLim = DBL_MAX, double gLim = DBL_MAX);
+    virtual std::pair<const state *, double> Pop(double fLim = std::numeric_limits<double>::max(),
+                                                 double gLim = std::numeric_limits<double>::max());
 
     inline const dataStructure &Lookup(const state &objKey) const { return table.at(objKey); }
 
@@ -57,7 +58,7 @@ public:
         if (nodeIt != table.end())
             return std::make_pair(true, nodeIt->second.g);
         else
-            return std::make_pair(false, DBL_MAX);
+            return std::make_pair(false, std::numeric_limits<double>::max());
     }
 
     double getMinF(double lowerBound = -1.0);
@@ -162,7 +163,6 @@ BucketBasedList<state, environment, dataStructure>::Pop(double fLim, double gLim
         return std::make_pair(nullptr, -1); // no valid (expandable) nodes
     }
 
-
     auto &node = table.at(*poppedState);
     node.bucket_index = -1;
     return std::make_pair(poppedState, node.g);
@@ -179,7 +179,7 @@ double BucketBasedList<state, environment, dataStructure>::getMinF(double lowerB
         auto currentLayerIt = fLayers.begin();
         while (true) {
             if (currentLayerIt == fLayers.end()) // no f values above lower bound
-                return DBL_MAX;
+                return std::numeric_limits<double>::max();
             if (currentLayerIt->first > lowerBound) // found f value above lower bound
                 break;
             currentLayerIt == currentLayerIt++; // try next value
@@ -203,7 +203,7 @@ double BucketBasedList<state, environment, dataStructure>::getMinF(double lowerB
         fLayers.erase(currentLayerIt); // f layer empty - get rid of it
     }
 
-    return DBL_MAX;
+    return std::numeric_limits<double>::max();
 }
 
 /**

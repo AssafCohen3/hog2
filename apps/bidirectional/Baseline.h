@@ -10,7 +10,7 @@
 template<class state, class action, class environment, class priorityQueue = MinGBucketOpenClosed<state, environment, BucketNodeData<state>>>
 class Baseline {
 public:
-    Baseline() {
+    Baseline(double epsilon_ = 1.0, double gcd_ = 1.0) {
         forwardHeuristic = 0;
         backwardHeuristic = 0;
         env = 0;
@@ -18,9 +18,11 @@ public:
         expandForward = true;
         nodesExpanded = nodesTouched = 0;
         currentCost = DBL_MAX;
+        epsilon = epsilon_;
+        gcd = gcd_;
     }
 
-    virtual ~Baseline() {
+    ~Baseline() {
         forwardQueue.Reset();
         backwardQueue.Reset();
     }
@@ -42,11 +44,11 @@ public:
 
     inline const int GetNumForwardItems() { return forwardQueue.size(); }
 
-    inline const AStarOpenClosedData <state> &GetForwardItem(unsigned int which) { return forwardQueue.Lookat(which); }
+    inline const BucketNodeData<state> &GetForwardItem(unsigned int which) { return forwardQueue.Lookat(which); }
 
     inline const int GetNumBackwardItems() { return backwardQueue.size(); }
 
-    inline const AStarOpenClosedData <state> &GetBackwardItem(unsigned int which) {
+    inline const BucketNodeData<state> &GetBackwardItem(unsigned int which) {
         return backwardQueue.Lookat(which);
     }
 
@@ -99,7 +101,8 @@ private:
 
     state middleNode;
     double currentCost;
-    double epsilon = 1.0; // TODO parametrize epsilon
+    double epsilon;
+    double gcd;
 
     environment *env;
     Timer t;
@@ -176,7 +179,7 @@ bool Baseline<state, action, environment, priorityQueue>::UpdateC() {
 
     while (C < gBound) {
         // std::cout << "  G updated from " << C << " to " << gBound << " after expanding " << counts[C] << std::endl;
-        C = std::min(gBound, std::min(forwardQueue.getMinF(C), backwardQueue.getMinF(C)));
+        C += gcd;
         // std::cout << "    forwardQueue: " << forwardQueue.getMinG(C) << " - backwardQueue: " << backwardQueue.getMinG(C) << std::endl;
         gBound = forwardQueue.getMinG(C) + backwardQueue.getMinG(C) + epsilon;
         updated = true;
@@ -238,6 +241,11 @@ void Baseline<state, action, environment, priorityQueue>::Expand(priorityQueue &
 
         double h = std::max(heuristic->HCost(succ, target), epsilon);
 
+        // ignore states with greater cost than best solution
+        // this can be either g + h
+        if (fgreatereq(succG + h, currentCost))
+            continue;
+
         // check if there is a collision
         auto collision = opposite.getNodeG(succ);
         if (collision.first) {
@@ -254,11 +262,6 @@ void Baseline<state, action, environment, priorityQueue>::Expand(priorityQueue &
                 }
             }
         }
-
-        // ignore states with greater cost than best solution
-        // this can be either g + h or g + gMin_opposite + epsilon
-        if (fgreatereq(succG + h, currentCost))
-            continue;
 
         // add it to the open list
         current.AddOpenNode(succ, succG, h, node);

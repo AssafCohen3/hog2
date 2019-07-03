@@ -197,13 +197,12 @@ void TestPancakeRandom() {
         std::vector < AStarOpenClosedData < PancakePuzzleState < N >> > rastarOpenClose;
 
         int nodes_NBS, nodes_NBSn, nodes_NBSa, nodes_NBSan, nodes_DVCBS, nodes_DVCBSn, nodes_DVCBSa, nodes_DVCBSan,
-                nodes_NBB, nodes_NBBn, nodes_GBFHS, nodes_GBFHSn, nodes_GBFHSbest, nodes_GBFHSbestn = 0;
+                nodes_NBB, nodes_NBBn, nodes_GBFHS, nodes_GBFHSn, nodes_GBFHSl, nodes_GBFHSln,
+                nodes_GBFHSbest, nodes_GBFHSbestn = 0;
 
-        for (int count = 0; count + 1.0 < INSTANCES + 1.0; count++) {
-//            std::cout << count << " " << (count + 1.0 < INSTANCES) << std::endl;
+        for (int count = 0; count < INSTANCES; count++) {
 
             if (count + 1.0 > INSTANCES + 1.0) {
-//                std::cout << "???????????????????????????????????????????????????????????????";
                 break;
             }
 
@@ -442,13 +441,13 @@ void TestPancakeRandom() {
 
             // GBFHS
             if (1) {
-                GBFHS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> gbfhs;
+                GBFHS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> gbfhs(true);
                 goal.Reset();
                 start = original;
                 t8.StartTimer();
                 gbfhs.GetPath(&pancake, start, goal, &pancake, &pancake2, gbfhsPath);
                 t8.EndTimer();
-                std::cout << "GAP-" << gap << " GBFHS found path length " << pancake.GetPathLength(gbfhsPath) << "; "
+                std::cout << "GAP-" << gap << " GBFHS-eager found path length " << pancake.GetPathLength(gbfhsPath) << "; "
                           << gbfhs.GetNodesExpanded() << " expanded; " << gbfhs.GetNecessaryExpansions()
                           << " necessary; "
                           << t8.GetElapsedTime() << "s elapsed, " << gbfhs.getC() << " C, " << gbfhs.getGLimF()
@@ -461,7 +460,7 @@ void TestPancakeRandom() {
                 // test optimality
                 if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(gbfhsPath);
                 else if (optimal_cost != pancake.GetPathLength(gbfhsPath)) {
-                    printf("GAP-%d NBB reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
+                    printf("GAP-%d GBFHS-eager reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
                            optimal_cost, pancake.GetPathLength(gbfhsPath));
                     exit(0);
                 }
@@ -473,7 +472,7 @@ void TestPancakeRandom() {
 
                     // TODO: threshold must be incremented by lcd, not epsilon
                     for (int threshold = 0; threshold <= optimal_cost; threshold += 1) {
-                        GBFHS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> gbfhs_split(threshold);
+                        GBFHS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> gbfhs_split(true, threshold);
                         goal.Reset();
                         start = original;
                         gbfhsPath.clear();
@@ -495,6 +494,34 @@ void TestPancakeRandom() {
                     nodes_GBFHSbest += bestExpanded;
                     nodes_GBFHSbestn += bestNecessary;
                 }
+            }
+
+            // GBFHS
+            if (1) {
+                GBFHS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> gbfhs(false);
+                goal.Reset();
+                start = original;
+                t8.StartTimer();
+                gbfhs.GetPath(&pancake, start, goal, &pancake, &pancake2, gbfhsPath);
+                t8.EndTimer();
+                std::cout << "GAP-" << gap << " GBFHS-lazy found path length " << pancake.GetPathLength(gbfhsPath) << "; "
+                          << gbfhs.GetNodesExpanded() << " expanded; " << gbfhs.GetNecessaryExpansions()
+                          << " necessary; "
+                          << t8.GetElapsedTime() << "s elapsed, " << gbfhs.getC() << " C, " << gbfhs.getGLimF()
+                          << " gLim_f, "
+                          << gbfhs.getGLimB() << " gLim_b" << std::endl;
+
+                nodes_GBFHSl += gbfhs.GetNodesExpanded();
+                nodes_GBFHSln += gbfhs.GetNecessaryExpansions();
+
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(gbfhsPath);
+                else if (optimal_cost != pancake.GetPathLength(gbfhsPath)) {
+                    printf("GAP-%d GBFHS-lazy reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
+                           optimal_cost, pancake.GetPathLength(gbfhsPath));
+                    exit(0);
+                }
+
             }
 
             //ALL Solution
@@ -738,6 +765,8 @@ void TestPancakeRandom() {
                   << " necessary" << std::endl;
         std::cout << "GAP-" << gap << " GBFHS " << (nodes_GBFHS / INSTANCES) << " expanded; "
                   << (nodes_GBFHSn / INSTANCES) << " necessary" << std::endl;
+        std::cout << "GAP-" << gap << " GBFHS " << (nodes_GBFHSl / INSTANCES) << " expanded; "
+                  << (nodes_GBFHSln / INSTANCES) << " necessary" << std::endl;
         std::cout << "GAP-" << gap << " GBFHS best " << (nodes_GBFHSbest / INSTANCES) << " expanded; "
                   << (nodes_GBFHSbestn / INSTANCES) << " necessary" << std::endl;
 

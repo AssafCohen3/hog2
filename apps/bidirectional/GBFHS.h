@@ -9,7 +9,7 @@
 template<class state, class action, class environment, class priorityQueue = BucketBasedList<state, environment, BucketNodeData<state>>>
 class GBFHS {
 public:
-    GBFHS(double threshold_ = -1) {
+    GBFHS(bool eager = true, double epsilon_ = 1.0, double gcd_ = 1.0, double threshold_ = -1) {
         forwardHeuristic = 0;
         backwardHeuristic = 0;
         env = 0;
@@ -17,10 +17,16 @@ public:
         expandForward = true;
         nodesExpanded = nodesTouched = 0;
         currentCost = DBL_MAX;
+        epsilon = epsilon_;
+        gcd = gcd_;
+        updateGLimEagerly = eager;
         threshold = threshold_;
     }
 
-    virtual ~GBFHS() {}
+    ~GBFHS() {
+        forwardQueue.Reset();
+        backwardQueue.Reset();
+    }
 
     void GetPath(environment *env, const state &from, const state &to,
                  Heuristic <state> *forward, Heuristic <state> *backward, std::vector <state> &thePath);
@@ -120,25 +126,25 @@ private:
     std::pair<double, double> SplitFunction() { // TODO: parametrize this
 
         if (threshold < 0.0) { // no threshold inputed
-            int forwardExpandableNodes = forwardQueue.expandableNodes(C, gLim_f + epsilon);
-            int backwardExpandableNodes = backwardQueue.expandableNodes(C, gLim_b + epsilon);
+            int forwardExpandableNodes = forwardQueue.expandableNodes(C, gLim_f + gcd);
+            int backwardExpandableNodes = backwardQueue.expandableNodes(C, gLim_b + gcd);
 
             if (forwardExpandableNodes < backwardExpandableNodes) {
-                return std::make_pair(gLim_f + epsilon, gLim_b);
+                return std::make_pair(gLim_f + gcd, gLim_b);
             } else if (forwardExpandableNodes > backwardExpandableNodes){
-                return std::make_pair(gLim_f, gLim_b + epsilon);
+                return std::make_pair(gLim_f, gLim_b + gcd);
             } else { // same number of expandable nodes on both sides
                 if (gLim_f <= gLim_b)
-                    return std::make_pair(gLim_f + epsilon, gLim_b);
+                    return std::make_pair(gLim_f + gcd, gLim_b);
                 else
-                    return std::make_pair(gLim_f, gLim_b + epsilon);
+                    return std::make_pair(gLim_f, gLim_b + gcd);
             }
         }
 
         if (gLim_f + 1 <= threshold) {
-            return std::make_pair(gLim_f + epsilon, gLim_b);
+            return std::make_pair(gLim_f + gcd, gLim_b);
         } else {
-            return std::make_pair(gLim_f, gLim_b + epsilon);
+            return std::make_pair(gLim_f, gLim_b + gcd);
         }
 
     }
@@ -149,7 +155,8 @@ private:
 
     state middleNode;
     double currentCost;
-    double epsilon = 1.0; // TODO parametrize epsilon
+    double epsilon;
+    double gcd;
 
     environment *env;
     Timer t;
@@ -157,7 +164,7 @@ private:
     Heuristic <state> *backwardHeuristic;
 
     bool expandForward = true;
-    bool updateGLimEagerly = true; // TODO: parametrize this
+    bool updateGLimEagerly = true;
 
     double C, gLim_f, gLim_b = 0.0;
 
@@ -219,10 +226,7 @@ bool GBFHS<state, action, environment, priorityQueue>::UpdateC() {
 
     while (!ExpandableNodes() && C < currentCost) {
         if (gLim_f + gLim_b + epsilon - 1 >= C) { // we have to update C
-            auto minFF = forwardQueue.getMinF(C);
-            auto minFB = backwardQueue.getMinF(C);
-            C = std::min(minFF, minFB);
-
+            C += gcd;
             updated = true;
 
             // if gLims are to be updated eagerly after C, do it
