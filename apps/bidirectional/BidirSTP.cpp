@@ -16,6 +16,7 @@
 #include "TemplateAStar.h"
 #include "Baseline.h"
 #include "GBFHS.h"
+#include "DBS.h"
 
 MNPuzzleState<4, 4> GetKorfInstance(int which) {
     int instances[100][16] =
@@ -136,11 +137,14 @@ void TestSTP() {
     TemplateAStar <MNPuzzleState<4, 4>, slideDir, MNPuzzle<4, 4>> rastar;
     MNPuzzle<4, 4> mnp;
 
-    long nodes_NBS, nodes_NBSn, nodes_NBSa, nodes_NBSan, nodes_DVCBS, nodes_DVCBSn, nodes_DVCBSa, nodes_DVCBSan,
-            nodes_NBB, nodes_NBBn, nodes_GBFHS, nodes_GBFHSn, nodes_GBFHSl, nodes_GBFHSln,
-            nodes_GBFHSbest, nodes_GBFHSbestn = 0;
+    long nodes_Astar = 0, nodes_Astarn = 0,
+            nodes_NBS = 0, nodes_NBSn = 0, nodes_NBSa = 0, nodes_NBSan = 0,
+            nodes_DVCBS = 0, nodes_DVCBSn = 0, nodes_DVCBSa = 0, nodes_DVCBSan = 0,
+            nodes_NBB = 0, nodes_NBBn = 0, nodes_GBFHS = 0, nodes_GBFHSn = 0, nodes_GBFHSl = 0, nodes_GBFHSln = 0,
+            nodes_DBS = 0, nodes_DBSn = 0,
+            nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0;
 
-    for (int x = 13; x < 100; x++) // 547 to 540
+    for (int x = 0; x < 100; x++) // 547 to 540
     {
 
         MNPuzzleState<4, 4> start, goal;
@@ -155,6 +159,65 @@ void TestSTP() {
 
         Timer t1, t2, t3;
 
+        double optimal_cost = -1.0;
+
+        if (1) {
+            NBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, NBSQueue<MNPuzzleState < 4, 4>, 1, false
+                    >> nbsEpsilon(false);
+            goal.Reset();
+            start = GetKorfInstance(x);
+            t2.StartTimer();
+            nbsEpsilon.GetPath(&mnp, start, goal, &mnp, &mnp, nbsEpsilonPath);
+            t2.EndTimer();
+            //printf("NBS found path length %1.0f; %llu expanded; %llu necessary; %llu generated; %1.2fs elapsed\n", mnp.GetPathLength(nbsPath),
+            //	   nbs.GetNodesExpanded(), nbs.GetNecessaryExpansions(), nbs.GetNodesTouched(), t2.GetElapsedTime());
+            printf("NBS-E-L found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed %llu forwardMeeting %llu backwardMeeting %llu forwardDistance %llu backwardDistance %f ExpansionUntilSolution\n",
+                   mnp.GetPathLength(nbsEpsilonPath),
+                   nbsEpsilon.GetNodesExpanded(), nbsEpsilon.GetNecessaryExpansions(), t2.GetElapsedTime(),
+                   nbsEpsilon.getForwardMeetingPoint(), nbsEpsilon.getBackwardMeetingPoint(),
+                   nbsEpsilon.getForwardUnnecessaryNodesInPath(),
+                   nbsEpsilon.getBackwardUnnecessaryNodesInPath(), nbsEpsilon.GetExpansionUntilFirstSolution());
+
+            nodes_NBS += nbsEpsilon.GetNodesExpanded();
+            nodes_NBSn += nbsEpsilon.GetNecessaryExpansions();
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(nbsEpsilonPath);
+            else if (optimal_cost != mnp.GetPathLength(nbsEpsilonPath)) {
+                printf("NBS-E-L reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(nbsEpsilonPath));
+                exit(0);
+            }
+        }
+
+        if (1) {
+            NBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, NBSQueue<MNPuzzleState < 4, 4>, 1, true
+                    >> nbsEpsilon(false, true);
+            goal.Reset();
+            start = GetKorfInstance(x);
+            t2.StartTimer();
+            nbsEpsilon.GetPath(&mnp, start, goal, &mnp, &mnp, nbsEpsilonPath);
+            t2.EndTimer();
+            //printf("NBS found path length %1.0f; %llu expanded; %llu necessary; %llu generated; %1.2fs elapsed\n", mnp.GetPathLength(nbsPath),
+            //	   nbs.GetNodesExpanded(), nbs.GetNecessaryExpansions(), nbs.GetNodesTouched(), t2.GetElapsedTime());
+            printf("NBS-E-LEQ found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed %llu forwardMeeting %llu backwardMeeting %llu forwardDistance %llu backwardDistance %f ExpansionUntilSolution\n",
+                   mnp.GetPathLength(nbsEpsilonPath),
+                   nbsEpsilon.GetNodesExpanded(), nbsEpsilon.GetNecessaryExpansions(), t2.GetElapsedTime(),
+                   nbsEpsilon.getForwardMeetingPoint(), nbsEpsilon.getBackwardMeetingPoint(),
+                   nbsEpsilon.getForwardUnnecessaryNodesInPath(),
+                   nbsEpsilon.getBackwardUnnecessaryNodesInPath(), nbsEpsilon.GetExpansionUntilFirstSolution());
+
+            nodes_NBSa += nbsEpsilon.GetNodesExpanded();
+            nodes_NBSan += nbsEpsilon.GetNecessaryExpansions();
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(nbsEpsilonPath);
+            else if (optimal_cost != mnp.GetPathLength(nbsEpsilonPath)) {
+                printf("NBS-E-LEQ reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(nbsEpsilonPath));
+                exit(0);
+            }
+        }
 
         if (1) {
             DVCBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, DVCBSQueue<MNPuzzleState < 4, 4>, 1, false
@@ -176,6 +239,14 @@ void TestSTP() {
 
             nodes_DVCBS += dvcbs.GetNodesExpanded();
             nodes_DVCBSn += dvcbs.GetNecessaryExpansions();
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(dvcbsEpsilonPath);
+            else if (optimal_cost != mnp.GetPathLength(dvcbsEpsilonPath)) {
+                printf("DVCBS-E-L reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(dvcbsEpsilonPath));
+                exit(0);
+            }
         }
 
         if (1) {
@@ -198,47 +269,14 @@ void TestSTP() {
 
             nodes_DVCBSa += dvcbs.GetNodesExpanded();
             nodes_DVCBSan += dvcbs.GetNecessaryExpansions();
-        }
 
-        if (1) {
-            NBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, NBSQueue<MNPuzzleState < 4, 4>, 1, false
-                    >> nbsEpsilon(false);
-            goal.Reset();
-            start = GetKorfInstance(x);
-            t2.StartTimer();
-            nbsEpsilon.GetPath(&mnp, start, goal, &mnp, &mnp, nbsEpsilonPath);
-            t2.EndTimer();
-            //printf("NBS found path length %1.0f; %llu expanded; %llu necessary; %llu generated; %1.2fs elapsed\n", mnp.GetPathLength(nbsPath),
-            //	   nbs.GetNodesExpanded(), nbs.GetNecessaryExpansions(), nbs.GetNodesTouched(), t2.GetElapsedTime());
-            printf("NBS-E-L found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed %llu forwardMeeting %llu backwardMeeting %llu forwardDistance %llu backwardDistance %f ExpansionUntilSolution\n",
-                   mnp.GetPathLength(nbsEpsilonPath),
-                   nbsEpsilon.GetNodesExpanded(), nbsEpsilon.GetNecessaryExpansions(), t2.GetElapsedTime(),
-                   nbsEpsilon.getForwardMeetingPoint(), nbsEpsilon.getBackwardMeetingPoint(),
-                   nbsEpsilon.getForwardUnnecessaryNodesInPath(),
-                   nbsEpsilon.getBackwardUnnecessaryNodesInPath(), nbsEpsilon.GetExpansionUntilFirstSolution());
-
-            nodes_NBS += nbsEpsilon.GetNodesExpanded();
-            nodes_NBSn += nbsEpsilon.GetNecessaryExpansions();
-        }
-        if (1) {
-            NBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, NBSQueue<MNPuzzleState < 4, 4>, 1, true
-                    >> nbsEpsilon(false, true);
-            goal.Reset();
-            start = GetKorfInstance(x);
-            t2.StartTimer();
-            nbsEpsilon.GetPath(&mnp, start, goal, &mnp, &mnp, nbsEpsilonPath);
-            t2.EndTimer();
-            //printf("NBS found path length %1.0f; %llu expanded; %llu necessary; %llu generated; %1.2fs elapsed\n", mnp.GetPathLength(nbsPath),
-            //	   nbs.GetNodesExpanded(), nbs.GetNecessaryExpansions(), nbs.GetNodesTouched(), t2.GetElapsedTime());
-            printf("NBS-E-LEQ found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed %llu forwardMeeting %llu backwardMeeting %llu forwardDistance %llu backwardDistance %f ExpansionUntilSolution\n",
-                   mnp.GetPathLength(nbsEpsilonPath),
-                   nbsEpsilon.GetNodesExpanded(), nbsEpsilon.GetNecessaryExpansions(), t2.GetElapsedTime(),
-                   nbsEpsilon.getForwardMeetingPoint(), nbsEpsilon.getBackwardMeetingPoint(),
-                   nbsEpsilon.getForwardUnnecessaryNodesInPath(),
-                   nbsEpsilon.getBackwardUnnecessaryNodesInPath(), nbsEpsilon.GetExpansionUntilFirstSolution());
-
-            nodes_NBSa += nbsEpsilon.GetNodesExpanded();
-            nodes_NBSan += nbsEpsilon.GetNecessaryExpansions();
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(dvcbsEpsilonPath);
+            else if (optimal_cost != mnp.GetPathLength(dvcbsEpsilonPath)) {
+                printf("DVCBS-E-LEQ reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(dvcbsEpsilonPath));
+                exit(0);
+            }
         }
 
         if (1) {
@@ -254,6 +292,14 @@ void TestSTP() {
 
             nodes_NBB += baseline.GetNodesExpanded();
             nodes_NBBn += baseline.GetNecessaryExpansions();
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
+            else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
+                printf("NBB reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(solutionPath));
+                exit(0);
+            }
         }
 
         if (1) {
@@ -263,48 +309,126 @@ void TestSTP() {
             timer.StartTimer();
             gbfhs.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
             timer.EndTimer();
-            printf("GBFHS-eager found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
-                   mnp.GetPathLength(solutionPath),
-                   gbfhs.GetNodesExpanded(), gbfhs.GetNecessaryExpansions(), timer.GetElapsedTime());
+            std::cout << "GBFHS-eager found path length " << mnp.GetPathLength(solutionPath)
+                      << "; "
+                      << gbfhs.GetNodesExpanded() << " expanded; " << gbfhs.GetNecessaryExpansions()
+                      << " necessary; "
+                      << timer.GetElapsedTime() << "s elapsed, " << gbfhs.getC() << " C, " << gbfhs.getGLimF()
+                      << " gLim_f, "
+                      << gbfhs.getGLimB() << " gLim_b, updated forward?: " << gbfhs.getLastUpdatedLimit() << std::endl;
 
             nodes_GBFHS += gbfhs.GetNodesExpanded();
             nodes_GBFHSn += gbfhs.GetNecessaryExpansions();
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
+            else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
+                printf("GBFHS-eager reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(solutionPath));
+                exit(0);
+            }
         }
 
-        if (0) {
+        if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
             GBFHS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> gbfhs(false);
             Timer timer;
             timer.StartTimer();
             gbfhs.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
             timer.EndTimer();
-            printf("GBFHS-lazy found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
-                   mnp.GetPathLength(solutionPath),
-                   gbfhs.GetNodesExpanded(), gbfhs.GetNecessaryExpansions(), timer.GetElapsedTime());
+            std::cout << "GBFHS-lazy found path length " << mnp.GetPathLength(solutionPath)
+                      << "; "
+                      << gbfhs.GetNodesExpanded() << " expanded; " << gbfhs.GetNecessaryExpansions()
+                      << " necessary; "
+                      << timer.GetElapsedTime() << "s elapsed, " << gbfhs.getC() << " C, " << gbfhs.getGLimF()
+                      << " gLim_f, "
+                      << gbfhs.getGLimB() << " gLim_b, updated forward?: " << gbfhs.getLastUpdatedLimit() << std::endl;
 
             nodes_GBFHSl += gbfhs.GetNodesExpanded();
             nodes_GBFHSln += gbfhs.GetNecessaryExpansions();
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
+            else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
+                printf("GBFHS-lazy reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(solutionPath));
+                exit(0);
+            }
+        }
+
+        if (1) {
+            std::vector <MNPuzzleState<4, 4>> solutionPath;
+            TemplateAStar <MNPuzzleState<4, 4>, slideDir, MNPuzzle<4, 4>> astar(false, 1.0);
+            astar.SetHeuristic(&mnp);
+            Timer timer;
+            timer.StartTimer();
+            astar.GetPath(&mnp, start, goal, solutionPath);
+            timer.EndTimer();
+            printf("A* found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   mnp.GetPathLength(solutionPath),
+                   astar.GetNodesExpanded(), astar.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_Astar += astar.GetNodesExpanded();
+            nodes_Astarn += astar.GetNecessaryExpansions();
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
+            else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
+                printf("AStar reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(solutionPath));
+                exit(0);
+            }
+        }
+
+
+        if (1) {
+            std::vector <MNPuzzleState<4, 4>> solutionPath;
+            DBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> dbs;
+            Timer timer;
+            timer.StartTimer();
+            dbs.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
+            timer.EndTimer();
+            printf("DBS found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   mnp.GetPathLength(solutionPath),
+                   dbs.GetNodesExpanded(), dbs.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_DBS += dbs.GetNodesExpanded();
+            nodes_DBSn += dbs.GetNecessaryExpansions();
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
+            else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
+                printf("DBS reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(solutionPath));
+                exit(0);
+            }
         }
     }
 
     printf("+++++++++++++++++++++++++++++++++++++++++\n");
 
-    std::cout << "STP" << " NBS " << nodes_NBS << " expanded; " << nodes_NBSn
+    std::cout << " Experiments: " << 100 << std::endl;
+
+    std::cout << " STP" << " NBS " << nodes_NBS << " expanded; " << nodes_NBSn
               << " necessary" << std::endl;
-    std::cout << "STP" << " NBSa " << nodes_NBSa << " expanded; " << nodes_NBSan
+    std::cout << " STP" << " NBSa " << nodes_NBSa << " expanded; " << nodes_NBSan
               << " necessary" << std::endl;
-    std::cout << "STP" << " DVCBS " << nodes_DVCBS << " expanded; "
+    std::cout << " STP" << " DVCBS " << nodes_DVCBS << " expanded; "
               << nodes_DVCBSn << " necessary" << std::endl;
-    std::cout << "STP" << " DVCBSa " << nodes_DVCBSa << " expanded; "
+    std::cout << " STP" << " DVCBSa " << nodes_DVCBSa << " expanded; "
               << nodes_DVCBSan << " necessary" << std::endl;
-    std::cout << "STP" << " NBB " << nodes_NBB << " expanded; " << nodes_NBBn
+    std::cout << " STP" << " NBB " << nodes_NBB << " expanded; " << nodes_NBBn
               << " necessary" << std::endl;
-    std::cout << "STP" << " GBFHS-eager " << nodes_GBFHS << " expanded; "
+    std::cout << " STP" << " GBFHS-eager " << nodes_GBFHS << " expanded; "
               << nodes_GBFHSn << " necessary" << std::endl;
-    std::cout << "STP" << " GBFHS-lazy " << nodes_GBFHSl << " expanded; "
+    std::cout << " STP" << " GBFHS-lazy " << nodes_GBFHSl << " expanded; "
               << nodes_GBFHSln << " necessary" << std::endl;
-    std::cout << "STP" << " GBFHS best " << nodes_GBFHSbest << " expanded; "
-              << nodes_GBFHSbestn << " necessary" << std::endl;
+//    std::cout << " STP" << " GBFHS best " << nodes_GBFHSbest << " expanded; "
+//              << nodes_GBFHSbestn << " necessary" << std::endl;
+    std::cout << " STP" << " A* " << nodes_Astar << " expanded; "
+              << nodes_Astarn << " necessary" << std::endl;
+    std::cout << " STP" << " DBS " << nodes_DBS << " expanded; "
+              << nodes_DBSn << " necessary" << std::endl;
 
     printf("+++++++++++++++++++++++++++++++++++++++++\n");
 

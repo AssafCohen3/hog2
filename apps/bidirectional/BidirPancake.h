@@ -9,8 +9,6 @@
 #ifndef BidirPancake_hpp
 #define BidirPancake_hpp
 
-#include <stdio.h>
-
 void TestPancake();
 
 #endif /* BidirPancake_hpp */

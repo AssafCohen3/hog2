@@ -3,7 +3,6 @@
 
 #include "MinGBucketOpenClosed.h"
 #include "FPUtil.h"
-#include "Timer.h"
 #include <unordered_map>
 #include <iostream>
 
@@ -105,7 +104,6 @@ private:
     double gcd;
 
     environment *env;
-    Timer t;
     Heuristic <state> *forwardHeuristic;
     Heuristic <state> *backwardHeuristic;
 
@@ -123,8 +121,6 @@ void Baseline<state, action, environment, priorityQueue>::GetPath(environment *e
                                                                   std::vector <state> &thePath) {
     if (!InitializeSearch(env, from, to, forward, backward, thePath))
         return;
-
-    t.StartTimer();
 
     while (!DoSingleSearchStep(thePath)) {}
 }
@@ -180,7 +176,6 @@ bool Baseline<state, action, environment, priorityQueue>::UpdateC() {
     while (C < gBound) {
         // std::cout << "  G updated from " << C << " to " << gBound << " after expanding " << counts[C] << std::endl;
         C += gcd;
-        // std::cout << "    forwardQueue: " << forwardQueue.getMinG(C) << " - backwardQueue: " << backwardQueue.getMinG(C) << std::endl;
         gBound = forwardQueue.getMinG(C) + backwardQueue.getMinG(C) + epsilon;
         updated = true;
     }

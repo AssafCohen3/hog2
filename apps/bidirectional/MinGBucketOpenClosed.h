@@ -71,7 +71,7 @@ double MinGBucketOpenClosed<state, environment, dataStructure>::getMinG(double f
     minG = std::numeric_limits<double>::max();
     minGFLayer = std::numeric_limits<double>::max();
 
-    for (auto it = Base::fLayers.begin(); it != Base::fLayers.end() && it->first <= f; it++) {
+    for (auto it = Base::fLayers.begin(); it != Base::fLayers.end() && it->first <= f;) {
         auto &currentFLayer = it->second;
 
         bool nodeFound = false;
@@ -95,7 +95,9 @@ double MinGBucketOpenClosed<state, environment, dataStructure>::getMinG(double f
         }
 
         if (currentFLayer.empty())
-            Base::fLayers.erase(it); // f layer empty - get rid of it
+            it = Base::fLayers.erase(it); // f layer empty - get rid of it
+        else
+            it++;
     }
 
     return minG;

@@ -15,6 +15,7 @@
 #include "BSStar.h"
 #include "Baseline.h"
 #include "GBFHS.h"
+#include "DBS.h"
 #include "CalculateWVC.h"
 
 
@@ -65,9 +66,12 @@ void TestTOH(int first, int last) {
     //g.Reset();
     //f = BuildPDB<N, pdb1Disks>(g);
 
-    long nodes_NBS, nodes_NBSn, nodes_NBSa, nodes_NBSan, nodes_DVCBS, nodes_DVCBSn, nodes_DVCBSa, nodes_DVCBSan,
-            nodes_NBB, nodes_NBBn, nodes_GBFHS, nodes_GBFHSn, nodes_GBFHSl, nodes_GBFHSln,
-            nodes_GBFHSbest, nodes_GBFHSbestn = 0;
+    long nodes_Astar = 0, nodes_Astarn = 0,
+            nodes_NBS = 0, nodes_NBSn = 0, nodes_NBSa = 0, nodes_NBSan = 0,
+            nodes_DVCBS = 0, nodes_DVCBSn = 0, nodes_DVCBSa = 0, nodes_DVCBSan = 0,
+            nodes_NBB = 0, nodes_NBBn = 0, nodes_GBFHS = 0, nodes_GBFHSn = 0, nodes_GBFHSl = 0, nodes_GBFHSln = 0,
+            nodes_DBS = 0, nodes_DBSn = 0,
+            nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0;
 
     int table[] = {52058078, 116173544, 208694125, 131936966, 141559500, 133800745, 194246206, 50028346, 167007978,
                    207116816, 163867037, 119897198, 201847476, 210859515, 117688410, 121633885};
@@ -97,7 +101,9 @@ void TestTOH(int first, int last) {
         Timer timer;
 
         std::cout << "-----------------------------" << std::endl;
-        std::cout << "Pancake problem: " << count + 1 << " of " << last << std::endl;
+        std::cout << "ToH problem: " << count + 1 << " of " << last << std::endl;
+
+        double optimal_cost = -1.0;
 
         //b = BuildPDB<N, pdb1Disks>(s);
         //printf("Starting heuristics: %f %f\n", f->HCost(s, g), b->HCost(g, s));
@@ -130,6 +136,54 @@ void TestTOH(int first, int last) {
 
             }
             if (1) {
+                NBS<TOHState < N>, TOHMove, TOH < N >, NBSQueue<TOHState < N>, 1, false >> nbsEpsilon(false);
+                timer.StartTimer();
+                nbsEpsilon.GetPath(&toh, s, g, f, b, thePath);
+                timer.EndTimer();
+                printf("NBS-E-L found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed %llu forwardMeeting %llu backwardMeeting %llu forwardDistance %llu backwardDistance %f ExpansionUntilSolution\n",
+                       toh.GetPathLength(thePath),
+                       nbsEpsilon.GetNodesExpanded(), nbsEpsilon.GetNecessaryExpansions(), timer.GetElapsedTime(),
+                       nbsEpsilon.getForwardMeetingPoint(), nbsEpsilon.getBackwardMeetingPoint(),
+                       nbsEpsilon.getForwardUnnecessaryNodesInPath(), nbsEpsilon.getBackwardUnnecessaryNodesInPath(),
+                       nbsEpsilon.GetExpansionUntilFirstSolution());
+
+                nodes_NBS += nbsEpsilon.GetNodesExpanded();
+                nodes_NBSn += nbsEpsilon.GetNecessaryExpansions();
+
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
+                else if (optimal_cost != toh.GetPathLength(thePath)) {
+                    printf("NBS-E-L reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                           optimal_cost, toh.GetPathLength(thePath));
+                    exit(0);
+                }
+
+            }
+            if (1) {
+                NBS<TOHState < N>, TOHMove, TOH < N >, NBSQueue<TOHState < N>, 1, true >> nbsEpsilon(false, true);
+                timer.StartTimer();
+                nbsEpsilon.GetPath(&toh, s, g, f, b, thePath);
+                timer.EndTimer();
+                printf("NBS-E-LEQ found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed %llu forwardMeeting %llu backwardMeeting %llu forwardDistance %llu backwardDistance %f ExpansionUntilSolution\n",
+                       toh.GetPathLength(thePath),
+                       nbsEpsilon.GetNodesExpanded(), nbsEpsilon.GetNecessaryExpansions(), timer.GetElapsedTime(),
+                       nbsEpsilon.getForwardMeetingPoint(), nbsEpsilon.getBackwardMeetingPoint(),
+                       nbsEpsilon.getForwardUnnecessaryNodesInPath(), nbsEpsilon.getBackwardUnnecessaryNodesInPath(),
+                       nbsEpsilon.GetExpansionUntilFirstSolution());
+
+                nodes_NBSa += nbsEpsilon.GetNodesExpanded();
+                nodes_NBSan += nbsEpsilon.GetNecessaryExpansions();
+
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
+                else if (optimal_cost != toh.GetPathLength(thePath)) {
+                    printf("NBS-E-LEQ reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                           optimal_cost, toh.GetPathLength(thePath));
+                    exit(0);
+                }
+
+            }
+            if (1) {
                 DVCBS<TOHState < N>, TOHMove, TOH < N >, DVCBSQueue<TOHState < N>, 1, false >> dvcbs(false);
                 timer.StartTimer();
                 dvcbs.GetPath(&toh, s, g, f, b, thePath);
@@ -144,6 +198,13 @@ void TestTOH(int first, int last) {
                 nodes_DVCBS += dvcbs.GetNodesExpanded();
                 nodes_DVCBSn += dvcbs.GetNecessaryExpansions();
 
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
+                else if (optimal_cost != toh.GetPathLength(thePath)) {
+                    printf("DVCBS-E-L reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                           optimal_cost, toh.GetPathLength(thePath));
+                    exit(0);
+                }
 
             }
             if (1) {
@@ -160,6 +221,14 @@ void TestTOH(int first, int last) {
 
                 nodes_DVCBSa += dvcbs.GetNodesExpanded();
                 nodes_DVCBSan += dvcbs.GetNecessaryExpansions();
+
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
+                else if (optimal_cost != toh.GetPathLength(thePath)) {
+                    printf("DVCBS-E-LEQ reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                           optimal_cost, toh.GetPathLength(thePath));
+                    exit(0);
+                }
             }
 
             if (0) {
@@ -188,38 +257,6 @@ void TestTOH(int first, int last) {
                        nbs.GetExpansionUntilFirstSolution());
 
             }
-            if (1) {
-                NBS<TOHState < N>, TOHMove, TOH < N >, NBSQueue<TOHState < N>, 1, false >> nbsEpsilon(false);
-                timer.StartTimer();
-                nbsEpsilon.GetPath(&toh, s, g, f, b, thePath);
-                timer.EndTimer();
-                printf("NBS-E-L found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed %llu forwardMeeting %llu backwardMeeting %llu forwardDistance %llu backwardDistance %f ExpansionUntilSolution\n",
-                       toh.GetPathLength(thePath),
-                       nbsEpsilon.GetNodesExpanded(), nbsEpsilon.GetNecessaryExpansions(), timer.GetElapsedTime(),
-                       nbsEpsilon.getForwardMeetingPoint(), nbsEpsilon.getBackwardMeetingPoint(),
-                       nbsEpsilon.getForwardUnnecessaryNodesInPath(), nbsEpsilon.getBackwardUnnecessaryNodesInPath(),
-                       nbsEpsilon.GetExpansionUntilFirstSolution());
-
-                nodes_NBS += nbsEpsilon.GetNodesExpanded();
-                nodes_NBSn += nbsEpsilon.GetNecessaryExpansions();
-
-            }
-            if (1) {
-                NBS<TOHState < N>, TOHMove, TOH < N >, NBSQueue<TOHState < N>, 1, true >> nbsEpsilon(false, true);
-                timer.StartTimer();
-                nbsEpsilon.GetPath(&toh, s, g, f, b, thePath);
-                timer.EndTimer();
-                printf("NBS-E-LEQ found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed %llu forwardMeeting %llu backwardMeeting %llu forwardDistance %llu backwardDistance %f ExpansionUntilSolution\n",
-                       toh.GetPathLength(thePath),
-                       nbsEpsilon.GetNodesExpanded(), nbsEpsilon.GetNecessaryExpansions(), timer.GetElapsedTime(),
-                       nbsEpsilon.getForwardMeetingPoint(), nbsEpsilon.getBackwardMeetingPoint(),
-                       nbsEpsilon.getForwardUnnecessaryNodesInPath(), nbsEpsilon.getBackwardUnnecessaryNodesInPath(),
-                       nbsEpsilon.GetExpansionUntilFirstSolution());
-
-                nodes_NBSa += nbsEpsilon.GetNodesExpanded();
-                nodes_NBSan += nbsEpsilon.GetNecessaryExpansions();
-
-            }
 
             if (1) {
                 Baseline<TOHState < N>, TOHMove, TOH < N >> baseline;
@@ -232,6 +269,14 @@ void TestTOH(int first, int last) {
 
                 nodes_NBB += baseline.GetNodesExpanded();
                 nodes_NBBn += baseline.GetNecessaryExpansions();
+
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
+                else if (optimal_cost != toh.GetPathLength(thePath)) {
+                    printf("NBB reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                           optimal_cost, toh.GetPathLength(thePath));
+                    exit(0);
+                }
             }
 
             if (1) {
@@ -239,12 +284,25 @@ void TestTOH(int first, int last) {
                 timer.StartTimer();
                 gbfhs.GetPath(&toh, s, g, f, b, thePath);
                 timer.EndTimer();
-                printf("GBFHS-eager found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
-                       toh.GetPathLength(thePath),
-                       gbfhs.GetNodesExpanded(), gbfhs.GetNecessaryExpansions(), timer.GetElapsedTime());
+                std::cout << "GBFHS-eager found path length " << toh.GetPathLength(thePath)
+                          << "; "
+                          << gbfhs.GetNodesExpanded() << " expanded; " << gbfhs.GetNecessaryExpansions()
+                          << " necessary; "
+                          << timer.GetElapsedTime() << "s elapsed, " << gbfhs.getC() << " C, " << gbfhs.getGLimF()
+                          << " gLim_f, "
+                          << gbfhs.getGLimB() << " gLim_b, updated forward?: " << gbfhs.getLastUpdatedLimit()
+                          << std::endl;
 
                 nodes_GBFHS += gbfhs.GetNodesExpanded();
                 nodes_GBFHSn += gbfhs.GetNecessaryExpansions();
+
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
+                else if (optimal_cost != toh.GetPathLength(thePath)) {
+                    printf("GBFHS-eager reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                           optimal_cost, toh.GetPathLength(thePath));
+                    exit(0);
+                }
             }
 
             if (1) {
@@ -252,12 +310,68 @@ void TestTOH(int first, int last) {
                 timer.StartTimer();
                 gbfhs.GetPath(&toh, s, g, f, b, thePath);
                 timer.EndTimer();
-                printf("GBFHS-lazy found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
-                       toh.GetPathLength(thePath),
-                       gbfhs.GetNodesExpanded(), gbfhs.GetNecessaryExpansions(), timer.GetElapsedTime());
+                std::cout << "GBFHS-lazy found path length " << toh.GetPathLength(thePath)
+                          << "; "
+                          << gbfhs.GetNodesExpanded() << " expanded; " << gbfhs.GetNecessaryExpansions()
+                          << " necessary; "
+                          << timer.GetElapsedTime() << "s elapsed, " << gbfhs.getC() << " C, " << gbfhs.getGLimF()
+                          << " gLim_f, "
+                          << gbfhs.getGLimB() << " gLim_b, updated forward?: " << gbfhs.getLastUpdatedLimit()
+                          << std::endl;
 
                 nodes_GBFHSl += gbfhs.GetNodesExpanded();
                 nodes_GBFHSln += gbfhs.GetNecessaryExpansions();
+
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
+                else if (optimal_cost != toh.GetPathLength(thePath)) {
+                    printf("GBFHS-lazy reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                           optimal_cost, toh.GetPathLength(thePath));
+                    exit(0);
+                }
+            }
+
+            if (1) {
+                TemplateAStar <TOHState<N>, TOHMove, TOH<N>> astar(false, 1);
+                astar.SetHeuristic(f);
+                timer.StartTimer();
+                astar.GetPath(&toh, s, g, thePath);
+                timer.EndTimer();
+                //printf("I%d-%d-%d\t%d\t", N, pdb1Disks, count, (int)toh.GetPathLength(thePath));
+                printf("A*-E %llu nodes %llu necessary", astar.GetNodesExpanded(), astar.GetNecessaryExpansions());
+                printf(" %1.2fs elapsed\n", timer.GetElapsedTime());
+
+                nodes_Astar += astar.GetNodesExpanded();
+                nodes_Astarn += astar.GetNecessaryExpansions();
+
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
+                else if (optimal_cost != toh.GetPathLength(thePath)) {
+                    printf("AStar reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                           optimal_cost, toh.GetPathLength(thePath));
+                    exit(0);
+                }
+            }
+
+            if (1) {
+                DBS<TOHState < N>, TOHMove, TOH < N >> dbs;
+                timer.StartTimer();
+                dbs.GetPath(&toh, s, g, f, b, thePath);
+                timer.EndTimer();
+                printf("DBS found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                       toh.GetPathLength(thePath),
+                       dbs.GetNodesExpanded(), dbs.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+                nodes_DBS += dbs.GetNodesExpanded();
+                nodes_DBSn += dbs.GetNecessaryExpansions();
+
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
+                else if (optimal_cost != toh.GetPathLength(thePath)) {
+                    printf("DBS reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                           optimal_cost, toh.GetPathLength(thePath));
+                    exit(0);
+                }
             }
         }
 
@@ -479,6 +593,8 @@ void TestTOH(int first, int last) {
 
     printf("+++++++++++++++++++++++++++++++++++++++++\n");
 
+    std::cout << " Experiments: " << (last - first) << std::endl;
+
     std::cout << "ToH" << " NBS " << nodes_NBS << " expanded; " << nodes_NBSn
               << " necessary" << std::endl;
     std::cout << "ToH" << " NBSa " << nodes_NBSa << " expanded; " << nodes_NBSan
@@ -493,8 +609,12 @@ void TestTOH(int first, int last) {
               << nodes_GBFHSn << " necessary" << std::endl;
     std::cout << "ToH" << " GBFHS-lazy " << nodes_GBFHSl << " expanded; "
               << nodes_GBFHSln << " necessary" << std::endl;
-    std::cout << "ToH" << " GBFHS best " << nodes_GBFHSbest << " expanded; "
-              << nodes_GBFHSbestn << " necessary" << std::endl;
+//    std::cout << "ToH" << " GBFHS best " << nodes_GBFHSbest << " expanded; "
+//              << nodes_GBFHSbestn << " necessary" << std::endl;
+    std::cout << "ToH" << " A* " << nodes_Astar << " expanded; "
+              << nodes_Astarn << " necessary" << std::endl;
+    std::cout << "ToH" << " NBB " << nodes_DBS << " expanded; " << nodes_DBSn
+              << " necessary" << std::endl;
 
     printf("+++++++++++++++++++++++++++++++++++++++++\n");
 

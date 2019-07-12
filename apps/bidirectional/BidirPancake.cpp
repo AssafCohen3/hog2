@@ -12,6 +12,7 @@
 #include "NBS.h"
 #include "Baseline.h"
 #include "GBFHS.h"
+#include "DBS.h"
 #include "IDAStar.h"
 #include "MM.h"
 #include "BSStar.h"
@@ -169,7 +170,7 @@ const int N = 14;
 const int INSTANCES = 50;
 
 void TestPancakeRandom() {
-    for (int gap = 0; gap < 3; gap++) {
+    for (int gap = 0; gap < 4; gap++) {
         srandom(0);
         PancakePuzzleState <N> start;
         PancakePuzzleState <N> original;
@@ -183,6 +184,7 @@ void TestPancakeRandom() {
         std::vector <PancakePuzzleState<N>> nbsEpsilonPath;
         std::vector <PancakePuzzleState<N>> baselinePath;
         std::vector <PancakePuzzleState<N>> gbfhsPath;
+        std::vector <PancakePuzzleState<N>> dbsPath;
         std::vector <PancakePuzzleState<N>> dvcbsEpsilonPath;
         std::vector <PancakePuzzleState<N>> bsPath;
         std::vector <PancakePuzzleState<N>> astarPath;
@@ -196,9 +198,12 @@ void TestPancakeRandom() {
         std::vector < AStarOpenClosedData < PancakePuzzleState < N >> > astarOpenClose;
         std::vector < AStarOpenClosedData < PancakePuzzleState < N >> > rastarOpenClose;
 
-        int nodes_NBS, nodes_NBSn, nodes_NBSa, nodes_NBSan, nodes_DVCBS, nodes_DVCBSn, nodes_DVCBSa, nodes_DVCBSan,
-                nodes_NBB, nodes_NBBn, nodes_GBFHS, nodes_GBFHSn, nodes_GBFHSl, nodes_GBFHSln,
-                nodes_GBFHSbest, nodes_GBFHSbestn = 0;
+        long nodes_Astar = 0, nodes_Astarn = 0,
+                nodes_NBS = 0, nodes_NBSn = 0, nodes_NBSa = 0, nodes_NBSan = 0,
+                nodes_DVCBS = 0, nodes_DVCBSn = 0, nodes_DVCBSa = 0, nodes_DVCBSan = 0,
+                nodes_NBB = 0, nodes_NBBn = 0, nodes_GBFHS = 0, nodes_GBFHSn = 0, nodes_GBFHSl = 0, nodes_GBFHSln = 0,
+                nodes_DBS = 0, nodes_DBSn = 0,
+                nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0;
 
         for (int count = 0; count < INSTANCES; count++) {
 
@@ -439,7 +444,7 @@ void TestPancakeRandom() {
                 }
             }
 
-            // GBFHS
+            // GBFHS eager
             if (1) {
                 GBFHS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> gbfhs(true);
                 goal.Reset();
@@ -447,12 +452,14 @@ void TestPancakeRandom() {
                 t8.StartTimer();
                 gbfhs.GetPath(&pancake, start, goal, &pancake, &pancake2, gbfhsPath);
                 t8.EndTimer();
-                std::cout << "GAP-" << gap << " GBFHS-eager found path length " << pancake.GetPathLength(gbfhsPath) << "; "
+                std::cout << "GAP-" << gap << " GBFHS-eager found path length " << pancake.GetPathLength(gbfhsPath)
+                          << "; "
                           << gbfhs.GetNodesExpanded() << " expanded; " << gbfhs.GetNecessaryExpansions()
                           << " necessary; "
                           << t8.GetElapsedTime() << "s elapsed, " << gbfhs.getC() << " C, " << gbfhs.getGLimF()
                           << " gLim_f, "
-                          << gbfhs.getGLimB() << " gLim_b" << std::endl;
+                          << gbfhs.getGLimB() << " gLim_b, updated forward?: " << gbfhs.getLastUpdatedLimit()
+                          << std::endl;
 
                 nodes_GBFHS += gbfhs.GetNodesExpanded();
                 nodes_GBFHSn += gbfhs.GetNecessaryExpansions();
@@ -472,7 +479,8 @@ void TestPancakeRandom() {
 
                     // TODO: threshold must be incremented by lcd, not epsilon
                     for (int threshold = 0; threshold <= optimal_cost; threshold += 1) {
-                        GBFHS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> gbfhs_split(true, threshold);
+                        GBFHS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle <
+                                                                            N >> gbfhs_split(true, threshold);
                         goal.Reset();
                         start = original;
                         gbfhsPath.clear();
@@ -496,7 +504,7 @@ void TestPancakeRandom() {
                 }
             }
 
-            // GBFHS
+            // GBFHS lazy
             if (1) {
                 GBFHS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> gbfhs(false);
                 goal.Reset();
@@ -504,7 +512,8 @@ void TestPancakeRandom() {
                 t8.StartTimer();
                 gbfhs.GetPath(&pancake, start, goal, &pancake, &pancake2, gbfhsPath);
                 t8.EndTimer();
-                std::cout << "GAP-" << gap << " GBFHS-lazy found path length " << pancake.GetPathLength(gbfhsPath) << "; "
+                std::cout << "GAP-" << gap << " GBFHS-lazy found path length " << pancake.GetPathLength(gbfhsPath)
+                          << "; "
                           << gbfhs.GetNodesExpanded() << " expanded; " << gbfhs.GetNecessaryExpansions()
                           << " necessary; "
                           << t8.GetElapsedTime() << "s elapsed, " << gbfhs.getC() << " C, " << gbfhs.getGLimF()
@@ -521,7 +530,47 @@ void TestPancakeRandom() {
                            optimal_cost, pancake.GetPathLength(gbfhsPath));
                     exit(0);
                 }
+            }
 
+            // DBS
+            if (1) {
+                DBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> dbs;
+                goal.Reset();
+                start = original;
+                t8.StartTimer();
+                dbs.GetPath(&pancake, start, goal, &pancake, &pancake2, dbsPath);
+                t8.EndTimer();
+                std::cout << "GAP-" << gap << " DBS found path length " << pancake.GetPathLength(dbsPath) << "; "
+                          << dbs.GetNodesExpanded() << " expanded; " << dbs.GetNecessaryExpansions()
+                          << " necessary; "
+                          << t8.GetElapsedTime() << "s elapsed" << std::endl;
+
+                nodes_DBS += dbs.GetNodesExpanded();
+                nodes_DBSn += dbs.GetNecessaryExpansions();
+
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(dbsPath);
+                else if (optimal_cost != pancake.GetPathLength(dbsPath)) {
+                    printf("GAP-%d DBS reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
+                           optimal_cost, pancake.GetPathLength(dbsPath));
+                    exit(0);
+                }
+            }
+
+            // A*
+            if (0) {
+                TemplateAStar <PancakePuzzleState<N>, PancakePuzzleAction, PancakePuzzle<N>> astar(false, 1.0);
+                start = original;
+                t1.StartTimer();
+                astar.GetPath(&pancake, start, goal, astarPath);
+                t1.EndTimer();
+                printf("GAP-%d A*-E found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n", gap,
+                       pancake.GetPathLength(astarPath),
+                       astar.GetNodesExpanded(), astar.GetNecessaryExpansions(), t1.GetElapsedTime());
+                astarOpenClose = astar.openClosedList.elements;
+
+                nodes_Astar += astar.GetNodesExpanded();
+                nodes_Astarn += astar.GetNecessaryExpansions();
             }
 
             //ALL Solution
@@ -753,22 +802,28 @@ void TestPancakeRandom() {
 
         printf("+++++++++++++++++++++++++++++++++++++++++\n");
 
-        std::cout << "GAP-" << gap << " NBS " << (nodes_NBS / INSTANCES) << " expanded; " << (nodes_NBSn / INSTANCES)
+        std::cout << " Experiments: " << INSTANCES << std::endl;
+
+        std::cout << " GAP-" << gap << " NBS " << nodes_NBS << " expanded; " << nodes_NBSn
                   << " necessary" << std::endl;
-        std::cout << "GAP-" << gap << " NBSa " << (nodes_NBSa / INSTANCES) << " expanded; " << (nodes_NBSan / INSTANCES)
+        std::cout << " GAP-" << gap << " NBSa " << nodes_NBSa << " expanded; " << nodes_NBSan
                   << " necessary" << std::endl;
-        std::cout << "GAP-" << gap << " DVCBS " << (nodes_DVCBS / INSTANCES) << " expanded; "
-                  << (nodes_DVCBSn / INSTANCES) << " necessary" << std::endl;
-        std::cout << "GAP-" << gap << " DVCBSa " << (nodes_DVCBSa / INSTANCES) << " expanded; "
-                  << (nodes_DVCBSan / INSTANCES) << " necessary" << std::endl;
-        std::cout << "GAP-" << gap << " NBB " << (nodes_NBB / INSTANCES) << " expanded; " << (nodes_NBBn / INSTANCES)
+        std::cout << " GAP-" << gap << " DVCBS " << nodes_DVCBS << " expanded; "
+                  << nodes_DVCBSn << " necessary" << std::endl;
+        std::cout << " GAP-" << gap << " DVCBSa " << nodes_DVCBSa << " expanded; "
+                  << nodes_DVCBSan << " necessary" << std::endl;
+        std::cout << " GAP-" << gap << " NBB " << nodes_NBB << " expanded; " << nodes_NBBn
                   << " necessary" << std::endl;
-        std::cout << "GAP-" << gap << " GBFHS " << (nodes_GBFHS / INSTANCES) << " expanded; "
-                  << (nodes_GBFHSn / INSTANCES) << " necessary" << std::endl;
-        std::cout << "GAP-" << gap << " GBFHS " << (nodes_GBFHSl / INSTANCES) << " expanded; "
-                  << (nodes_GBFHSln / INSTANCES) << " necessary" << std::endl;
-        std::cout << "GAP-" << gap << " GBFHS best " << (nodes_GBFHSbest / INSTANCES) << " expanded; "
-                  << (nodes_GBFHSbestn / INSTANCES) << " necessary" << std::endl;
+        std::cout << " GAP-" << gap << " GBFHS-eager " << nodes_GBFHS << " expanded; "
+                  << nodes_GBFHSn << " necessary" << std::endl;
+        std::cout << " GAP-" << gap << " GBFHS-lazy " << nodes_GBFHSl << " expanded; "
+                  << nodes_GBFHSln << " necessary" << std::endl;
+//        std::cout << "GAP-" << gap << " GBFHS best " << nodes_GBFHSbest << " expanded; "
+//                  << nodes_GBFHSbestn << " necessary" << std::endl;
+        std::cout << " GAP-" << gap << " A* " << nodes_Astar << " expanded; "
+                  << nodes_Astarn << " necessary" << std::endl;
+        std::cout << " GAP-" << gap << " DBS " << nodes_DBS << " expanded; "
+                  << nodes_DBSn << " necessary" << std::endl;
 
         printf("+++++++++++++++++++++++++++++++++++++++++\n");
 

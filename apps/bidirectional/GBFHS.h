@@ -3,8 +3,16 @@
 
 #include "BucketBasedList.h"
 #include "FPUtil.h"
-#include "Timer.h"
 #include <unordered_map>
+
+
+class GBFHS_args {
+    bool eager = true;
+    double epsilon_ = 1.0;
+    double gcd_ = 1.0;
+    double threshold_ = -1.0;
+    double eager_ratio = -1.0;
+};
 
 template<class state, class action, class environment, class priorityQueue = BucketBasedList<state, environment, BucketNodeData<state>>>
 class GBFHS {
@@ -75,6 +83,8 @@ public:
 
     double getGLimB() { return gLim_b; }
 
+    bool getLastUpdatedLimit() { return limitUpdatedForward; }
+
 private:
 
     void ExtractPath(const priorityQueue &queue, const state &collisionState, std::vector <state> &thePath) {
@@ -130,20 +140,27 @@ private:
             int backwardExpandableNodes = backwardQueue.expandableNodes(C, gLim_b + gcd);
 
             if (forwardExpandableNodes < backwardExpandableNodes) {
+                limitUpdatedForward = true;
                 return std::make_pair(gLim_f + gcd, gLim_b);
-            } else if (forwardExpandableNodes > backwardExpandableNodes){
+            } else if (forwardExpandableNodes > backwardExpandableNodes) {
+                limitUpdatedForward = false;
                 return std::make_pair(gLim_f, gLim_b + gcd);
             } else { // same number of expandable nodes on both sides
-                if (gLim_f <= gLim_b)
+                if (gLim_f <= gLim_b) {
+                    limitUpdatedForward = true;
                     return std::make_pair(gLim_f + gcd, gLim_b);
-                else
+                } else {
+                    limitUpdatedForward = false;
                     return std::make_pair(gLim_f, gLim_b + gcd);
+                }
             }
         }
 
         if (gLim_f + 1 <= threshold) {
+            limitUpdatedForward = true;
             return std::make_pair(gLim_f + gcd, gLim_b);
         } else {
+            limitUpdatedForward = false;
             return std::make_pair(gLim_f, gLim_b + gcd);
         }
 
@@ -159,12 +176,13 @@ private:
     double gcd;
 
     environment *env;
-    Timer t;
     Heuristic <state> *forwardHeuristic;
     Heuristic <state> *backwardHeuristic;
 
     bool expandForward = true;
     bool updateGLimEagerly = true;
+
+    bool limitUpdatedForward = true;
 
     double C, gLim_f, gLim_b = 0.0;
 
@@ -178,8 +196,6 @@ void GBFHS<state, action, environment, priorityQueue>::GetPath(environment *env,
                                                                std::vector <state> &thePath) {
     if (InitializeSearch(env, from, to, forward, backward, thePath) == false)
         return;
-
-    t.StartTimer();
 
     while (!DoSingleSearchStep(thePath)) {}
 }

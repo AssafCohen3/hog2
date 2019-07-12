@@ -1,5 +1,5 @@
-#ifndef BUCKETBASEDLIST_H
-#define BUCKETBASEDLIST_H
+#ifndef THREEDIMBUCKETBASEDLIST_H
+#define THREEDIMBUCKETBASEDLIST_H
 
 #include <cassert>
 #include <vector>
@@ -10,8 +10,19 @@
 #include <functional>
 #include "BucketBasedList.h"
 
-template<typename state, class environment, class dataStructure = BucketNodeData <state> >
+enum MinCriterion {
+    MinG, MinF, MinD
+};
+
+/*
+ * Strong assumptions regarding the cached state have been made for this class
+ * for example, whenever a bucket is created or emptied the cached state must be set to dirty
+ * this has to be taken into account when modifying the usage of this class
+ */
+template<typename state, class environment, class dataStructure = BucketNodeData<state> >
 class ThreeDimBucketBasedList {
+
+    using Bucket = std::vector<const state *>;
 
 public:
 
@@ -24,9 +35,9 @@ public:
         fLayers.clear();
     }
 
-    virtual void AddOpenNode(const state val, double g, double h, double d, const state *parent = nullptr);
+    void AddOpenNode(const state val, double g, double h, double d, const state *parent = nullptr);
 
-    virtual std::pair<const state *, double> Pop(double fLim = DBL_MAX, double gLim = DBL_MAX);
+    std::pair<const state *, double> Pop(MinCriterion criterion);
 
     inline const dataStructure &Lookup(const state &objKey) const { return table.at(objKey); }
 
@@ -41,30 +52,76 @@ public:
             return std::make_pair(false, DBL_MAX);
     }
 
-    double getMinF(double lowerBound = -1.0);
+    double getMinG(MinCriterion criterion) {
+        if (bestBucket == nullptr) {
+            bool expandableNodes = findBestBucket(criterion);
+            if (!expandableNodes)
+                return DBL_MAX;
+        }
+        return minG;
+    }
+
+    double getMinF(MinCriterion criterion) {
+        if (bestBucket == nullptr) {
+            bool expandableNodes = findBestBucket(criterion);
+            if (!expandableNodes)
+                return DBL_MAX;
+        }
+        return minF;
+    }
+
+    double getMinD(MinCriterion criterion) {
+        if (bestBucket == nullptr) {
+            bool expandableNodes = findBestBucket(criterion);
+            if (!expandableNodes)
+                return DBL_MAX;
+        }
+        return minD;
+    }
 
     inline void setEnvironment(environment *env_) { env = env_; }
 
     int expandableNodes(double f, double g, bool earlyStopping = false);
 
+    bool findBestBucket(MinCriterion criterion);
+
+    void setLimits(double gLim_, double fLim_, double dLim_) {
+        invalidateCachedValues();
+        gLim = gLim_, fLim = fLim_, dLim = dLim_;
+    }
+
 private:
+
     environment *env;
 
     std::function<size_t(const state &)> stateHasher = [this](const state &x) { return env->GetStateHash(x); };
 
-protected:
     std::unordered_map<const state, dataStructure, decltype(stateHasher)> table;
 
-    // sorted buckets, although if the same f layer and/or bucket is repeatedly accessed then other implementations may be faster
-    // fist key is f, second is g
-    // it could be the other way around, profiling is probably necessary to determine performance
-    std::map<double, std::map<double, std::map < double, std::vector<const state *> > >> fLayers;
+    // fist key is g, second is f, third is d
+    std::map<double, std::map<double, std::map < double, Bucket> >> fLayers;
+
+    Bucket *bestBucket = nullptr;
+
+    double minG = DBL_MAX, minF = DBL_MAX, minD = DBL_MAX;
+    double gLim = DBL_MAX, fLim = DBL_MAX, dLim = DBL_MAX;
+
+    void invalidateCachedValues() {
+        bestBucket = nullptr;
+        minG = DBL_MAX;
+        minF = DBL_MAX;
+        minD = DBL_MAX;
+    }
 
 };
 
 template<typename state, class environment, class dataStructure>
-void ThreeDimBucketBasedList<state, environment, dataStructure>::AddOpenNode(const state val, double g, double h,
-                                                                             double d, const state *parent) {
+void ThreeDimBucketBasedList<state, environment, dataStructure>::AddOpenNode(const state val,
+                                                                             const double g,
+                                                                             const double h,
+                                                                             const double d,
+                                                                             const state *parent) {
+    const double f = g + h;
 
     auto nodeIt = table.find(val);
     if (nodeIt != table.end()) { // node already exists
@@ -73,76 +130,104 @@ void ThreeDimBucketBasedList<state, environment, dataStructure>::AddOpenNode(con
             return;    // existing node has no worse g value, don't store
         } else {
             // invalidate pointer with higher g value in the open list
-            fLayers[old_g + h][old_g][nodeIt->second.bucket_index] = nullptr;
+            // remember to get the right d, which depends on old_g!
+            fLayers[old_g][old_g + h][d + (old_g - g)][nodeIt->second.bucket_index] = nullptr;
 
-            auto &bucket = fLayers[g + h][g];
+            auto &bucket = fLayers[g][f][d];
             nodeIt->second = dataStructure(g, parent, bucket.size()); // node exists but with worse g value, update
             bucket.push_back(&(nodeIt->first));
+            if (g < minG || f < minF || d < minD)
+                invalidateCachedValues();
         }
     } else {  // node doesn't exist
-        auto &layer = fLayers[g + h];
-        auto &bucket = layer[g];
+        auto &bucket = fLayers[g][f][d];
         auto it_pair = table.insert(std::make_pair(val, dataStructure(g, parent, bucket.size())));
         bucket.push_back(&(it_pair.first->first));
+        if (g < minG || f < minF || d < minD)
+            invalidateCachedValues();
     }
 
 }
 
-// TODO: this method does f-ascending, g-descending, which is likely the best tie-breaker
-// TODO: still, it would be good if this could be parametrized
+
 template<typename state, class environment, class dataStructure>
-std::pair<const state *, double>
-ThreeDimBucketBasedList<state, environment, dataStructure>::Pop(double fLim, double gLim) {
-    const state *poppedState = nullptr;
+bool ThreeDimBucketBasedList<state, environment, dataStructure>::findBestBucket(MinCriterion criterion) {
 
-    auto currentLayerIt = fLayers.begin();
+    invalidateCachedValues();
 
-    do {
-        auto &currentFLayer = currentLayerIt->second;
-        auto bucket_it = currentFLayer.rbegin(); // start with the highest g bucket
+    auto gLayerIt = fLayers.begin();
+    while (gLayerIt != fLayers.end() && gLayerIt->first <= gLim) {
+        auto &gLayer = gLayerIt->second;
 
-        // get the position of a bucket with valid entries under the limits
-        while (bucket_it != currentFLayer.rend() && bucket_it->first >= gLim) { // bucket strictly lower than g
-            bucket_it++;
+        if (gLayer.size() == 0) { // if the whole g layer is empty, erase it
+            gLayerIt = fLayers.erase(gLayerIt);
+            continue;
         }
 
-        // find a bucket with valid entries
-        while (bucket_it != currentFLayer.rend() && poppedState == nullptr) {
-            auto &bucket = bucket_it->second;
-            while (poppedState == nullptr && bucket.size() != 0) {
-                poppedState = bucket.back();  // this may be an invalid entry, (already expanded state with a lower g)
-                bucket.pop_back();
+        auto fLayerIt = gLayer.begin();
+        while (fLayerIt != gLayer.end() && fLayerIt->first <= fLim) {
+            auto &fLayer = fLayerIt->second;
+
+            if (fLayer.size() == 0) { // if the whole f layer is empty, erase it
+                fLayerIt = gLayer.erase(fLayerIt);
+                continue;
             }
 
-            // delete bucket if empty
-            if (bucket.size() == 0) {
-                currentFLayer.erase(--bucket_it.base());
-                if (bucket_it != currentFLayer.rend()) {
-                    bucket_it++;
+            auto dLayerIt = fLayer.begin();
+            while (dLayerIt != fLayer.end() && dLayerIt->first <= dLim) {
+
+                // deal with bucket - first, check that is not empty
+                Bucket &bucket = dLayerIt->second;
+                if (bucket.size() == 0) {
+                    dLayerIt = fLayer.erase(dLayerIt);
+                    continue;
                 }
-            }
-        }
 
-        // if no adequate bucket has been found
-        if (bucket_it == currentFLayer.rend()) {
-            if (currentFLayer.begin() == currentFLayer.end()) { // last bucket in the layer was erased
-                currentLayerIt = fLayers.erase(currentLayerIt);
-                if (fLayers.size() == 0) {
-                    break; // empty open list
+                // pick it if it is the best based on the criterion
+                if (gLayerIt->first < minG) {
+                    minG = gLayerIt->first;
+                    if (criterion == MinCriterion::MinG) bestBucket = &bucket;
                 }
-            } else {
-                currentLayerIt++;
+
+                if (fLayerIt->first < minF) {
+                    minF = fLayerIt->first;
+                    if (criterion == MinCriterion::MinF) bestBucket = &bucket;
+                }
+
+                if (dLayerIt->first < minD) {
+                    minD = dLayerIt->first;
+                    if (criterion == MinCriterion::MinD) bestBucket = &bucket;
+                }
+
+                dLayerIt++;
             }
+
+            fLayerIt++;
         }
 
-
-        // repeat until we find a valid entry or there's none within the limits
-    } while (poppedState == nullptr && currentLayerIt != fLayers.end() && currentLayerIt->first <= fLim);
-
-    if (poppedState == nullptr) {
-        return std::make_pair(nullptr, -1); // no valid (expandable) nodes
+        gLayerIt++;
     }
 
+    return bestBucket != nullptr;
+}
+
+template<typename state, class environment, class dataStructure>
+std::pair<const state *, double>
+ThreeDimBucketBasedList<state, environment, dataStructure>::Pop(MinCriterion criterion) {
+    const state *poppedState = nullptr;
+
+    while (poppedState == nullptr) {
+        if (bestBucket == nullptr) {
+            bool expandableNodes = findBestBucket(criterion);
+            if (!expandableNodes)
+                return std::make_pair(nullptr, -1);
+        }
+
+        poppedState = bestBucket->back();
+        bestBucket->pop_back();
+        if (bestBucket->size() == 0)
+            invalidateCachedValues(); // whenever a bucket is emptied, cached must be invalidated
+    }
 
     auto &node = table.at(*poppedState);
     node.bucket_index = -1;
@@ -150,50 +235,12 @@ ThreeDimBucketBasedList<state, environment, dataStructure>::Pop(double fLim, dou
 }
 
 /**
-  * in order to get a proper estimate, this method has to find a non-expanded node
-  */
-template<typename state, class environment, class dataStructure>
-double ThreeDimBucketBasedList<state, environment, dataStructure>::getMinF(double lowerBound) {
-
-    while (!fLayers.empty()) {
-
-        auto currentLayerIt = fLayers.begin();
-        while (true) {
-            if (currentLayerIt == fLayers.end()) // no f values above lower bound
-                return DBL_MAX;
-            if (currentLayerIt->first > lowerBound) // found f value above lower bound
-                break;
-            currentLayerIt == currentLayerIt++; // try next value
-        }
-
-        auto &currentFLayer = currentLayerIt->second;
-
-        while (!currentFLayer.empty()) {
-            auto &bucket = currentFLayer.begin()->second;
-
-            while (!bucket.empty()) {
-                if (bucket.back() != nullptr) // found a valid node
-                    return currentLayerIt->first;
-                else
-                    bucket.pop_back(); // discard the node, as it has been expanded
-            }
-
-            currentFLayer.erase(currentFLayer.begin()); // bucket empty - get rid of it
-        }
-
-        fLayers.erase(currentLayerIt); // f layer empty - get rid of it
-    }
-
-    return DBL_MAX;
-}
-
-/**
   * number of expandable nodes such that f(n) <= f and g(n) < g
   */
 template<typename state, class environment, class dataStructure>
-int
-ThreeDimBucketBasedList<state, environment, dataStructure>::expandableNodes(double f, double g, bool earlyStopping) {
-
+int ThreeDimBucketBasedList<state, environment, dataStructure>::expandableNodes(double f,
+                                                                                double g,
+                                                                                bool earlyStopping) {
     int nodeCount = 0;
     for (const auto &flayer : fLayers) {
         if (flayer.first > f)
