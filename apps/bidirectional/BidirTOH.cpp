@@ -613,7 +613,7 @@ void TestTOH(int first, int last) {
 //              << nodes_GBFHSbestn << " necessary" << std::endl;
     std::cout << "ToH" << " A* " << nodes_Astar << " expanded; "
               << nodes_Astarn << " necessary" << std::endl;
-    std::cout << "ToH" << " NBB " << nodes_DBS << " expanded; " << nodes_DBSn
+    std::cout << "ToH" << " DBS " << nodes_DBS << " expanded; " << nodes_DBSn
               << " necessary" << std::endl;
 
     printf("+++++++++++++++++++++++++++++++++++++++++\n");

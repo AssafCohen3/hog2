@@ -99,10 +99,7 @@ void BucketBasedList<state, environment, dataStructure>::AddOpenNode(const state
             }
 
             // invalidate pointer with higher g value in the open list
-//            std::cout << "Invalidating pointer" << std::endl;
-//            std::cout << old_g + h << " | " << old_g << " | " << nodeIt->second.bucket_index << " - " << g << std::endl;
             fLayers[old_g + h][old_g][nodeIt->second.bucket_index] = nullptr;
-//            std::cout << "Invalidated" << std::endl;
 
             auto &bucket = fLayers[g + h][g];
             nodeIt->second = dataStructure(g, parent, bucket.size()); // node exists but with worse g value, update

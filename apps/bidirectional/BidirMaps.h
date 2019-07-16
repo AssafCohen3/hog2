@@ -57,6 +57,9 @@ public:
                    ("../../scenarios/" + folder + "/" + scenarioFiles[i]).c_str(), 1.0);
         }
 
+//        runMap(("../../maps/mazes/maze512-16-4.map"),
+//               ("../../scenarios/mazes/maze512-16-4.map.scen"), 1.0);
+
         printf("+++++++++++++++++++++++++++++++++++++++++\n");
 
         std::cout << " Experiments: " << experiments << std::endl;

@@ -170,7 +170,7 @@ const int N = 14;
 const int INSTANCES = 50;
 
 void TestPancakeRandom() {
-    for (int gap = 0; gap < 4; gap++) {
+    for (int gap = 0; gap < 1; gap++) {
         srandom(0);
         PancakePuzzleState <N> start;
         PancakePuzzleState <N> original;
@@ -384,12 +384,12 @@ void TestPancakeRandom() {
                     nodes_DVCBSn += dvcbsEpsilon.GetNecessaryExpansions();
 
                     // test optimality
-//                    if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(dvcbsEpsilonPath);
-//                    else if (optimal_cost != pancake.GetPathLength(dvcbsEpsilonPath)) {
-//                        printf("GAP-%d DVCBS-E-L reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
-//                               optimal_cost, pancake.GetPathLength(dvcbsEpsilonPath));
-//                        exit(0);
-//                    }
+                    if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(dvcbsEpsilonPath);
+                    else if (optimal_cost != pancake.GetPathLength(dvcbsEpsilonPath)) {
+                        printf("GAP-%d DVCBS-E-L reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
+                               optimal_cost, pancake.GetPathLength(dvcbsEpsilonPath));
+                        exit(0);
+                    }
                 }
                 if (1) {
                     DVCBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >, DVCBSQueue<
@@ -411,12 +411,12 @@ void TestPancakeRandom() {
                     nodes_DVCBSan += dvcbsEpsilon.GetNecessaryExpansions();
 
                     // test optimality
-//                    if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(dvcbsEpsilonPath);
-//                    else if (optimal_cost != pancake.GetPathLength(dvcbsEpsilonPath)) {
-//                        printf("GAP-%d DVCBS-E-LEQ reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
-//                               optimal_cost, pancake.GetPathLength(dvcbsEpsilonPath));
-//                        exit(0);
-//                    }
+                    if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(dvcbsEpsilonPath);
+                    else if (optimal_cost != pancake.GetPathLength(dvcbsEpsilonPath)) {
+                        printf("GAP-%d DVCBS-E-LEQ reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
+                               optimal_cost, pancake.GetPathLength(dvcbsEpsilonPath));
+                        exit(0);
+                    }
                 }
             }
 
@@ -558,7 +558,7 @@ void TestPancakeRandom() {
             }
 
             // A*
-            if (0) {
+            if (1) {
                 TemplateAStar <PancakePuzzleState<N>, PancakePuzzleAction, PancakePuzzle<N>> astar(false, 1.0);
                 start = original;
                 t1.StartTimer();

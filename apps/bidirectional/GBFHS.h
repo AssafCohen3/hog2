@@ -336,13 +336,12 @@ void GBFHS<state, action, environment, priorityQueue>::Expand(priorityQueue &cur
         auto collision = opposite.getNodeG(succ);
         if (collision.first) {
             double collisionCost = succG + collision.second;
-            if (fgreatereq(collisionCost, currentCost)) { // cost higher than the current solution, discard
-                continue;
-            } else if (fless(collisionCost, currentCost)) {
+            if (fless(collisionCost, currentCost)) {
                 currentCost = collisionCost;
                 middleNode = succ;
-                current.AddOpenNode(succ, succG, h, node); // add the node so the plan can be extracted
+
                 if (fgreatereq(C, currentCost)) {
+                    current.AddOpenNode(succ, succG, h, node); // add the node so the plan can be extracted
                     break; // step out, don't generate more nodes
                 }
             }

@@ -186,7 +186,6 @@ bool DBS<state, action, environment, priorityQueue>::UpdateC() {
             forwardQueue.getMinG(getMinCriterion(true)) + backwardQueue.getMinG(getMinCriterion(false)) + epsilon;
 
     while (C < std::max(gBound, fBound)) {
-        // std::cout << "  C updated from " << C << " to " << std::max(gBound, fBound) << " after expanding " << counts[C] << std::endl;
         C += gcd;
         updated = true;
         UpdateQueuesAndCriterion();
@@ -331,16 +330,13 @@ void DBS<state, action, environment, priorityQueue>::Expand(priorityQueue &curre
         auto collision = opposite.getNodeG(succ);
         if (collision.first) {
             double collisionCost = succG + collision.second;
-            // std::cout << "Collision found: " << collisionCost << " at " << C << std::endl;
-            if (fgreatereq(collisionCost, currentCost)) { // cost higher than the current solution, discard
-                continue;
-            } else if (fless(collisionCost, currentCost)) {
+            if (fless(collisionCost, currentCost)) {
                 currentCost = collisionCost;
                 middleNode = succ;
 
-                // add the node so the plan can be extracted
-                current.AddOpenNode(succ, succG, h, succG - reverseHeuristic->HCost(succ, source), node);
                 if (fgreatereq(C, currentCost)) {
+                    // add the node so the plan can be extracted
+                    current.AddOpenNode(succ, succG, h, succG - reverseHeuristic->HCost(succ, source), node);
                     break; // step out, don't generate more nodes
                 }
             }

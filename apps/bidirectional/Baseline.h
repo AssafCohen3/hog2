@@ -164,7 +164,6 @@ bool Baseline<state, action, environment, priorityQueue>::UpdateC() {
     auto fMin = std::max(fMinf, fMinb);
 
     if (C < fMin) {
-        // std::cout << "  F updated from " << C << " to " << fMin << " after expanding " << counts[C] << std::endl;
         C = fMin;
         updated = true;
     }
@@ -174,7 +173,6 @@ bool Baseline<state, action, environment, priorityQueue>::UpdateC() {
     auto gBound = minGF + minGB + epsilon;
 
     while (C < gBound) {
-        // std::cout << "  G updated from " << C << " to " << gBound << " after expanding " << counts[C] << std::endl;
         C += gcd;
         gBound = forwardQueue.getMinG(C) + backwardQueue.getMinG(C) + epsilon;
         updated = true;
@@ -238,21 +236,19 @@ void Baseline<state, action, environment, priorityQueue>::Expand(priorityQueue &
 
         // ignore states with greater cost than best solution
         // this can be either g + h
-        if (fgreatereq(succG + h, currentCost))
+        if (succG + h >= currentCost)
             continue;
 
         // check if there is a collision
         auto collision = opposite.getNodeG(succ);
         if (collision.first) {
             double collisionCost = succG + collision.second;
-            if (fgreatereq(collisionCost, currentCost)) { // cost higher than the current solution, discard
-                continue;
-            } else if (fless(collisionCost, currentCost)) {
+            if (fless(collisionCost, currentCost)) {
                 currentCost = collisionCost;
                 middleNode = succ;
 
-                current.AddOpenNode(succ, succG, h, node); // add the node so the plan can be extracted
                 if (fgreatereq(C, currentCost)) {
+                    current.AddOpenNode(succ, succG, h, node); // add the node so the plan can be extracted
                     break; // step out, don't generate more nodes
                 }
             }
