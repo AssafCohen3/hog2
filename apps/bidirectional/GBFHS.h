@@ -333,9 +333,10 @@ void GBFHS<state, action, environment, priorityQueue>::Expand(priorityQueue &cur
             continue;
 
         // check if there is a collision
-        auto collision = opposite.getNodeG(succ);
+        auto collision = opposite.getNodeG(succ, reverseHeuristic->HCost(succ, source));
         if (collision.first) {
-            double collisionCost = succG + collision.second;
+            auto gValue = collision.second;
+            double collisionCost = succG + gValue.second;
             if (fless(collisionCost, currentCost)) {
                 currentCost = collisionCost;
                 middleNode = succ;
@@ -344,6 +345,8 @@ void GBFHS<state, action, environment, priorityQueue>::Expand(priorityQueue &cur
                     current.AddOpenNode(succ, succG, h, node); // add the node so the plan can be extracted
                     break; // step out, don't generate more nodes
                 }
+            } else if (gValue.first) {
+                continue; // if the g value is provably optimal and the collision value is geq, prune the node
             }
         }
 

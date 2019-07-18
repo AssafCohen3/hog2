@@ -20,6 +20,10 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
         start.y = s.GetNthExperiment(x).GetStartY();
         goal.x = s.GetNthExperiment(x).GetGoalX();
         goal.y = s.GetNthExperiment(x).GetGoalY();
+//        start.x = 107;
+//        start.y = 99;
+//        goal.x = 236;
+//        goal.y = 179;
 
         std::cout << map << "-" << start << "-" << goal << std::endl;
 
@@ -228,7 +232,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
             else if (optimal_cost != me->GetPathLength(path)) {
-                printf("DBS reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                printf("DBS reported bad value!! optimal %1.2f; reported %1.2f;\n",
                        optimal_cost, me->GetPathLength(path));
                 exit(0);
             }

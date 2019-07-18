@@ -240,9 +240,11 @@ void Baseline<state, action, environment, priorityQueue>::Expand(priorityQueue &
             continue;
 
         // check if there is a collision
-        auto collision = opposite.getNodeG(succ);
+        // TODO: pass a lambda in to avoid the heuristic evaluation
+        auto collision = opposite.getNodeG(succ, reverseHeuristic->HCost(succ, source));
         if (collision.first) {
-            double collisionCost = succG + collision.second;
+            auto gValue = collision.second;
+            double collisionCost = succG + gValue.second;
             if (fless(collisionCost, currentCost)) {
                 currentCost = collisionCost;
                 middleNode = succ;
@@ -251,6 +253,8 @@ void Baseline<state, action, environment, priorityQueue>::Expand(priorityQueue &
                     current.AddOpenNode(succ, succG, h, node); // add the node so the plan can be extracted
                     break; // step out, don't generate more nodes
                 }
+            } else if (gValue.first) {
+                continue; // if the g value is provably optimal and the collision value is geq, prune the node
             }
         }
 

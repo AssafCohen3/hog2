@@ -53,12 +53,15 @@ public:
     /**
       * get the g value of a node or DBL_MAX if it doesn't exist
       **/
-    const std::pair<bool, double> getNodeG(const state &objKey) {
+    const std::pair<bool, std::pair<bool, double>> getNodeG(const state &objKey, const double h) {
         auto nodeIt = table.find(objKey);
-        if (nodeIt != table.end())
-            return std::make_pair(true, nodeIt->second.g);
-        else
-            return std::make_pair(false, std::numeric_limits<double>::max());
+        if (nodeIt != table.end()) {
+            double g = nodeIt->second.g;
+            bool optimalG = nodeIt->second.bucket_index == -1 || (g + h <= getMinF()); // optimal g if expanded or their f is minimal
+            return std::make_pair(true, std::make_pair(optimalG, nodeIt->second.g));
+        } else {
+            return std::make_pair(false, std::make_pair(false, std::numeric_limits<double>::max()));
+        }
     }
 
     double getMinF(double lowerBound = -1.0);
@@ -94,7 +97,7 @@ void BucketBasedList<state, environment, dataStructure>::AddOpenNode(const state
         } else {
 
             if (nodeIt->second.bucket_index == -1) {
-                std::cout << "Reopening!!!!!!!!: " << val << std::endl;
+                std::cerr << "Reopening!!!!!!!!: " << val << std::endl;
                 exit(0);
             }
 

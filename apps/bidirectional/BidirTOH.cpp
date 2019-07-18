@@ -593,28 +593,28 @@ void TestTOH(int first, int last) {
 
     printf("+++++++++++++++++++++++++++++++++++++++++\n");
 
-    std::cout << " Experiments: " << (last - first) << std::endl;
+    auto experiments = last - first;
 
-    std::cout << "ToH" << " NBS " << nodes_NBS << " expanded; " << nodes_NBSn
-              << " necessary" << std::endl;
-    std::cout << "ToH" << " NBSa " << nodes_NBSa << " expanded; " << nodes_NBSan
-              << " necessary" << std::endl;
-    std::cout << "ToH" << " DVCBS " << nodes_DVCBS << " expanded; "
-              << nodes_DVCBSn << " necessary" << std::endl;
-    std::cout << "ToH" << " DVCBSa " << nodes_DVCBSa << " expanded; "
-              << nodes_DVCBSan << " necessary" << std::endl;
-    std::cout << "ToH" << " NBB " << nodes_NBB << " expanded; " << nodes_NBBn
-              << " necessary" << std::endl;
-    std::cout << "ToH" << " GBFHS-eager " << nodes_GBFHS << " expanded; "
-              << nodes_GBFHSn << " necessary" << std::endl;
-    std::cout << "ToH" << " GBFHS-lazy " << nodes_GBFHSl << " expanded; "
-              << nodes_GBFHSln << " necessary" << std::endl;
-//    std::cout << "ToH" << " GBFHS best " << nodes_GBFHSbest << " expanded; "
-//              << nodes_GBFHSbestn << " necessary" << std::endl;
-    std::cout << "ToH" << " A* " << nodes_Astar << " expanded; "
-              << nodes_Astarn << " necessary" << std::endl;
-    std::cout << "ToH" << " DBS " << nodes_DBS << " expanded; " << nodes_DBSn
-              << " necessary" << std::endl;
+    std::cout << " Experiments: " << experiments << std::endl;
+
+    std::cout << "ToH" << " NBS " << nodes_NBS / experiments << " expanded; "
+              << nodes_NBSn / experiments << " necessary" << std::endl;
+    std::cout << "ToH" << " NBSa " << nodes_NBSa / experiments << " expanded; "
+              << nodes_NBSan / experiments << " necessary" << std::endl;
+    std::cout << "ToH" << " DVCBS " << nodes_DVCBS / experiments << " expanded; "
+              << nodes_DVCBSn / experiments << " necessary" << std::endl;
+    std::cout << "ToH" << " DVCBSa " << nodes_DVCBSa / experiments << " expanded; "
+              << nodes_DVCBSan / experiments << " necessary" << std::endl;
+    std::cout << "ToH" << " NBB " << nodes_NBB / experiments << " expanded; "
+              << nodes_NBBn / experiments << " necessary" << std::endl;
+    std::cout << "ToH" << " GBFHS-eager " << nodes_GBFHS / experiments << " expanded; "
+              << nodes_GBFHSn / experiments << " necessary" << std::endl;
+    std::cout << "ToH" << " GBFHS-lazy " << nodes_GBFHSl / experiments << " expanded; "
+              << nodes_GBFHSln / experiments << " necessary" << std::endl;
+    std::cout << "ToH" << " A* " << nodes_Astar / experiments << " expanded; "
+              << nodes_Astarn / experiments << " necessary" << std::endl;
+    std::cout << "ToH" << " DBS " << nodes_DBS / experiments << " expanded; "
+              << nodes_DBSn / experiments << " necessary" << std::endl;
 
     printf("+++++++++++++++++++++++++++++++++++++++++\n");
 

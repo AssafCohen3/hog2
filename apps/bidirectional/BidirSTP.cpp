@@ -409,26 +409,24 @@ void TestSTP() {
 
     std::cout << " Experiments: " << 100 << std::endl;
 
-    std::cout << " STP" << " NBS " << nodes_NBS << " expanded; " << nodes_NBSn
-              << " necessary" << std::endl;
-    std::cout << " STP" << " NBSa " << nodes_NBSa << " expanded; " << nodes_NBSan
-              << " necessary" << std::endl;
-    std::cout << " STP" << " DVCBS " << nodes_DVCBS << " expanded; "
-              << nodes_DVCBSn << " necessary" << std::endl;
-    std::cout << " STP" << " DVCBSa " << nodes_DVCBSa << " expanded; "
-              << nodes_DVCBSan << " necessary" << std::endl;
-    std::cout << " STP" << " NBB " << nodes_NBB << " expanded; " << nodes_NBBn
-              << " necessary" << std::endl;
-    std::cout << " STP" << " GBFHS-eager " << nodes_GBFHS << " expanded; "
-              << nodes_GBFHSn << " necessary" << std::endl;
-    std::cout << " STP" << " GBFHS-lazy " << nodes_GBFHSl << " expanded; "
-              << nodes_GBFHSln << " necessary" << std::endl;
-//    std::cout << " STP" << " GBFHS best " << nodes_GBFHSbest << " expanded; "
-//              << nodes_GBFHSbestn << " necessary" << std::endl;
-    std::cout << " STP" << " A* " << nodes_Astar << " expanded; "
-              << nodes_Astarn << " necessary" << std::endl;
-    std::cout << " STP" << " DBS " << nodes_DBS << " expanded; "
-              << nodes_DBSn << " necessary" << std::endl;
+    std::cout << " STP" << " NBS " << nodes_NBS / 100 << " expanded; "
+              << nodes_NBSn / 100 << " necessary" << std::endl;
+    std::cout << " STP" << " NBSa " << nodes_NBSa / 100 << " expanded; "
+              << nodes_NBSan / 100 << " necessary" << std::endl;
+    std::cout << " STP" << " DVCBS " << nodes_DVCBS / 100 << " expanded; "
+              << nodes_DVCBSn / 100 << " necessary" << std::endl;
+    std::cout << " STP" << " DVCBSa " << nodes_DVCBSa / 100 << " expanded; "
+              << nodes_DVCBSan / 100 << " necessary" << std::endl;
+    std::cout << " STP" << " NBB " << nodes_NBB / 100 << " expanded; "
+              << nodes_NBBn / 100 << " necessary" << std::endl;
+    std::cout << " STP" << " GBFHS-eager " << nodes_GBFHS / 100 << " expanded; "
+              << nodes_GBFHSn / 100 << " necessary" << std::endl;
+    std::cout << " STP" << " GBFHS-lazy " << nodes_GBFHSl / 100 << " expanded; "
+              << nodes_GBFHSln / 100 << " necessary" << std::endl;
+    std::cout << " STP" << " A* " << nodes_Astar / 100 << " expanded; "
+              << nodes_Astarn / 100 << " necessary" << std::endl;
+    std::cout << " STP" << " DBS " << nodes_DBS / 100 << " expanded; "
+              << nodes_DBSn / 100 << " necessary" << std::endl;
 
     printf("+++++++++++++++++++++++++++++++++++++++++\n");
 

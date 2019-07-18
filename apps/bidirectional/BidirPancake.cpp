@@ -170,7 +170,7 @@ const int N = 14;
 const int INSTANCES = 50;
 
 void TestPancakeRandom() {
-    for (int gap = 0; gap < 1; gap++) {
+    for (int gap = 0; gap < 5; gap++) {
         srandom(0);
         PancakePuzzleState <N> start;
         PancakePuzzleState <N> original;
@@ -804,26 +804,24 @@ void TestPancakeRandom() {
 
         std::cout << " Experiments: " << INSTANCES << std::endl;
 
-        std::cout << " GAP-" << gap << " NBS " << nodes_NBS << " expanded; " << nodes_NBSn
-                  << " necessary" << std::endl;
-        std::cout << " GAP-" << gap << " NBSa " << nodes_NBSa << " expanded; " << nodes_NBSan
-                  << " necessary" << std::endl;
-        std::cout << " GAP-" << gap << " DVCBS " << nodes_DVCBS << " expanded; "
-                  << nodes_DVCBSn << " necessary" << std::endl;
-        std::cout << " GAP-" << gap << " DVCBSa " << nodes_DVCBSa << " expanded; "
-                  << nodes_DVCBSan << " necessary" << std::endl;
-        std::cout << " GAP-" << gap << " NBB " << nodes_NBB << " expanded; " << nodes_NBBn
-                  << " necessary" << std::endl;
-        std::cout << " GAP-" << gap << " GBFHS-eager " << nodes_GBFHS << " expanded; "
-                  << nodes_GBFHSn << " necessary" << std::endl;
-        std::cout << " GAP-" << gap << " GBFHS-lazy " << nodes_GBFHSl << " expanded; "
-                  << nodes_GBFHSln << " necessary" << std::endl;
-//        std::cout << "GAP-" << gap << " GBFHS best " << nodes_GBFHSbest << " expanded; "
-//                  << nodes_GBFHSbestn << " necessary" << std::endl;
-        std::cout << " GAP-" << gap << " A* " << nodes_Astar << " expanded; "
-                  << nodes_Astarn << " necessary" << std::endl;
-        std::cout << " GAP-" << gap << " DBS " << nodes_DBS << " expanded; "
-                  << nodes_DBSn << " necessary" << std::endl;
+        std::cout << " GAP-" << gap << " NBS " << nodes_NBS / INSTANCES << " expanded; "
+                  << nodes_NBSn / INSTANCES << " necessary" << std::endl;
+        std::cout << " GAP-" << gap << " NBSa " << nodes_NBSa / INSTANCES << " expanded; "
+                  << nodes_NBSan / INSTANCES << " necessary" << std::endl;
+        std::cout << " GAP-" << gap << " DVCBS " << nodes_DVCBS / INSTANCES << " expanded; "
+                  << nodes_DVCBSn / INSTANCES << " necessary" << std::endl;
+        std::cout << " GAP-" << gap << " DVCBSa " << nodes_DVCBSa / INSTANCES << " expanded; "
+                  << nodes_DVCBSan / INSTANCES << " necessary" << std::endl;
+        std::cout << " GAP-" << gap << " NBB " << nodes_NBB / INSTANCES << " expanded; "
+                  << nodes_NBBn / INSTANCES << " necessary" << std::endl;
+        std::cout << " GAP-" << gap << " GBFHS-eager " << nodes_GBFHS / INSTANCES << " expanded; "
+                  << nodes_GBFHSn / INSTANCES << " necessary" << std::endl;
+        std::cout << " GAP-" << gap << " GBFHS-lazy " << nodes_GBFHSl / INSTANCES << " expanded; "
+                  << nodes_GBFHSln / INSTANCES << " necessary" << std::endl;
+        std::cout << " GAP-" << gap << " A* " << nodes_Astar / INSTANCES << " expanded; "
+                  << nodes_Astarn / INSTANCES << " necessary" << std::endl;
+        std::cout << " GAP-" << gap << " DBS " << nodes_DBS / INSTANCES << " expanded; "
+                  << nodes_DBSn / INSTANCES << " necessary" << std::endl;
 
         printf("+++++++++++++++++++++++++++++++++++++++++\n");
 

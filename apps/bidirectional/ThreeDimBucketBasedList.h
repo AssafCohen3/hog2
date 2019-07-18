@@ -44,12 +44,15 @@ public:
     /**
       * get the g value of a node or DBL_MAX if it doesn't exist
       **/
-    const std::pair<bool, double> getNodeG(const state &objKey) {
+    const std::pair<bool, std::pair<bool, double>> getNodeG(const state &objKey, const double h, MinCriterion criterion) {
         auto nodeIt = table.find(objKey);
-        if (nodeIt != table.end())
-            return std::make_pair(true, nodeIt->second.g);
-        else
-            return std::make_pair(false, DBL_MAX);
+        if (nodeIt != table.end()) {
+            double g = nodeIt->second.g;
+            bool optimalG = nodeIt->second.bucket_index == -1 || (g + h <= getMinF(criterion)); // optimal g if expanded or their f is minimal
+            return std::make_pair(true, std::make_pair(optimalG, nodeIt->second.g));
+        } else {
+            return std::make_pair(false, std::make_pair(false, std::numeric_limits<double>::max()));
+        }
     }
 
     double getMinG(MinCriterion criterion) {

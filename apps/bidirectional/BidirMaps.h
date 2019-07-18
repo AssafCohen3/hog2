@@ -57,25 +57,31 @@ public:
                    ("../../scenarios/" + folder + "/" + scenarioFiles[i]).c_str(), 1.0);
         }
 
-//        runMap(("../../maps/mazes/maze512-16-4.map"),
-//               ("../../scenarios/mazes/maze512-16-4.map.scen"), 1.0);
+//        runMap(("../../maps/dao/brc505d.map"),
+//               ("../../scenarios/dao/brc505d.map.scen"), 1.0);
 
         printf("+++++++++++++++++++++++++++++++++++++++++\n");
 
         std::cout << " Experiments: " << experiments << std::endl;
 
-        std::cout << folder << " NBS " << nodes_NBS << " expanded; " << nodes_NBSn << " necessary" << std::endl;
-        std::cout << folder << " NBSa " << nodes_NBSa << " expanded; " << nodes_NBSan << " necessary" << std::endl;
-        std::cout << folder << " DVCBS " << nodes_DVCBS << " expanded; " << nodes_DVCBSn << " necessary" << std::endl;
-        std::cout << folder << " DVCBSa " << nodes_DVCBSa << " expanded; " << nodes_DVCBSan << " necessary"
-                  << std::endl;
-        std::cout << folder << " NBB " << nodes_NBB << " expanded; " << nodes_NBBn << " necessary" << std::endl;
-        std::cout << folder << " GBFHS-eager " << nodes_GBFHS << " expanded; " << nodes_GBFHSn << " necessary"
-                  << std::endl;
-        std::cout << folder << " GBFHS-lazy " << nodes_GBFHSl << " expanded; " << nodes_GBFHSln << " necessary"
-                  << std::endl;
-        std::cout << folder << " A* " << nodes_Astar << " expanded; " << nodes_Astarn << " necessary" << std::endl;
-        std::cout << folder << " DBS " << nodes_DBS << " expanded; " << nodes_DBSn << " necessary" << std::endl;
+        std::cout << folder << " NBS " << nodes_NBS / experiments << " expanded; "
+                  << nodes_NBSn / experiments << " necessary" << std::endl;
+        std::cout << folder << " NBSa " << nodes_NBSa / experiments << " expanded; "
+                  << nodes_NBSan / experiments << " necessary" << std::endl;
+        std::cout << folder << " DVCBS " << nodes_DVCBS / experiments << " expanded; "
+                  << nodes_DVCBSn / experiments << " necessary" << std::endl;
+        std::cout << folder << " DVCBSa " << nodes_DVCBSa / experiments << " expanded; "
+                  << nodes_DVCBSan / experiments << " necessary" << std::endl;
+        std::cout << folder << " NBB " << nodes_NBB / experiments << " expanded; "
+                  << nodes_NBBn / experiments << " necessary" << std::endl;
+        std::cout << folder << " GBFHS-eager " << nodes_GBFHS / experiments << " expanded; "
+                  << nodes_GBFHSn / experiments << " necessary" << std::endl;
+        std::cout << folder << " GBFHS-lazy " << nodes_GBFHSl / experiments << " expanded; "
+                  << nodes_GBFHSln / experiments << " necessary" << std::endl;
+        std::cout << folder << " A* " << nodes_Astar / experiments << " expanded; "
+                  << nodes_Astarn / experiments << " necessary" << std::endl;
+        std::cout << folder << " DBS " << nodes_DBS / experiments << " expanded; "
+                  << nodes_DBSn / experiments << " necessary" << std::endl;
 
         printf("+++++++++++++++++++++++++++++++++++++++++\n");
 
