@@ -47,6 +47,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
             nodes_NBS += nbs.GetNodesExpanded();
             nodes_NBSn += nbs.GetNecessaryExpansions();
+            if (nbs.GetNodesExpanded() == nbs.GetNecessaryExpansions()) notie_NBS++;
 
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
@@ -74,6 +75,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
             nodes_NBSa += nbsA.GetNodesExpanded();
             nodes_NBSan += nbsA.GetNecessaryExpansions();
+            if (nbsA.GetNodesExpanded() == nbsA.GetNecessaryExpansions()) notie_NBSa++;
 
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
@@ -101,6 +103,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
             nodes_DVCBS += dvcbs.GetNodesExpanded();
             nodes_DVCBSn += dvcbs.GetNecessaryExpansions();
+            if (dvcbs.GetNodesExpanded() == dvcbs.GetNecessaryExpansions()) notie_DVCBS++;
 
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
@@ -128,6 +131,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
             nodes_DVCBSa += dvcbs.GetNodesExpanded();
             nodes_DVCBSan += dvcbs.GetNecessaryExpansions();
+            if (dvcbs.GetNodesExpanded() == dvcbs.GetNecessaryExpansions()) notie_DVCBSa++;
 
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
@@ -151,6 +155,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
             nodes_NBB += baseline.GetNodesExpanded();
             nodes_NBBn += baseline.GetNecessaryExpansions();
+            if (baseline.GetNodesExpanded() == baseline.GetNecessaryExpansions()) notie_NBB++;
 
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
@@ -178,6 +183,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
             nodes_GBFHS += gbfhs.GetNodesExpanded();
             nodes_GBFHSn += gbfhs.GetNecessaryExpansions();
+            if (gbfhs.GetNodesExpanded() == gbfhs.GetNecessaryExpansions()) notie_GBFHS++;
 
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
@@ -205,6 +211,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
             nodes_GBFHSl += gbfhs.GetNodesExpanded();
             nodes_GBFHSln += gbfhs.GetNecessaryExpansions();
+            if (gbfhs.GetNodesExpanded() == gbfhs.GetNecessaryExpansions()) notie_GBFHSl++;
 
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
@@ -228,6 +235,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
             nodes_DBS += dbs.GetNodesExpanded();
             nodes_DBSn += dbs.GetNecessaryExpansions();
+            if (dbs.GetNodesExpanded() == dbs.GetNecessaryExpansions()) notie_DBS++;
 
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
@@ -252,6 +260,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
             nodes_Astar += astar.GetNodesExpanded();
             nodes_Astarn += astar.GetNecessaryExpansions();
+            if (astar.GetNodesExpanded() == astar.GetNecessaryExpansions()) notie_Astar++;
 
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);

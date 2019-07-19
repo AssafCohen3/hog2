@@ -66,12 +66,13 @@ void TestTOH(int first, int last) {
     //g.Reset();
     //f = BuildPDB<N, pdb1Disks>(g);
 
-    long nodes_Astar = 0, nodes_Astarn = 0,
-            nodes_NBS = 0, nodes_NBSn = 0, nodes_NBSa = 0, nodes_NBSan = 0,
-            nodes_DVCBS = 0, nodes_DVCBSn = 0, nodes_DVCBSa = 0, nodes_DVCBSan = 0,
-            nodes_NBB = 0, nodes_NBBn = 0, nodes_GBFHS = 0, nodes_GBFHSn = 0, nodes_GBFHSl = 0, nodes_GBFHSln = 0,
-            nodes_DBS = 0, nodes_DBSn = 0,
-            nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0;
+    long nodes_Astar = 0, nodes_Astarn = 0, notie_Astar = 0,
+            nodes_NBS = 0, nodes_NBSn = 0, notie_NBS = 0, nodes_NBSa = 0, nodes_NBSan = 0, notie_NBSa = 0,
+            nodes_DVCBS = 0, nodes_DVCBSn = 0, notie_DVCBS = 0, nodes_DVCBSa = 0, nodes_DVCBSan = 0, notie_DVCBSa = 0,
+            nodes_NBB = 0, nodes_NBBn = 0, notie_NBB = 0,
+            nodes_GBFHS = 0, nodes_GBFHSn = 0, notie_GBFHS = 0, nodes_GBFHSl = 0, nodes_GBFHSln = 0, notie_GBFHSl = 0,
+            nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0, notie_GBFHSbest = 0,
+            nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0;
 
     int table[] = {52058078, 116173544, 208694125, 131936966, 141559500, 133800745, 194246206, 50028346, 167007978,
                    207116816, 163867037, 119897198, 201847476, 210859515, 117688410, 121633885};
@@ -149,6 +150,7 @@ void TestTOH(int first, int last) {
 
                 nodes_NBS += nbsEpsilon.GetNodesExpanded();
                 nodes_NBSn += nbsEpsilon.GetNecessaryExpansions();
+                if(nbsEpsilon.GetNodesExpanded() == nbsEpsilon.GetNecessaryExpansions()) notie_NBS++;
 
                 // test optimality
                 if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
@@ -173,6 +175,7 @@ void TestTOH(int first, int last) {
 
                 nodes_NBSa += nbsEpsilon.GetNodesExpanded();
                 nodes_NBSan += nbsEpsilon.GetNecessaryExpansions();
+                if(nbsEpsilon.GetNodesExpanded() == nbsEpsilon.GetNecessaryExpansions()) notie_NBSa++;
 
                 // test optimality
                 if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
@@ -197,6 +200,7 @@ void TestTOH(int first, int last) {
 
                 nodes_DVCBS += dvcbs.GetNodesExpanded();
                 nodes_DVCBSn += dvcbs.GetNecessaryExpansions();
+                if(dvcbs.GetNodesExpanded() == dvcbs.GetNecessaryExpansions()) notie_DVCBS++;
 
                 // test optimality
                 if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
@@ -221,6 +225,7 @@ void TestTOH(int first, int last) {
 
                 nodes_DVCBSa += dvcbs.GetNodesExpanded();
                 nodes_DVCBSan += dvcbs.GetNecessaryExpansions();
+                if(dvcbs.GetNodesExpanded() == dvcbs.GetNecessaryExpansions()) notie_DVCBSa++;
 
                 // test optimality
                 if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
@@ -269,6 +274,7 @@ void TestTOH(int first, int last) {
 
                 nodes_NBB += baseline.GetNodesExpanded();
                 nodes_NBBn += baseline.GetNecessaryExpansions();
+                if(baseline.GetNodesExpanded() == baseline.GetNecessaryExpansions()) notie_NBB++;
 
                 // test optimality
                 if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
@@ -295,6 +301,7 @@ void TestTOH(int first, int last) {
 
                 nodes_GBFHS += gbfhs.GetNodesExpanded();
                 nodes_GBFHSn += gbfhs.GetNecessaryExpansions();
+                if(gbfhs.GetNodesExpanded() == gbfhs.GetNecessaryExpansions()) notie_GBFHS++;
 
                 // test optimality
                 if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
@@ -321,33 +328,12 @@ void TestTOH(int first, int last) {
 
                 nodes_GBFHSl += gbfhs.GetNodesExpanded();
                 nodes_GBFHSln += gbfhs.GetNecessaryExpansions();
+                if(gbfhs.GetNodesExpanded() == gbfhs.GetNecessaryExpansions()) notie_GBFHSl++;
 
                 // test optimality
                 if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
                 else if (optimal_cost != toh.GetPathLength(thePath)) {
                     printf("GBFHS-lazy reported bad value!! optimal %1.0f; reported %1.0f;\n",
-                           optimal_cost, toh.GetPathLength(thePath));
-                    exit(0);
-                }
-            }
-
-            if (1) {
-                TemplateAStar <TOHState<N>, TOHMove, TOH<N>> astar(false, 1);
-                astar.SetHeuristic(f);
-                timer.StartTimer();
-                astar.GetPath(&toh, s, g, thePath);
-                timer.EndTimer();
-                //printf("I%d-%d-%d\t%d\t", N, pdb1Disks, count, (int)toh.GetPathLength(thePath));
-                printf("A*-E %llu nodes %llu necessary", astar.GetNodesExpanded(), astar.GetNecessaryExpansions());
-                printf(" %1.2fs elapsed\n", timer.GetElapsedTime());
-
-                nodes_Astar += astar.GetNodesExpanded();
-                nodes_Astarn += astar.GetNecessaryExpansions();
-
-                // test optimality
-                if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
-                else if (optimal_cost != toh.GetPathLength(thePath)) {
-                    printf("AStar reported bad value!! optimal %1.0f; reported %1.0f;\n",
                            optimal_cost, toh.GetPathLength(thePath));
                     exit(0);
                 }
@@ -364,11 +350,35 @@ void TestTOH(int first, int last) {
 
                 nodes_DBS += dbs.GetNodesExpanded();
                 nodes_DBSn += dbs.GetNecessaryExpansions();
+                if(dbs.GetNodesExpanded() == dbs.GetNecessaryExpansions()) notie_DBS++;
 
                 // test optimality
                 if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
                 else if (optimal_cost != toh.GetPathLength(thePath)) {
                     printf("DBS reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                           optimal_cost, toh.GetPathLength(thePath));
+                    exit(0);
+                }
+            }
+
+            if (1) {
+                TemplateAStar <TOHState<N>, TOHMove, TOH<N>> astar(false, 1);
+                astar.SetHeuristic(f);
+                timer.StartTimer();
+                astar.GetPath(&toh, s, g, thePath);
+                timer.EndTimer();
+                printf("A* found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                       toh.GetPathLength(thePath),
+                       astar.GetNodesExpanded(), astar.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+                nodes_Astar += astar.GetNodesExpanded();
+                nodes_Astarn += astar.GetNecessaryExpansions();
+                if(astar.GetNodesExpanded() == astar.GetNecessaryExpansions()) notie_Astar++;
+
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
+                else if (optimal_cost != toh.GetPathLength(thePath)) {
+                    printf("A* reported bad value!! optimal %1.0f; reported %1.0f;\n",
                            optimal_cost, toh.GetPathLength(thePath));
                     exit(0);
                 }
@@ -598,25 +608,35 @@ void TestTOH(int first, int last) {
     std::cout << " Experiments: " << experiments << std::endl;
 
     std::cout << "ToH" << " NBS " << nodes_NBS / experiments << " expanded; "
-              << nodes_NBSn / experiments << " necessary" << std::endl;
+              << nodes_NBSn / experiments << " necessary; "
+              << notie_NBS / (float) experiments << " no last layer" << std::endl;
     std::cout << "ToH" << " NBSa " << nodes_NBSa / experiments << " expanded; "
-              << nodes_NBSan / experiments << " necessary" << std::endl;
+              << nodes_NBSan / experiments << " necessary; "
+            << notie_NBSa / (float) experiments << " no last layer" << std::endl;
     std::cout << "ToH" << " DVCBS " << nodes_DVCBS / experiments << " expanded; "
-              << nodes_DVCBSn / experiments << " necessary" << std::endl;
+              << nodes_DVCBSn / experiments << " necessary; "
+            << notie_DVCBS / (float) experiments << " no last layer" << std::endl;
     std::cout << "ToH" << " DVCBSa " << nodes_DVCBSa / experiments << " expanded; "
-              << nodes_DVCBSan / experiments << " necessary" << std::endl;
+              << nodes_DVCBSan / experiments << " necessary; "
+            << notie_DVCBSa / (float) experiments << " no last layer" << std::endl;
     std::cout << "ToH" << " NBB " << nodes_NBB / experiments << " expanded; "
-              << nodes_NBBn / experiments << " necessary" << std::endl;
+              << nodes_NBBn / experiments << " necessary; "
+            << notie_NBB / (float) experiments << " no last layer" << std::endl;
     std::cout << "ToH" << " GBFHS-eager " << nodes_GBFHS / experiments << " expanded; "
-              << nodes_GBFHSn / experiments << " necessary" << std::endl;
+              << nodes_GBFHSn / experiments << " necessary; "
+            << notie_GBFHS / (float) experiments << " no last layer" << std::endl;
     std::cout << "ToH" << " GBFHS-lazy " << nodes_GBFHSl / experiments << " expanded; "
-              << nodes_GBFHSln / experiments << " necessary" << std::endl;
+              << nodes_GBFHSln / experiments << " necessary; "
+            << notie_GBFHSl / (float) experiments << " no last layer" << std::endl;
     std::cout << "ToH" << " A* " << nodes_Astar / experiments << " expanded; "
-              << nodes_Astarn / experiments << " necessary" << std::endl;
+              << nodes_Astarn / experiments << " necessary; "
+            << notie_Astar / (float) experiments << " no last layer" << std::endl;
     std::cout << "ToH" << " DBS " << nodes_DBS / experiments << " expanded; "
-              << nodes_DBSn / experiments << " necessary" << std::endl;
+              << nodes_DBSn / experiments << " necessary; "
+            << notie_DBS / (float) experiments << " no last layer" << std::endl;
 
     printf("+++++++++++++++++++++++++++++++++++++++++\n");
+
 
     while (f->heuristics.size() > 0) {
         delete f->heuristics.back();
@@ -630,6 +650,9 @@ void TOHTest() {
     TestTOH<12, 4>(0, 50);
 //	TestTOH<14, 5>(0, 50);
     TestTOH<12, 6>(0, 50);
+
+    exit(0);
+
 //	TestTOH<14, 7>(0, 50);
 //	TestTOH<14, 8>(0, 50);
 //	TestTOH<14, 9>(0, 50);

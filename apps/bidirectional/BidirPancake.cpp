@@ -163,6 +163,7 @@ void TestPancakeTR() {
                mm.GetNodesExpanded(), t4.GetElapsedTime(),
                nbs.GetNodesExpanded(), t2.GetElapsedTime(), dvcbs.GetNodesExpanded(), t5.GetElapsedTime());
     }
+
     exit(0);
 }
 
@@ -198,12 +199,13 @@ void TestPancakeRandom() {
         std::vector < AStarOpenClosedData < PancakePuzzleState < N >> > astarOpenClose;
         std::vector < AStarOpenClosedData < PancakePuzzleState < N >> > rastarOpenClose;
 
-        long nodes_Astar = 0, nodes_Astarn = 0,
-                nodes_NBS = 0, nodes_NBSn = 0, nodes_NBSa = 0, nodes_NBSan = 0,
-                nodes_DVCBS = 0, nodes_DVCBSn = 0, nodes_DVCBSa = 0, nodes_DVCBSan = 0,
-                nodes_NBB = 0, nodes_NBBn = 0, nodes_GBFHS = 0, nodes_GBFHSn = 0, nodes_GBFHSl = 0, nodes_GBFHSln = 0,
-                nodes_DBS = 0, nodes_DBSn = 0,
-                nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0;
+        long nodes_Astar = 0, nodes_Astarn = 0, notie_Astar = 0,
+                nodes_NBS = 0, nodes_NBSn = 0, notie_NBS = 0, nodes_NBSa = 0, nodes_NBSan = 0, notie_NBSa = 0,
+                nodes_DVCBS = 0, nodes_DVCBSn = 0, notie_DVCBS = 0, nodes_DVCBSa = 0, nodes_DVCBSan = 0, notie_DVCBSa = 0,
+                nodes_NBB = 0, nodes_NBBn = 0, notie_NBB = 0,
+                nodes_GBFHS = 0, nodes_GBFHSn = 0, notie_GBFHS = 0, nodes_GBFHSl = 0, nodes_GBFHSln = 0, notie_GBFHSl = 0,
+                nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0, notie_GBFHSbest = 0,
+                nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0;
 
         for (int count = 0; count < INSTANCES; count++) {
 
@@ -327,6 +329,7 @@ void TestPancakeRandom() {
 
                     nodes_NBS += nbsEpsilon.GetNodesExpanded();
                     nodes_NBSn += nbsEpsilon.GetNecessaryExpansions();
+                    if (nbsEpsilon.GetNodesExpanded() == nbsEpsilon.GetNecessaryExpansions()) notie_NBS++;
 
                     // test optimality
                     if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(nbsEpsilonPath);
@@ -353,6 +356,7 @@ void TestPancakeRandom() {
 
                     nodes_NBSa += nbsEpsilonLeq.GetNodesExpanded();
                     nodes_NBSan += nbsEpsilonLeq.GetNecessaryExpansions();
+                    if(nbsEpsilonLeq.GetNodesExpanded() == nbsEpsilonLeq.GetNecessaryExpansions()) notie_NBSa++;
 
                     // test optimality
                     if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(nbsEpsilonPath);
@@ -382,6 +386,7 @@ void TestPancakeRandom() {
 
                     nodes_DVCBS += dvcbsEpsilon.GetNodesExpanded();
                     nodes_DVCBSn += dvcbsEpsilon.GetNecessaryExpansions();
+                    if(dvcbsEpsilon.GetNodesExpanded() == dvcbsEpsilon.GetNecessaryExpansions()) notie_DVCBS++;
 
                     // test optimality
                     if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(dvcbsEpsilonPath);
@@ -409,6 +414,7 @@ void TestPancakeRandom() {
 
                     nodes_DVCBSa += dvcbsEpsilon.GetNodesExpanded();
                     nodes_DVCBSan += dvcbsEpsilon.GetNecessaryExpansions();
+                    if(dvcbsEpsilon.GetNodesExpanded() == dvcbsEpsilon.GetNecessaryExpansions()) notie_DVCBSa++;
 
                     // test optimality
                     if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(dvcbsEpsilonPath);
@@ -434,6 +440,7 @@ void TestPancakeRandom() {
 
                 nodes_NBB += baseline.GetNodesExpanded();
                 nodes_NBBn += baseline.GetNecessaryExpansions();
+                if(baseline.GetNodesExpanded() == baseline.GetNecessaryExpansions()) notie_NBB++;
 
                 // test optimality
                 if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(baselinePath);
@@ -463,6 +470,7 @@ void TestPancakeRandom() {
 
                 nodes_GBFHS += gbfhs.GetNodesExpanded();
                 nodes_GBFHSn += gbfhs.GetNecessaryExpansions();
+                if(gbfhs.GetNodesExpanded() == gbfhs.GetNecessaryExpansions()) notie_GBFHS++;
 
                 // test optimality
                 if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(gbfhsPath);
@@ -522,6 +530,7 @@ void TestPancakeRandom() {
 
                 nodes_GBFHSl += gbfhs.GetNodesExpanded();
                 nodes_GBFHSln += gbfhs.GetNecessaryExpansions();
+                if(gbfhs.GetNodesExpanded() == gbfhs.GetNecessaryExpansions()) notie_GBFHSl++;
 
                 // test optimality
                 if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(gbfhsPath);
@@ -547,6 +556,7 @@ void TestPancakeRandom() {
 
                 nodes_DBS += dbs.GetNodesExpanded();
                 nodes_DBSn += dbs.GetNecessaryExpansions();
+                if(dbs.GetNodesExpanded() == dbs.GetNecessaryExpansions()) notie_DBS++;
 
                 // test optimality
                 if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(dbsPath);
@@ -571,6 +581,7 @@ void TestPancakeRandom() {
 
                 nodes_Astar += astar.GetNodesExpanded();
                 nodes_Astarn += astar.GetNecessaryExpansions();
+                if(astar.GetNodesExpanded() == astar.GetNecessaryExpansions()) notie_Astar++;
             }
 
             //ALL Solution
@@ -804,28 +815,39 @@ void TestPancakeRandom() {
 
         std::cout << " Experiments: " << INSTANCES << std::endl;
 
-        std::cout << " GAP-" << gap << " NBS " << nodes_NBS / INSTANCES << " expanded; "
-                  << nodes_NBSn / INSTANCES << " necessary" << std::endl;
-        std::cout << " GAP-" << gap << " NBSa " << nodes_NBSa / INSTANCES << " expanded; "
-                  << nodes_NBSan / INSTANCES << " necessary" << std::endl;
-        std::cout << " GAP-" << gap << " DVCBS " << nodes_DVCBS / INSTANCES << " expanded; "
-                  << nodes_DVCBSn / INSTANCES << " necessary" << std::endl;
-        std::cout << " GAP-" << gap << " DVCBSa " << nodes_DVCBSa / INSTANCES << " expanded; "
-                  << nodes_DVCBSan / INSTANCES << " necessary" << std::endl;
-        std::cout << " GAP-" << gap << " NBB " << nodes_NBB / INSTANCES << " expanded; "
-                  << nodes_NBBn / INSTANCES << " necessary" << std::endl;
-        std::cout << " GAP-" << gap << " GBFHS-eager " << nodes_GBFHS / INSTANCES << " expanded; "
-                  << nodes_GBFHSn / INSTANCES << " necessary" << std::endl;
-        std::cout << " GAP-" << gap << " GBFHS-lazy " << nodes_GBFHSl / INSTANCES << " expanded; "
-                  << nodes_GBFHSln / INSTANCES << " necessary" << std::endl;
-        std::cout << " GAP-" << gap << " A* " << nodes_Astar / INSTANCES << " expanded; "
-                  << nodes_Astarn / INSTANCES << " necessary" << std::endl;
-        std::cout << " GAP-" << gap << " DBS " << nodes_DBS / INSTANCES << " expanded; "
-                  << nodes_DBSn / INSTANCES << " necessary" << std::endl;
+        std::cout << "ToH" << " NBS " << nodes_NBS / INSTANCES << " expanded; "
+                  << nodes_NBSn / INSTANCES << " necessary; "
+                  << notie_NBS / (float) INSTANCES << " no last layer" << std::endl;
+        std::cout << "ToH" << " NBSa " << nodes_NBSa / INSTANCES << " expanded; "
+                  << nodes_NBSan / INSTANCES << " necessary; "
+                  << notie_NBSa / (float) INSTANCES << " no last layer" << std::endl;
+        std::cout << "ToH" << " DVCBS " << nodes_DVCBS / INSTANCES << " expanded; "
+                  << nodes_DVCBSn / INSTANCES << " necessary; "
+                  << notie_DVCBS / (float) INSTANCES << " no last layer" << std::endl;
+        std::cout << "ToH" << " DVCBSa " << nodes_DVCBSa / INSTANCES << " expanded; "
+                  << nodes_DVCBSan / INSTANCES << " necessary; "
+                  << notie_DVCBSa / (float) INSTANCES << " no last layer" << std::endl;
+        std::cout << "ToH" << " NBB " << nodes_NBB / INSTANCES << " expanded; "
+                  << nodes_NBBn / INSTANCES << " necessary; "
+                  << notie_NBB / (float) INSTANCES << " no last layer" << std::endl;
+        std::cout << "ToH" << " GBFHS-eager " << nodes_GBFHS / INSTANCES << " expanded; "
+                  << nodes_GBFHSn / INSTANCES << " necessary; "
+                  << notie_GBFHS / (float) INSTANCES << " no last layer" << std::endl;
+        std::cout << "ToH" << " GBFHS-lazy " << nodes_GBFHSl / INSTANCES << " expanded; "
+                  << nodes_GBFHSln / INSTANCES << " necessary; "
+                  << notie_GBFHSl / (float) INSTANCES << " no last layer" << std::endl;
+        std::cout << "ToH" << " A* " << nodes_Astar / INSTANCES << " expanded; "
+                  << nodes_Astarn / INSTANCES << " necessary; "
+                  << notie_Astar / (float) INSTANCES << " no last layer" << std::endl;
+        std::cout << "ToH" << " DBS " << nodes_DBS / INSTANCES << " expanded; "
+                  << nodes_DBSn / INSTANCES << " necessary; "
+                  << notie_DBS / (float) INSTANCES << " no last layer" << std::endl;
 
         printf("+++++++++++++++++++++++++++++++++++++++++\n");
 
     }
+
+    exit(0);
 }
 
 const int CNT = 28;
