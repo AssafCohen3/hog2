@@ -186,7 +186,7 @@ bool DBS<state, action, environment, priorityQueue>::UpdateC() {
                     + backwardQueue.getMinG(getMinCriterion(false))
                     + epsilon;
 
-    while (C < std::max(gBound, fBound)) {
+    while (C < std::max(gBound, fBound) && C < currentCost) {
         C += gcd;
         updated = true;
         UpdateQueuesAndCriterion();

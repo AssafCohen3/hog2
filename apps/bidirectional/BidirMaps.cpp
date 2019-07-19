@@ -38,7 +38,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             timer.StartTimer();
             nbs.GetPath(me, start, goal, me, me, path);
             timer.EndTimer();
-            printf("NBS-E-L found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed %llu forwardMeeting %llu backwardMeeting %llu forwardDistance %llu backwardDistance %f ExpansionUntilSolution\n",
+            printf("NBS-E-L found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed %llu forwardMeeting %llu backwardMeeting %llu forwardDistance %llu backwardDistance %f ExpansionUntilSolution\n",
                    me->GetPathLength(path),
                    nbs.GetNodesExpanded(), nbs.GetNecessaryExpansions(), timer.GetElapsedTime(),
                    nbs.getForwardMeetingPoint(), nbs.getBackwardMeetingPoint(),
@@ -64,7 +64,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             timer.StartTimer();
             nbsA.GetPath(me, start, goal, me, me, path);
             timer.EndTimer();
-            printf("NBS-E-LEQ found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed %llu forwardMeeting %llu backwardMeeting %llu forwardDistance %llu backwardDistance %f ExpansionUntilSolution\n",
+            printf("NBS-E-LEQ found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed %llu forwardMeeting %llu backwardMeeting %llu forwardDistance %llu backwardDistance %f ExpansionUntilSolution\n",
                    me->GetPathLength(path),
                    nbsA.GetNodesExpanded(), nbsA.GetNecessaryExpansions(), timer.GetElapsedTime(),
                    nbsA.getForwardMeetingPoint(), nbsA.getBackwardMeetingPoint(),
@@ -91,7 +91,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             timer.StartTimer();
             dvcbs.GetPath(me, start, goal, me, me, path);
             timer.EndTimer();
-            printf("DVCBS-E-L found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed %llu forwardMeeting %llu backwardMeeting %llu forwardDistance %llu backwardDistance %f ExpansionUntilSolution\n",
+            printf("DVCBS-E-L found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed %llu forwardMeeting %llu backwardMeeting %llu forwardDistance %llu backwardDistance %f ExpansionUntilSolution\n",
                    me->GetPathLength(path),
                    dvcbs.GetNodesExpanded(), dvcbs.GetNecessaryExpansions(), timer.GetElapsedTime(),
                    dvcbs.getForwardMeetingPoint(), dvcbs.getBackwardMeetingPoint(),
@@ -118,7 +118,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             timer.StartTimer();
             dvcbs.GetPath(me, start, goal, me, me, path);
             timer.EndTimer();
-            printf("DVCBS-E-LEQ found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed %llu forwardMeeting %llu backwardMeeting %llu forwardDistance %llu backwardDistance %f ExpansionUntilSolution\n",
+            printf("DVCBS-E-LEQ found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed %llu forwardMeeting %llu backwardMeeting %llu forwardDistance %llu backwardDistance %f ExpansionUntilSolution\n",
                    me->GetPathLength(path),
                    dvcbs.GetNodesExpanded(), dvcbs.GetNecessaryExpansions(), timer.GetElapsedTime(),
                    dvcbs.getForwardMeetingPoint(), dvcbs.getBackwardMeetingPoint(),
@@ -145,7 +145,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             timer.StartTimer();
             baseline.GetPath(me, start, goal, me, me, path);
             timer.EndTimer();
-            printf("NBB found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+            printf("NBB found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
                    me->GetPathLength(path),
                    baseline.GetNodesExpanded(), baseline.GetNecessaryExpansions(), timer.GetElapsedTime());
 
@@ -222,7 +222,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             timer.StartTimer();
             dbs.GetPath(me, start, goal, me, me, path);
             timer.EndTimer();
-            printf("DBS found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+            printf("DBS found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
                    me->GetPathLength(path),
                    dbs.GetNodesExpanded(), dbs.GetNecessaryExpansions(), timer.GetElapsedTime());
 
@@ -246,7 +246,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             timer.StartTimer();
             astar.GetPath(me, start, goal, path);
             timer.EndTimer();
-            printf("A* found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+            printf("A* found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
                    me->GetPathLength(path),
                    astar.GetNodesExpanded(), astar.GetNecessaryExpansions(), timer.GetElapsedTime());
 
