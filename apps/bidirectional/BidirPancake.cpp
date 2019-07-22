@@ -488,7 +488,7 @@ void TestPancakeRandom() {
                     // TODO: threshold must be incremented by lcd, not epsilon
                     for (int threshold = 0; threshold <= optimal_cost; threshold += 1) {
                         GBFHS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle <
-                                                                            N >> gbfhs_split(true, threshold);
+                                                                            N >> gbfhs_split(true, 1.0, 1.0, threshold);
                         goal.Reset();
                         start = original;
                         gbfhsPath.clear();
