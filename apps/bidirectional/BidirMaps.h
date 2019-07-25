@@ -14,6 +14,8 @@
 #include "GBFHS.h"
 #include "DBS.h"
 #include "TemplateAStar.h"
+#include "BSStar.h"
+#include "BAE.h"
 
 class MapExperiment {
 
@@ -25,11 +27,13 @@ class MapExperiment {
     void runMap(const char *map, const char *scenario, double weight);
 
     long nodes_Astar = 0, nodes_Astarn = 0, notie_Astar = 0,
+            nodes_BSstar = 0, nodes_BSstarn = 0, notie_BSstar = 0,
             nodes_NBS = 0, nodes_NBSn = 0, notie_NBS = 0, nodes_NBSa = 0, nodes_NBSan = 0, notie_NBSa = 0,
             nodes_DVCBS = 0, nodes_DVCBSn = 0, notie_DVCBS = 0, nodes_DVCBSa = 0, nodes_DVCBSan = 0, notie_DVCBSa = 0,
             nodes_NBB = 0, nodes_NBBn = 0, notie_NBB = 0,
             nodes_GBFHS = 0, nodes_GBFHSn = 0, notie_GBFHS = 0, nodes_GBFHSl = 0, nodes_GBFHSln = 0, notie_GBFHSl = 0,
             nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0, notie_GBFHSbest = 0,
+            nodes_BAE = 0, nodes_BAEn = 0, notie_BAE = 0,
             nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0;
 
     int experiments = 0;
@@ -90,6 +94,12 @@ public:
         std::cout << "ToH" << " A* " << nodes_Astar / experiments << " expanded; "
                   << nodes_Astarn / experiments << " necessary; "
                   << notie_Astar / (float) experiments << " no last layer" << std::endl;
+        std::cout << "ToH" << " BS* " << nodes_BSstar / experiments << " expanded; "
+                  << nodes_BSstarn / experiments << " necessary; "
+                  << notie_BSstar / (float) experiments << " no last layer" << std::endl;
+        std::cout << "ToH" << " BAE* " << nodes_BAE / experiments << " expanded; "
+                  << nodes_BAEn / experiments << " necessary; "
+                  << notie_BAE / (float) experiments << " no last layer" << std::endl;
         std::cout << "ToH" << " DBS " << nodes_DBS / experiments << " expanded; "
                   << nodes_DBSn / experiments << " necessary; "
                   << notie_DBS / (float) experiments << " no last layer" << std::endl;

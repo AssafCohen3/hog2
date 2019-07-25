@@ -247,6 +247,54 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
         }
 
         if (1) {
+            BSStar <xyLoc, tDirection, MapEnvironment> bs;
+            std::vector <xyLoc> path;
+            Timer timer;
+            timer.StartTimer();
+            bs.GetPath(me, start, goal, me, me, path);
+            timer.EndTimer();
+            printf("BS* found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   me->GetPathLength(path),
+                   bs.GetNodesExpanded(), bs.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_BSstar += bs.GetNodesExpanded();
+            nodes_BSstarn += bs.GetNecessaryExpansions();
+            if (bs.GetNodesExpanded() == bs.GetNecessaryExpansions()) notie_BSstar++;
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
+            else if (optimal_cost != me->GetPathLength(path)) {
+                printf("BS* reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, me->GetPathLength(path));
+                exit(0);
+            }
+        }
+
+        if (1) {
+            BAE <xyLoc, tDirection, MapEnvironment> bae;
+            std::vector <xyLoc> path;
+            Timer timer;
+            timer.StartTimer();
+            bae.GetPath(me, start, goal, me, me, path);
+            timer.EndTimer();
+            printf("BAE* found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   me->GetPathLength(path),
+                   bae.GetNodesExpanded(), bae.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_BAE += bae.GetNodesExpanded();
+            nodes_BAE += bae.GetNecessaryExpansions();
+            if (bae.GetNodesExpanded() == bae.GetNecessaryExpansions()) notie_BSstar++;
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
+            else if (optimal_cost != me->GetPathLength(path)) {
+                printf("BAE* reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, me->GetPathLength(path));
+                exit(0);
+            }
+        }
+
+        if (1) {
             TemplateAStar <xyLoc, tDirection, MapEnvironment> astar(false, 1.0);
             std::vector <xyLoc> path;
             Timer timer;

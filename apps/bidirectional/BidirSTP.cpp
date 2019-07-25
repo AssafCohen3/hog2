@@ -13,6 +13,7 @@
 #include "IDAStar.h"
 #include "MM.h"
 #include "BSStar.h"
+#include "BAE.h"
 #include "TemplateAStar.h"
 #include "Baseline.h"
 #include "GBFHS.h"
@@ -138,11 +139,13 @@ void TestSTP() {
     MNPuzzle<4, 4> mnp;
 
     long nodes_Astar = 0, nodes_Astarn = 0, notie_Astar = 0,
+            nodes_BSstar = 0, nodes_BSstarn = 0, notie_BSstar = 0,
             nodes_NBS = 0, nodes_NBSn = 0, notie_NBS = 0, nodes_NBSa = 0, nodes_NBSan = 0, notie_NBSa = 0,
             nodes_DVCBS = 0, nodes_DVCBSn = 0, notie_DVCBS = 0, nodes_DVCBSa = 0, nodes_DVCBSan = 0, notie_DVCBSa = 0,
             nodes_NBB = 0, nodes_NBBn = 0, notie_NBB = 0,
             nodes_GBFHS = 0, nodes_GBFHSn = 0, notie_GBFHS = 0, nodes_GBFHSl = 0, nodes_GBFHSln = 0, notie_GBFHSl = 0,
             nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0, notie_GBFHSbest = 0,
+            nodes_BAE = 0, nodes_BAEn = 0, notie_BAE = 0,
             nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0;
 
     for (int x = 0; x < 100; x++) // 547 to 540
@@ -366,32 +369,6 @@ void TestSTP() {
 
         if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
-            TemplateAStar <MNPuzzleState<4, 4>, slideDir, MNPuzzle<4, 4>> astar(false, 1.0);
-            astar.SetHeuristic(&mnp);
-            Timer timer;
-            timer.StartTimer();
-            astar.GetPath(&mnp, start, goal, solutionPath);
-            timer.EndTimer();
-            printf("A* found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
-                   mnp.GetPathLength(solutionPath),
-                   astar.GetNodesExpanded(), astar.GetNecessaryExpansions(), timer.GetElapsedTime());
-
-            nodes_Astar += astar.GetNodesExpanded();
-            nodes_Astarn += astar.GetNecessaryExpansions();
-            if (astar.GetNodesExpanded() == astar.GetNecessaryExpansions()) notie_Astar++;
-
-            // test optimality
-            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
-            else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
-                printf("AStar reported bad value!! optimal %1.0f; reported %1.0f;\n",
-                       optimal_cost, mnp.GetPathLength(solutionPath));
-                exit(0);
-            }
-        }
-
-
-        if (1) {
-            std::vector <MNPuzzleState<4, 4>> solutionPath;
             DBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> dbs;
             Timer timer;
             timer.StartTimer();
@@ -409,6 +386,79 @@ void TestSTP() {
             if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
             else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
                 printf("DBS reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(solutionPath));
+                exit(0);
+            }
+        }
+
+        if (1) {
+            std::vector <MNPuzzleState<4, 4>> solutionPath;
+            BSStar <MNPuzzleState<4, 4>, slideDir, MNPuzzle<4, 4>> bs;
+            Timer timer;
+            timer.StartTimer();
+            bs.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
+            timer.EndTimer();
+            printf("BS* found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   mnp.GetPathLength(solutionPath),
+                   bs.GetNodesExpanded(), bs.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_BSstar += bs.GetNodesExpanded();
+            nodes_BSstarn += bs.GetNecessaryExpansions();
+            if (bs.GetNodesExpanded() == bs.GetNecessaryExpansions()) notie_BSstar++;
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
+            else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
+                printf("BS* reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(solutionPath));
+                exit(0);
+            }
+        }
+
+        if (1) {
+            std::vector <MNPuzzleState<4, 4>> solutionPath;
+            BAE <MNPuzzleState<4, 4>, slideDir, MNPuzzle<4, 4>> bae;
+            Timer timer;
+            timer.StartTimer();
+            bae.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
+            timer.EndTimer();
+            printf("BAE* found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   mnp.GetPathLength(solutionPath),
+                   bae.GetNodesExpanded(), bae.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_BAE += bae.GetNodesExpanded();
+            nodes_BAEn += bae.GetNecessaryExpansions();
+            if (bae.GetNodesExpanded() == bae.GetNecessaryExpansions()) notie_BAE++;
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
+            else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
+                printf("BAE* reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(solutionPath));
+                exit(0);
+            }
+        }
+
+        if (1) {
+            std::vector <MNPuzzleState<4, 4>> solutionPath;
+            TemplateAStar <MNPuzzleState<4, 4>, slideDir, MNPuzzle<4, 4>> astar(false, 1.0);
+            astar.SetHeuristic(&mnp);
+            Timer timer;
+            timer.StartTimer();
+            astar.GetPath(&mnp, start, goal, solutionPath);
+            timer.EndTimer();
+            printf("A* found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   mnp.GetPathLength(solutionPath),
+                   astar.GetNodesExpanded(), astar.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_Astar += astar.GetNodesExpanded();
+            nodes_Astarn += astar.GetNecessaryExpansions();
+            if (astar.GetNodesExpanded() == astar.GetNecessaryExpansions()) notie_Astar++;
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
+            else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
+                printf("A* reported bad value!! optimal %1.0f; reported %1.0f;\n",
                        optimal_cost, mnp.GetPathLength(solutionPath));
                 exit(0);
             }
@@ -443,103 +493,17 @@ void TestSTP() {
     std::cout << "ToH" << " A* " << nodes_Astar / 100 << " expanded; "
               << nodes_Astarn / 100 << " necessary; "
               << notie_Astar / (float) 100 << " no last layer" << std::endl;
+    std::cout << "ToH" << " BS* " << nodes_BSstar / 100 << " expanded; "
+              << nodes_BSstarn / 100 << " necessary; "
+              << notie_BSstar / (float) 100 << " no last layer" << std::endl;
+    std::cout << "ToH" << " BAE* " << nodes_BAE / 100 << " expanded; "
+              << nodes_BAEn / 100 << " necessary; "
+              << notie_BAE / (float) 100 << " no last layer" << std::endl;
     std::cout << "ToH" << " DBS " << nodes_DBS / 100 << " expanded; "
               << nodes_DBSn / 100 << " necessary; "
               << notie_DBS / (float) 100 << " no last layer" << std::endl;
 
     printf("+++++++++++++++++++++++++++++++++++++++++\n");
 
-    exit(0);
-}
-
-
-void TestSTPFull() {
-    NBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> nbs;
-    DVCBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> dvcbs(1);
-    MM <MNPuzzleState<4, 4>, slideDir, MNPuzzle<4, 4>> mm;
-    MNPuzzle<4, 4> mnp;
-    IDAStar <MNPuzzleState<4, 4>, slideDir> ida;
-    TemplateAStar <MNPuzzleState<4, 4>, slideDir, MNPuzzle<4, 4>> astar;
-
-    for (int x = 0; x < 100; x++) // 547 to 540
-    {
-
-        MNPuzzleState<4, 4> start, goal;
-        printf("Problem %d of %d\n", x + 1, 100);
-
-        std::vector <slideDir> idaPath;
-        std::vector <MNPuzzleState<4, 4>> dvcbsPath;
-        std::vector <MNPuzzleState<4, 4>> nbsPath;
-        std::vector <MNPuzzleState<4, 4>> astarPath;
-        std::vector <MNPuzzleState<4, 4>> mmPath;
-        Timer t1, t2, t3, t4, t5;
-
-        goal.Reset();
-        start = GetKorfInstance(x);
-        t1.StartTimer();
-        ida.GetPath(&mnp, start, goal, idaPath);
-        t1.EndTimer();
-        printf("IDA* found path length %ld; %llu expanded; %1.2fs elapsed\n", idaPath.size(), ida.GetNodesExpanded(),
-               t1.GetElapsedTime());
-
-        goal.Reset();
-        start = GetKorfInstance(x);
-        t2.StartTimer();
-        astar.GetPath(&mnp, start, goal, astarPath);
-        t2.EndTimer();
-        printf("A* found path length %ld; %llu expanded; %1.2fs elapsed\n", astarPath.size() - 1,
-               astar.GetNodesExpanded(), t2.GetElapsedTime());
-
-        goal.Reset();
-        start = GetKorfInstance(x);
-        t3.StartTimer();
-        nbs.GetPath(&mnp, start, goal, &mnp, &mnp, nbsPath);
-        t3.EndTimer();
-        printf("NBS found path length %ld; %llu expanded; %1.2fs elapsed\n", nbsPath.size() - 1, nbs.GetNodesExpanded(),
-               t3.GetElapsedTime());
-
-        goal.Reset();
-        start = GetKorfInstance(x);
-        t5.StartTimer();
-        dvcbs.GetPath(&mnp, start, goal, &mnp, &mnp, dvcbsPath);
-        t5.EndTimer();
-        printf("DVCBS found path length %ld; %llu expanded; %1.2fs elapsed\n", dvcbsPath.size() - 1,
-               dvcbs.GetNodesExpanded(), t5.GetElapsedTime());
-
-        goal.Reset();
-        start = GetKorfInstance(x);
-        t4.StartTimer();
-        mm.GetPath(&mnp, start, goal, &mnp, &mnp, mmPath);
-        t4.EndTimer();
-        printf("MM found path length %ld; %llu expanded; %1.2fs elapsed\n", mmPath.size() - 1, mm.GetNodesExpanded(),
-               t3.GetElapsedTime());
-
-
-        std::cout << ida.GetNodesExpanded() << "\t" << astar.GetNodesExpanded() << "\t" << nbs.GetNodesExpanded()
-                  << "\t";
-        std::cout << t1.GetElapsedTime() << "\t" << t2.GetElapsedTime() << "\t" << t3.GetElapsedTime() << "\n";
-
-        //if (!fequal)
-        if (nbsPath.size() != idaPath.size() + 1) {
-            std::cout << "error solution cost:\t expected cost\n";
-            std::cout << nbsPath.size() << "\t" << idaPath.size() << "\n";
-//			double d;
-//			for (auto x : correctPath)
-//			{
-//				astar.GetClosedListGCost(x, d);
-//				auto t = nbs.GetNodeForwardLocation(x);
-//				auto u = nbs.GetNodeBackwardLocation(x);
-//				std::cout << x << " is on " << t << " and " << u << "\n";
-//				std::cout << "True g: " << d;
-//				if (t != kUnseen)
-//					std::cout << " forward g: " << nbs.GetNodeForwardG(x);
-//				if (u != kUnseen)
-//					std::cout << " backward g: " << nbs.GetNodeBackwardG(x);
-//				std::cout << "\n";
-//			}
-            exit(0);
-        }
-
-    }
     exit(0);
 }
