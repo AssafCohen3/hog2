@@ -377,7 +377,7 @@ void BAE<state, action, environment, priorityQueue>::Nip(const state &s, priorit
         auto loc = queue.Lookup(hash, childID);
         auto &childData = queue.Lookup(childID);
         if (loc == kClosedList && childData.parentID == parentID) {
-            // Nip(childData.data, queue);
+            Nip(childData.data, queue);
         } else if (loc == kOpenList && (childData.parentID == parentID))// && (childData.data != middleNode))
         {
             if (childData.data == middleNode) {
