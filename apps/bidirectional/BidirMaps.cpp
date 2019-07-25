@@ -282,7 +282,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
                    bae.GetNodesExpanded(), bae.GetNecessaryExpansions(), timer.GetElapsedTime());
 
             nodes_BAE += bae.GetNodesExpanded();
-            nodes_BAE += bae.GetNecessaryExpansions();
+            nodes_BAEn += bae.GetNecessaryExpansions();
             if (bae.GetNodesExpanded() == bae.GetNecessaryExpansions()) notie_BSstar++;
 
             // test optimality
