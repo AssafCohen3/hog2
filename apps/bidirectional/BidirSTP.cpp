@@ -139,14 +139,14 @@ void TestSTP() {
     MNPuzzle<4, 4> mnp;
 
     long nodes_Astar = 0, nodes_Astarn = 0, notie_Astar = 0,
-            nodes_BSstar = 0, nodes_BSstarn = 0, notie_BSstar = 0,
+            nodes_BSstar = 0, nodes_BSstarn = 0, notie_BSstar = 0, nodes_BSstara = 0, nodes_BSstaran = 0, notie_BSstara = 0,
             nodes_NBS = 0, nodes_NBSn = 0, notie_NBS = 0, nodes_NBSa = 0, nodes_NBSan = 0, notie_NBSa = 0,
             nodes_DVCBS = 0, nodes_DVCBSn = 0, notie_DVCBS = 0, nodes_DVCBSa = 0, nodes_DVCBSan = 0, notie_DVCBSa = 0,
             nodes_NBB = 0, nodes_NBBn = 0, notie_NBB = 0,
             nodes_GBFHS = 0, nodes_GBFHSn = 0, notie_GBFHS = 0, nodes_GBFHSl = 0, nodes_GBFHSln = 0, notie_GBFHSl = 0,
             nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0, notie_GBFHSbest = 0,
-            nodes_BAE = 0, nodes_BAEn = 0, notie_BAE = 0,
-            nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0;
+            nodes_BAE = 0, nodes_BAEn = 0, notie_BAE = 0, nodes_BAEp = 0, nodes_BAEpn = 0, notie_BAEp = 0,
+            nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0;
 
     for (int x = 0; x < 100; x++) // 547 to 540
     {
@@ -367,6 +367,7 @@ void TestSTP() {
             }
         }
 
+        // DBS
         if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
             DBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> dbs;
@@ -391,9 +392,35 @@ void TestSTP() {
             }
         }
 
+        // DBS-p
         if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
-            BSStar <MNPuzzleState<4, 4>, slideDir, MNPuzzle<4, 4>> bs;
+            DBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> dbs(false);
+            Timer timer;
+            timer.StartTimer();
+            dbs.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
+            timer.EndTimer();
+            printf("DBS-p found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   mnp.GetPathLength(solutionPath),
+                   dbs.GetNodesExpanded(), dbs.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_DBSp += dbs.GetNodesExpanded();
+            nodes_DBSpn += dbs.GetNecessaryExpansions();
+            if (dbs.GetNodesExpanded() == dbs.GetNecessaryExpansions()) notie_DBSp++;
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
+            else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
+                printf("DBS-p reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(solutionPath));
+                exit(0);
+            }
+        }
+
+        // BS*
+        if (1) {
+            std::vector <MNPuzzleState<4, 4>> solutionPath;
+            BSStar<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> bs;
             Timer timer;
             timer.StartTimer();
             bs.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
@@ -415,9 +442,35 @@ void TestSTP() {
             }
         }
 
+        // BS*-a
         if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
-            BAE <MNPuzzleState<4, 4>, slideDir, MNPuzzle<4, 4>> bae;
+            BSStar<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> bs(true);
+            Timer timer;
+            timer.StartTimer();
+            bs.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
+            timer.EndTimer();
+            printf("BS*-a found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   mnp.GetPathLength(solutionPath),
+                   bs.GetNodesExpanded(), bs.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_BSstara += bs.GetNodesExpanded();
+            nodes_BSstaran += bs.GetNecessaryExpansions();
+            if (bs.GetNodesExpanded() == bs.GetNecessaryExpansions()) notie_BSstara++;
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
+            else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
+                printf("BS*-a reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(solutionPath));
+                exit(0);
+            }
+        }
+
+        // BAE*
+        if (1) {
+            std::vector <MNPuzzleState<4, 4>> solutionPath;
+            BAE<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> bae;
             Timer timer;
             timer.StartTimer();
             bae.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
@@ -434,6 +487,31 @@ void TestSTP() {
             if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
             else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
                 printf("BAE* reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(solutionPath));
+                exit(0);
+            }
+        }
+
+        // BAE*
+        if (1) {
+            std::vector <MNPuzzleState<4, 4>> solutionPath;
+            BAE<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> bae(false);
+            Timer timer;
+            timer.StartTimer();
+            bae.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
+            timer.EndTimer();
+            printf("BAE*-p found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   mnp.GetPathLength(solutionPath),
+                   bae.GetNodesExpanded(), bae.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_BAEp += bae.GetNodesExpanded();
+            nodes_BAEpn += bae.GetNecessaryExpansions();
+            if (bae.GetNodesExpanded() == bae.GetNecessaryExpansions()) notie_BAEp++;
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
+            else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
+                printf("BAE*-p reported bad value!! optimal %1.0f; reported %1.0f;\n",
                        optimal_cost, mnp.GetPathLength(solutionPath));
                 exit(0);
             }
@@ -469,39 +547,48 @@ void TestSTP() {
 
     std::cout << " Experiments: " << 100 << std::endl;
 
-    std::cout << "ToH" << " NBS " << nodes_NBS / 100 << " expanded; "
+    std::cout << "STP" << " NBS " << nodes_NBS / 100 << " expanded; "
               << nodes_NBSn / 100 << " necessary; "
               << notie_NBS / (float) 100 << " no last layer" << std::endl;
-    std::cout << "ToH" << " NBSa " << nodes_NBSa / 100 << " expanded; "
+    std::cout << "STP" << " NBSa " << nodes_NBSa / 100 << " expanded; "
               << nodes_NBSan / 100 << " necessary; "
               << notie_NBSa / (float) 100 << " no last layer" << std::endl;
-    std::cout << "ToH" << " DVCBS " << nodes_DVCBS / 100 << " expanded; "
+    std::cout << "STP" << " DVCBS " << nodes_DVCBS / 100 << " expanded; "
               << nodes_DVCBSn / 100 << " necessary; "
               << notie_DVCBS / (float) 100 << " no last layer" << std::endl;
-    std::cout << "ToH" << " DVCBSa " << nodes_DVCBSa / 100 << " expanded; "
+    std::cout << "STP" << " DVCBSa " << nodes_DVCBSa / 100 << " expanded; "
               << nodes_DVCBSan / 100 << " necessary; "
               << notie_DVCBSa / (float) 100 << " no last layer" << std::endl;
-    std::cout << "ToH" << " NBB " << nodes_NBB / 100 << " expanded; "
+    std::cout << "STP" << " NBB " << nodes_NBB / 100 << " expanded; "
               << nodes_NBBn / 100 << " necessary; "
               << notie_NBB / (float) 100 << " no last layer" << std::endl;
-    std::cout << "ToH" << " GBFHS-eager " << nodes_GBFHS / 100 << " expanded; "
+    std::cout << "STP" << " GBFHS-eager " << nodes_GBFHS / 100 << " expanded; "
               << nodes_GBFHSn / 100 << " necessary; "
               << notie_GBFHS / (float) 100 << " no last layer" << std::endl;
-    std::cout << "ToH" << " GBFHS-lazy " << nodes_GBFHSl / 100 << " expanded; "
+    std::cout << "STP" << " GBFHS-lazy " << nodes_GBFHSl / 100 << " expanded; "
               << nodes_GBFHSln / 100 << " necessary; "
               << notie_GBFHSl / (float) 100 << " no last layer" << std::endl;
-    std::cout << "ToH" << " A* " << nodes_Astar / 100 << " expanded; "
+    std::cout << "STP" << " A* " << nodes_Astar / 100 << " expanded; "
               << nodes_Astarn / 100 << " necessary; "
               << notie_Astar / (float) 100 << " no last layer" << std::endl;
-    std::cout << "ToH" << " BS* " << nodes_BSstar / 100 << " expanded; "
+    std::cout << "STP" << " BS* " << nodes_BSstar / 100 << " expanded; "
               << nodes_BSstarn / 100 << " necessary; "
               << notie_BSstar / (float) 100 << " no last layer" << std::endl;
-    std::cout << "ToH" << " BAE* " << nodes_BAE / 100 << " expanded; "
+    std::cout << "STP" << " BS*-a " << nodes_BSstara / 100 << " expanded; "
+              << nodes_BSstaran / 100 << " necessary; "
+              << notie_BSstara / (float) 100 << " no last layer" << std::endl;
+    std::cout << "STP" << " BAE* " << nodes_BAE / 100 << " expanded; "
               << nodes_BAEn / 100 << " necessary; "
               << notie_BAE / (float) 100 << " no last layer" << std::endl;
-    std::cout << "ToH" << " DBS " << nodes_DBS / 100 << " expanded; "
+    std::cout << "STP" << " BAE*-p " << nodes_BAEp / 100 << " expanded; "
+              << nodes_BAEpn / 100 << " necessary; "
+              << notie_BAEp / (float) 100 << " no last layer" << std::endl;
+    std::cout << "STP" << " DBS " << nodes_DBS / 100 << " expanded; "
               << nodes_DBSn / 100 << " necessary; "
               << notie_DBS / (float) 100 << " no last layer" << std::endl;
+    std::cout << "STP" << " DBS-p " << nodes_DBSp / 100 << " expanded; "
+              << nodes_DBSpn / 100 << " necessary; "
+              << notie_DBSp / (float) 100 << " no last layer" << std::endl;
 
     printf("+++++++++++++++++++++++++++++++++++++++++\n");
 

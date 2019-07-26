@@ -56,14 +56,14 @@ void TestPancakeRandom() {
         std::vector < AStarOpenClosedData < PancakePuzzleState < N >> > rastarOpenClose;
 
         long nodes_Astar = 0, nodes_Astarn = 0, notie_Astar = 0,
-                nodes_BSstar = 0, nodes_BSstarn = 0, notie_BSstar = 0,
+                nodes_BSstar = 0, nodes_BSstarn = 0, notie_BSstar = 0, nodes_BSstara = 0, nodes_BSstaran = 0, notie_BSstara = 0,
                 nodes_NBS = 0, nodes_NBSn = 0, notie_NBS = 0, nodes_NBSa = 0, nodes_NBSan = 0, notie_NBSa = 0,
                 nodes_DVCBS = 0, nodes_DVCBSn = 0, notie_DVCBS = 0, nodes_DVCBSa = 0, nodes_DVCBSan = 0, notie_DVCBSa = 0,
                 nodes_NBB = 0, nodes_NBBn = 0, notie_NBB = 0,
                 nodes_GBFHS = 0, nodes_GBFHSn = 0, notie_GBFHS = 0, nodes_GBFHSl = 0, nodes_GBFHSln = 0, notie_GBFHSl = 0,
                 nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0, notie_GBFHSbest = 0,
-                nodes_BAE = 0, nodes_BAEn = 0, notie_BAE = 0,
-                nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0;
+                nodes_BAE = 0, nodes_BAEn = 0, notie_BAE = 0, nodes_BAEp = 0, nodes_BAEpn = 0, notie_BAEp = 0,
+                nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0;
 
         for (int count = 0; count < INSTANCES; count++) {
 
@@ -427,6 +427,32 @@ void TestPancakeRandom() {
                 }
             }
 
+            // DBS
+            if (1) {
+                DBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> dbs(false);
+                goal.Reset();
+                start = original;
+                t8.StartTimer();
+                dbs.GetPath(&pancake, start, goal, &pancake, &pancake2, dbsPath);
+                t8.EndTimer();
+                std::cout << "GAP-" << gap << " DBS-p found path length " << pancake.GetPathLength(dbsPath) << "; "
+                          << dbs.GetNodesExpanded() << " expanded; " << dbs.GetNecessaryExpansions()
+                          << " necessary; "
+                          << t8.GetElapsedTime() << "s elapsed" << std::endl;
+
+                nodes_DBSp += dbs.GetNodesExpanded();
+                nodes_DBSpn += dbs.GetNecessaryExpansions();
+                if (dbs.GetNodesExpanded() == dbs.GetNecessaryExpansions()) notie_DBSp++;
+
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(dbsPath);
+                else if (optimal_cost != pancake.GetPathLength(dbsPath)) {
+                    printf("GAP-%d DBS-p reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
+                           optimal_cost, pancake.GetPathLength(dbsPath));
+                    exit(0);
+                }
+            }
+
             // BS*
             if (1) {
                 BSStar<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> bs;
@@ -451,6 +477,30 @@ void TestPancakeRandom() {
                 }
             }
 
+            // BS*-a
+            if (1) {
+                BSStar<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> bs(true);
+                start = original;
+                t1.StartTimer();
+                bs.GetPath(&pancake, start, goal, &pancake, &pancake2, bsPath);
+                t1.EndTimer();
+                printf("GAP-%d BS*-a found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n", gap,
+                       pancake.GetPathLength(bsPath),
+                       bs.GetNodesExpanded(), bs.GetNecessaryExpansions(), t1.GetElapsedTime());
+
+                nodes_BSstara += bs.GetNodesExpanded();
+                nodes_BSstaran += bs.GetNecessaryExpansions();
+                if (bs.GetNodesExpanded() == bs.GetNecessaryExpansions()) notie_BSstara++;
+
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(bsPath);
+                else if (optimal_cost != pancake.GetPathLength(bsPath)) {
+                    printf("GAP-%d BS*-a reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
+                           optimal_cost, pancake.GetPathLength(bsPath));
+                    exit(0);
+                }
+            }
+
             // BAE*
             if (1) {
                 BAE<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> bae;
@@ -470,6 +520,30 @@ void TestPancakeRandom() {
                 if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(baePath);
                 else if (optimal_cost != pancake.GetPathLength(baePath)) {
                     printf("GAP-%d BAE* reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
+                           optimal_cost, pancake.GetPathLength(baePath));
+                    exit(0);
+                }
+            }
+
+            // BAE*-p
+            if (1) {
+                BAE<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> bae(false);
+                start = original;
+                t1.StartTimer();
+                bae.GetPath(&pancake, start, goal, &pancake, &pancake2, baePath);
+                t1.EndTimer();
+                printf("GAP-%d BAE*-p found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n", gap,
+                       pancake.GetPathLength(baePath),
+                       bae.GetNodesExpanded(), bae.GetNecessaryExpansions(), t1.GetElapsedTime());
+
+                nodes_BAEp += bae.GetNodesExpanded();
+                nodes_BAEpn += bae.GetNecessaryExpansions();
+                if (bae.GetNodesExpanded() == bae.GetNecessaryExpansions()) notie_BAEp++;
+
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(baePath);
+                else if (optimal_cost != pancake.GetPathLength(baePath)) {
+                    printf("GAP-%d BAE*-p reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
                            optimal_cost, pancake.GetPathLength(baePath));
                     exit(0);
                 }
@@ -505,235 +579,54 @@ void TestPancakeRandom() {
 
         std::cout << " Experiments: " << INSTANCES << std::endl;
 
-        std::cout << "ToH" << " NBS " << nodes_NBS / INSTANCES << " expanded; "
+        std::cout << "Pancake" << " NBS " << nodes_NBS / INSTANCES << " expanded; "
                   << nodes_NBSn / INSTANCES << " necessary; "
                   << notie_NBS / (float) INSTANCES << " no last layer" << std::endl;
-        std::cout << "ToH" << " NBSa " << nodes_NBSa / INSTANCES << " expanded; "
+        std::cout << "Pancake" << " NBSa " << nodes_NBSa / INSTANCES << " expanded; "
                   << nodes_NBSan / INSTANCES << " necessary; "
                   << notie_NBSa / (float) INSTANCES << " no last layer" << std::endl;
-        std::cout << "ToH" << " DVCBS " << nodes_DVCBS / INSTANCES << " expanded; "
+        std::cout << "Pancake" << " DVCBS " << nodes_DVCBS / INSTANCES << " expanded; "
                   << nodes_DVCBSn / INSTANCES << " necessary; "
                   << notie_DVCBS / (float) INSTANCES << " no last layer" << std::endl;
-        std::cout << "ToH" << " DVCBSa " << nodes_DVCBSa / INSTANCES << " expanded; "
+        std::cout << "Pancake" << " DVCBSa " << nodes_DVCBSa / INSTANCES << " expanded; "
                   << nodes_DVCBSan / INSTANCES << " necessary; "
                   << notie_DVCBSa / (float) INSTANCES << " no last layer" << std::endl;
-        std::cout << "ToH" << " NBB " << nodes_NBB / INSTANCES << " expanded; "
+        std::cout << "Pancake" << " NBB " << nodes_NBB / INSTANCES << " expanded; "
                   << nodes_NBBn / INSTANCES << " necessary; "
                   << notie_NBB / (float) INSTANCES << " no last layer" << std::endl;
-        std::cout << "ToH" << " GBFHS-eager " << nodes_GBFHS / INSTANCES << " expanded; "
+        std::cout << "Pancake" << " GBFHS-eager " << nodes_GBFHS / INSTANCES << " expanded; "
                   << nodes_GBFHSn / INSTANCES << " necessary; "
                   << notie_GBFHS / (float) INSTANCES << " no last layer" << std::endl;
-        std::cout << "ToH" << " GBFHS-lazy " << nodes_GBFHSl / INSTANCES << " expanded; "
+        std::cout << "Pancake" << " GBFHS-lazy " << nodes_GBFHSl / INSTANCES << " expanded; "
                   << nodes_GBFHSln / INSTANCES << " necessary; "
                   << notie_GBFHSl / (float) INSTANCES << " no last layer" << std::endl;
-        std::cout << "ToH" << " A* " << nodes_Astar / INSTANCES << " expanded; "
+        std::cout << "Pancake" << " A* " << nodes_Astar / INSTANCES << " expanded; "
                   << nodes_Astarn / INSTANCES << " necessary; "
                   << notie_Astar / (float) INSTANCES << " no last layer" << std::endl;
-        std::cout << "ToH" << " BS* " << nodes_BSstar / INSTANCES << " expanded; "
+        std::cout << "Pancake" << " BS* " << nodes_BSstar / INSTANCES << " expanded; "
                   << nodes_BSstarn / INSTANCES << " necessary; "
                   << notie_BSstar / (float) INSTANCES << " no last layer" << std::endl;
-        std::cout << "ToH" << " BAE* " << nodes_BAE / INSTANCES << " expanded; "
+        std::cout << "Pancake" << " BS*-a " << nodes_BSstara / INSTANCES << " expanded; "
+                  << nodes_BSstaran / INSTANCES << " necessary; "
+                  << notie_BSstara / (float) INSTANCES << " no last layer" << std::endl;
+        std::cout << "Pancake" << " BAE* " << nodes_BAE / INSTANCES << " expanded; "
                   << nodes_BAEn / INSTANCES << " necessary; "
                   << notie_BAE / (float) INSTANCES << " no last layer" << std::endl;
-        std::cout << "ToH" << " DBS " << nodes_DBS / INSTANCES << " expanded; "
+        std::cout << "Pancake" << " BAE*-p " << nodes_BAEp / INSTANCES << " expanded; "
+                  << nodes_BAEpn / INSTANCES << " necessary; "
+                  << notie_BAEp / (float) INSTANCES << " no last layer" << std::endl;
+        std::cout << "Pancake" << " DBS " << nodes_DBS / INSTANCES << " expanded; "
                   << nodes_DBSn / INSTANCES << " necessary; "
                   << notie_DBS / (float) INSTANCES << " no last layer" << std::endl;
+        std::cout << "Pancake" << " DBS-p " << nodes_DBSp / INSTANCES << " expanded; "
+                  << nodes_DBSpn / INSTANCES << " necessary; "
+                  << notie_DBSp / (float) INSTANCES << " no last layer" << std::endl;
 
         printf("+++++++++++++++++++++++++++++++++++++++++\n");
 
     }
 
     exit(0);
-}
-
-const int CNT = 28;
-
-void TestPancakeHard() {
-    srandom(2017218);
-    PancakePuzzleState <CNT> start;
-    PancakePuzzleState <CNT> original;
-    PancakePuzzleState <CNT> goal;
-    PancakePuzzle <CNT> pancake;
-    PancakePuzzle <CNT> pancake2;
-
-
-    std::vector <PancakePuzzleState<CNT>> nbsPath;
-    std::vector <PancakePuzzleState<CNT>> dvcbsPath;
-    std::vector <PancakePuzzleState<CNT>> bsPath;
-    std::vector <PancakePuzzleState<CNT>> astarPath;
-    std::vector <PancakePuzzleState<CNT>> mmPath;
-    std::vector <PancakePuzzleAction> idaPath;
-    Timer t1, t2, t3, t4, t5;
-
-    for (int count = 2; count < 100; count++) {
-        goal.Reset();
-        original.Reset();
-        GetPancakeInstance(original, count);
-
-        printf("Problem %d of %d\n", count + 1, 100);
-        std::cout << original << "; Initial heuristic " << pancake.HCost(original, goal) << "\n";
-
-        // A*
-        if (0) {
-            TemplateAStar <PancakePuzzleState<CNT>, PancakePuzzleAction, PancakePuzzle<CNT>> astar;
-            start = original;
-            t1.StartTimer();
-            astar.GetPath(&pancake, start, goal, astarPath);
-            t1.EndTimer();
-            printf("HARD-%d A* found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n", count,
-                   pancake.GetPathLength(astarPath),
-                   astar.GetNodesExpanded(), astar.GetNecessaryExpansions(), t1.GetElapsedTime());
-//			std::unordered_map<int, bool> m;
-//			for (int x = 0; x < astar.GetNumItems(); x++)
-//			{
-//				auto &i = astar.GetItem(x);
-//				if (i.where != kClosedList)
-//					continue;
-//				int tmp = (((int)i.g)<<10)|(int)i.h;
-//				if (m.find(tmp) == m.end())
-//				{
-//					m[tmp] = true;
-//					printf("(%d, %d)\n", (int)i.g, (int)i.h);
-//				}
-//			}
-        }
-
-        // Reverse A*
-        if (0) {
-            TemplateAStar <PancakePuzzleState<CNT>, PancakePuzzleAction, PancakePuzzle<CNT>> astar;
-            goal.Reset();
-            start = original;
-            t1.StartTimer();
-            astar.GetPath(&pancake, goal, start, astarPath);
-            t1.EndTimer();
-            printf("HARD-%d ReverseA* found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n", count,
-                   pancake.GetPathLength(astarPath),
-                   astar.GetNodesExpanded(), astar.GetNecessaryExpansions(), t1.GetElapsedTime());
-//			std::unordered_map<int, bool> m;
-//			for (int x = 0; x < astar.GetNumItems(); x++)
-//			{
-//				auto &i = astar.GetItem(x);
-//				if (i.where != kClosedList)
-//					continue;
-//				int tmp = (((int)i.g)<<10)|(int)i.h;
-//				if (m.find(tmp) == m.end())
-//				{
-//					m[tmp] = true;
-//					printf("(%d, %d)\n", (int)i.g, (int)i.h);
-//				}
-//			}
-        }
-
-        // Find minimum
-        /*
-        if (0)
-        {
-            std::string t = "/Users/nathanst/pancake_";
-            t += std::to_string(count);
-            t += ".svg";
-
-            start = original;
-            GetWeightedVertexGraph<PancakePuzzleState<CNT>, PancakePuzzleAction, PancakePuzzle<CNT>>(start, goal, &pancake, &pancake, &pancake);
-        }
-        */
-        // DVCBS
-        if (1) {
-            for (int i = 1; i <= 15; i++) {
-                if (i != 4) {
-                    continue;
-                }
-                DVCBS<PancakePuzzleState < CNT>, PancakePuzzleAction, PancakePuzzle < CNT >> dvcbs(i);
-                goal.Reset();
-                start = original;
-                t2.StartTimer();
-                dvcbs.GetPath(&pancake, start, goal, &pancake, &pancake2, dvcbsPath);
-                t2.EndTimer();
-                printf("HARD-%d DVCBS %d found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed; \n",
-                       count, i, pancake.GetPathLength(dvcbsPath),
-                       dvcbs.GetNodesExpanded(), dvcbs.GetNecessaryExpansions(), t2.GetElapsedTime());
-            }
-
-        }
-        // NBS
-        if (1) {
-            NBS<PancakePuzzleState < CNT>, PancakePuzzleAction, PancakePuzzle < CNT >> nbs;
-            goal.Reset();
-            start = original;
-            t2.StartTimer();
-            nbs.GetPath(&pancake, start, goal, &pancake, &pancake2, nbsPath);
-            t2.EndTimer();
-            printf("HARD-%d NBS found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed; \n", count,
-                   pancake.GetPathLength(nbsPath),
-                   nbs.GetNodesExpanded(), nbs.GetNecessaryExpansions(), t2.GetElapsedTime());
-        }
-
-        // NBS0
-        if (0) {
-            ZeroHeuristic <PancakePuzzleState<CNT>> z;
-            NBS<PancakePuzzleState < CNT>, PancakePuzzleAction, PancakePuzzle < CNT >> nbs;
-            goal.Reset();
-            start = original;
-            t2.StartTimer();
-            nbs.GetPath(&pancake, start, goal, &z, &z, nbsPath);
-            t2.EndTimer();
-            printf("HARD-%d NBS0 found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed;\n", count,
-                   pancake.GetPathLength(nbsPath),
-                   nbs.GetNodesExpanded(), nbs.GetNecessaryExpansions(), t2.GetElapsedTime());
-        }
-
-        // BS*
-        if (0) {
-            BSStar<PancakePuzzleState < CNT>, PancakePuzzleAction, PancakePuzzle < CNT >> bs;
-            goal.Reset();
-            start = original;
-            t2.StartTimer();
-            bs.GetPath(&pancake, start, goal, &pancake, &pancake2, bsPath);
-            t2.EndTimer();
-            printf("HARD-%d BS* found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n", count,
-                   pancake.GetPathLength(bsPath),
-                   bs.GetNodesExpanded(), bs.GetNecessaryExpansions(), t2.GetElapsedTime());
-        }
-
-        // IDA*
-        if (0) {
-            IDAStar<PancakePuzzleState<CNT>, PancakePuzzleAction, false> idastar;
-            goal.Reset();
-            start = original;
-            t3.StartTimer();
-            idastar.GetPath(&pancake, start, goal, idaPath);
-            t3.EndTimer();
-            printf("HARD-%d IDA* found path length %ld; %llu expanded; %llu generated; %1.2fs elapsed\n", count,
-                   idaPath.size(),
-                   idastar.GetNodesExpanded(), idastar.GetNodesTouched(), t3.GetElapsedTime());
-        }
-
-        // MM
-        if (0) {
-            MM <PancakePuzzleState<CNT>, PancakePuzzleAction, PancakePuzzle<CNT>> mm;
-            goal.Reset();
-            start = original;
-            t4.StartTimer();
-            mm.GetPath(&pancake, start, goal, &pancake, &pancake2, mmPath);
-            t4.EndTimer();
-            printf("HARD-%d MM found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n", count,
-                   pancake.GetPathLength(mmPath),
-                   mm.GetNodesExpanded(), mm.GetNecessaryExpansions(), t1.GetElapsedTime());
-        }
-
-        // MM0
-        if (0) {
-            MM <PancakePuzzleState<CNT>, PancakePuzzleAction, PancakePuzzle<CNT>> mm;
-            ZeroHeuristic <PancakePuzzleState<CNT>> z;
-            goal.Reset();
-            start = original;
-            t4.StartTimer();
-            mm.GetPath(&pancake, start, goal, &z, &z, mmPath);
-            t4.EndTimer();
-            printf("HARD-%d MM0 found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n", count,
-                   pancake.GetPathLength(mmPath),
-                   mm.GetNodesExpanded(), mm.GetNecessaryExpansions(), t1.GetElapsedTime());
-        }
-    }
 }
 
 void TestPancake() {

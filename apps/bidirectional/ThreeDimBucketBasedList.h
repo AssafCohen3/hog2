@@ -44,11 +44,13 @@ public:
     /**
       * get the g value of a node or DBL_MAX if it doesn't exist
       **/
-    const std::pair<bool, std::pair<bool, double>> getNodeG(const state &objKey, const double h, MinCriterion criterion) {
+    const std::pair<bool, std::pair<bool, double>>
+    getNodeG(const state &objKey, const double h, MinCriterion criterion) {
         auto nodeIt = table.find(objKey);
         if (nodeIt != table.end()) {
             double g = nodeIt->second.g;
-            bool optimalG = nodeIt->second.bucket_index == -1 || (g + h <= getMinF(criterion)); // optimal g if expanded or their f is minimal
+            bool optimalG = nodeIt->second.bucket_index == -1 ||
+                            (g + h <= getMinF(criterion)); // optimal g if expanded or their f is minimal
             return std::make_pair(true, std::make_pair(optimalG, nodeIt->second.g));
         } else {
             return std::make_pair(false, std::make_pair(false, std::numeric_limits<double>::max()));
@@ -84,7 +86,7 @@ public:
 
     inline void setEnvironment(environment *env_) { env = env_; }
 
-    int expandableNodes(double f, double g, bool earlyStopping = false);
+    int countMinimumGNodes();
 
     bool findBestBucket(MinCriterion criterion);
 
@@ -237,31 +239,35 @@ ThreeDimBucketBasedList<state, environment, dataStructure>::Pop(MinCriterion cri
     return std::make_pair(poppedState, node.g);
 }
 
-/**
-  * number of expandable nodes such that f(n) <= f and g(n) < g
-  */
 template<typename state, class environment, class dataStructure>
-int ThreeDimBucketBasedList<state, environment, dataStructure>::expandableNodes(double f,
-                                                                                double g,
-                                                                                bool earlyStopping) {
+int ThreeDimBucketBasedList<state, environment, dataStructure>::countMinimumGNodes() {
+
+    if (fLayers.empty()) return 0;
+
+    double minExpandableG = DBL_MAX;
     int nodeCount = 0;
-    for (const auto &flayer : fLayers) {
-        if (flayer.first > f)
+    for (const auto &glayer : fLayers) {
+        if (glayer.first > gLim)
             break;
 
-        for (const auto &bucket : flayer.second) {
-            if (bucket.first >= g)
+        for (const auto &fLayer : glayer.second) {
+            if (fLayer.first > fLim)
                 break;
 
-            nodeCount += bucket.second.size();
-            if (earlyStopping) {
-                return nodeCount;
+            for (const auto &bucket : fLayer.second) {
+                if (bucket.first > dLim)
+                    break;
+
+                if (glayer.first < minExpandableG) { // we found a lower g bucket with expandable nodes
+                    minExpandableG = glayer.first;
+                    nodeCount = 0;
+                }
+                nodeCount += bucket.second.size();
             }
         }
-
     }
 
-    return nodeCount;
+    return minExpandableG == DBL_MAX ? 0 : nodeCount;
 
 }
 

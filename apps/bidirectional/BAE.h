@@ -5,6 +5,7 @@
 #include "FPUtil.h"
 #include "Timer.h"
 #include <unordered_map>
+#include <math.h>
 
 template<class state, int epsilon = 1>
 struct BAECompare {
@@ -21,11 +22,13 @@ struct BAECompare {
 template<class state, class action, class environment, class priorityQueue = AStarOpenClosed <state, BAECompare<state>>>
 class BAE {
 public:
-    BAE() {
+    BAE(bool alternating_ = true, double gcd_ = 1.0) {
         forwardHeuristic = 0;
         backwardHeuristic = 0;
         env = 0;
         ResetNodeCount();
+        gcd = gcd_;
+        alternating = alternating_;
     }
 
     virtual ~BAE() {}
@@ -115,9 +118,12 @@ private:
         if(forwardQueue.OpenSize() == 0 || backwardQueue.OpenSize() == 0)
             return DBL_MAX;
 
-        double total_error_forward = forwardQueue.Lookup(forwardQueue.Peek()).h;
-        double total_error_backward = backwardQueue.Lookup(backwardQueue.Peek()).h;
-        return h0 + ((total_error_forward + total_error_backward) / 2);
+        double totalErrorForward = forwardQueue.Lookup(forwardQueue.Peek()).h;
+        double totalErrorBackward = backwardQueue.Lookup(backwardQueue.Peek()).h;
+        double unroundedLowerBound = h0 + ((totalErrorForward + totalErrorBackward) / 2);
+
+        // round up to the next multiple of gcd
+        return ceil(unroundedLowerBound/gcd) * gcd;
     }
 
     priorityQueue forwardQueue, backwardQueue;
@@ -137,6 +143,8 @@ private:
     Heuristic <state> *forwardHeuristic;
     Heuristic <state> *backwardHeuristic;
 
+    double gcd;
+    bool alternating;
     double h0;
     bool expandForward;
 
@@ -215,13 +223,21 @@ bool BAE<state, action, environment, priorityQueue>::DoSingleSearchStep(std::vec
         return true;
     }
 
-    if (expandForward) {
-        Expand(forwardQueue, backwardQueue, forwardHeuristic, backwardHeuristic, goal, start);
-        expandForward = false;
-    } else {
-        Expand(backwardQueue, forwardQueue, backwardHeuristic, forwardHeuristic, start, goal);
-        expandForward = true;
+    if (alternating) { // original BAE* definition
+        if (expandForward) {
+            Expand(forwardQueue, backwardQueue, forwardHeuristic, backwardHeuristic, goal, start);
+            expandForward = false;
+        } else {
+            Expand(backwardQueue, forwardQueue, backwardHeuristic, forwardHeuristic, start, goal);
+            expandForward = true;
+        }
+    } else { // BS* policy, roughly Pohl's criterion
+        if (forwardQueue.OpenSize() > backwardQueue.OpenSize())
+            Expand(backwardQueue, forwardQueue, backwardHeuristic, forwardHeuristic, start, goal);
+        else
+            Expand(forwardQueue, backwardQueue, forwardHeuristic, backwardHeuristic, goal, start);
     }
+
     return false;
 }
 

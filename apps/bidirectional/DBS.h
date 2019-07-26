@@ -9,7 +9,7 @@
 template<class state, class action, class environment, class priorityQueue = ThreeDimBucketBasedList<state, environment, BucketNodeData<state>>>
 class DBS {
 public:
-    DBS(double epsilon_ = 1.0, double gcd_ = 1.0) {
+    DBS(bool alternating_ = true, double epsilon_ = 1.0, double gcd_ = 1.0) {
         forwardHeuristic = 0;
         backwardHeuristic = 0;
         env = 0;
@@ -19,6 +19,7 @@ public:
         currentCost = DBL_MAX;
         epsilon = epsilon_;
         gcd = gcd_;
+        alternating = alternating_;
     }
 
     ~DBS() {
@@ -126,6 +127,7 @@ private:
     Heuristic <state> *backwardHeuristic;
 
     bool expandForward = true;
+    bool alternating;
 
     double C = 0.0;
 
@@ -187,6 +189,8 @@ bool DBS<state, action, environment, priorityQueue>::UpdateC() {
                     + epsilon;
 
     while (C < std::max(gBound, fBound) && C < currentCost) {
+//        if (!alternating && C < gBound ) std::cout << "  -- C g Updated: " << (C + gcd) << " and " << currentCost << std::endl;
+//        if (!alternating && C < fBound ) std::cout << "  -- C f Updated: " << (C + gcd) << " and " << currentCost << std::endl;
         C += gcd;
         updated = true;
         UpdateQueuesAndCriterion();
@@ -280,14 +284,33 @@ bool DBS<state, action, environment, priorityQueue>::DoSingleSearchStep(std::vec
         return true;
     }
 
-    // TODO: parametrize whether we want to alternate or to take a look at the open lists
-    if (expandForward) {
-        Expand(forwardQueue, backwardQueue, forwardHeuristic, backwardHeuristic, goal, start, true);
-        expandForward = false;
-    } else {
-        Expand(backwardQueue, forwardQueue, backwardHeuristic, forwardHeuristic, start, goal, false);
-        expandForward = true;
+    // TODO: parametrize better whether we want to alternate or to take a look at the open lists
+    if (alternating) { // alternate directions
+        if (expandForward) {
+            Expand(forwardQueue, backwardQueue, forwardHeuristic, backwardHeuristic, goal, start, true);
+            expandForward = false;
+        } else {
+            Expand(backwardQueue, forwardQueue, backwardHeuristic, forwardHeuristic, start, goal, false);
+            expandForward = true;
+        }
+    } else { // choose side with the fewest nodes with minimum g
+        double fMinF = forwardQueue.getMinF(getMinCriterion(true));
+        double dMinF = forwardQueue.getMinD(getMinCriterion(true));
+
+        double fMinB = backwardQueue.getMinF(getMinCriterion(false));
+        double dMinB = backwardQueue.getMinD(getMinCriterion(false));
+
+        double gNodesForward = forwardQueue.countMinimumGNodes();
+        double gNodesBackward = backwardQueue.countMinimumGNodes();
+
+//        std::cout << "  Direction: " << gNodesForward << " - " << gNodesBackward << std::endl;
+
+        if (gNodesForward <= gNodesBackward)
+            Expand(forwardQueue, backwardQueue, forwardHeuristic, backwardHeuristic, goal, start, true);
+        else
+            Expand(backwardQueue, forwardQueue, backwardHeuristic, forwardHeuristic, start, goal, false);
     }
+
     return false;
 }
 
