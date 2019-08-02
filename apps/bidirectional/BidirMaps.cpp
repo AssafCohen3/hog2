@@ -272,6 +272,56 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             }
         }
 
+        // DDBS
+        if (1) {
+            DDBS<xyLoc, tDirection, MapEnvironment> ddbs(true, 1.0, 0.5);
+            std::vector <xyLoc> path;
+            Timer timer;
+            timer.StartTimer();
+            ddbs.GetPath(me, start, goal, me, me, path);
+            timer.EndTimer();
+            printf("DDBS found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   me->GetPathLength(path),
+                   ddbs.GetNodesExpanded(), ddbs.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_DDBS += ddbs.GetNodesExpanded();
+            nodes_DDBSn += ddbs.GetNecessaryExpansions();
+            if (ddbs.GetNodesExpanded() == ddbs.GetNecessaryExpansions()) notie_DDBS++;
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
+            else if (optimal_cost != me->GetPathLength(path)) {
+                printf("DDBS reported bad value!! optimal %1.2f; reported %1.2f;\n",
+                       optimal_cost, me->GetPathLength(path));
+                exit(0);
+            }
+        }
+
+        // DDBS-p
+        if (1) {
+            DDBS<xyLoc, tDirection, MapEnvironment> ddbs(false, 1.0, 0.5);
+            std::vector <xyLoc> path;
+            Timer timer;
+            timer.StartTimer();
+            ddbs.GetPath(me, start, goal, me, me, path);
+            timer.EndTimer();
+            printf("DDBS-p found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   me->GetPathLength(path),
+                   ddbs.GetNodesExpanded(), ddbs.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_DDBSp += ddbs.GetNodesExpanded();
+            nodes_DDBSpn += ddbs.GetNecessaryExpansions();
+            if (ddbs.GetNodesExpanded() == ddbs.GetNecessaryExpansions()) notie_DDBSp++;
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
+            else if (optimal_cost != me->GetPathLength(path)) {
+                printf("DDBS-p reported bad value!! optimal %1.2f; reported %1.2f;\n",
+                       optimal_cost, me->GetPathLength(path));
+                exit(0);
+            }
+        }
+
         // BS*
         if (1) {
             BSStar <xyLoc, tDirection, MapEnvironment> bs;

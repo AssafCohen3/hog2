@@ -17,6 +17,7 @@
 #include "Baseline.h"
 #include "GBFHS.h"
 #include "DBS.h"
+#include "DDBS.h"
 #include "CalculateWVC.h"
 
 
@@ -75,7 +76,8 @@ void TestTOH(int first, int last) {
             nodes_GBFHS = 0, nodes_GBFHSn = 0, notie_GBFHS = 0, nodes_GBFHSl = 0, nodes_GBFHSln = 0, notie_GBFHSl = 0,
             nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0, notie_GBFHSbest = 0,
             nodes_BAE = 0, nodes_BAEn = 0, notie_BAE = 0, nodes_BAEp = 0, nodes_BAEpn = 0, notie_BAEp = 0,
-            nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0;
+            nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0,
+            nodes_DDBS = 0, nodes_DDBSn = 0, notie_DDBS = 0, nodes_DDBSp = 0, nodes_DDBSpn = 0, notie_DDBSp = 0;
 
     int table[] = {52058078, 116173544, 208694125, 131936966, 141559500, 133800745, 194246206, 50028346, 167007978,
                    207116816, 163867037, 119897198, 201847476, 210859515, 117688410, 121633885};
@@ -332,6 +334,52 @@ void TestTOH(int first, int last) {
             }
         }
 
+        // DDBS
+        if (1) {
+            DDBS<TOHState < N>, TOHMove, TOH < N >> ddbs;
+            timer.StartTimer();
+            ddbs.GetPath(&toh, s, g, f, b, thePath);
+            timer.EndTimer();
+            printf("DDBS found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   toh.GetPathLength(thePath),
+                   ddbs.GetNodesExpanded(), ddbs.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_DDBS += ddbs.GetNodesExpanded();
+            nodes_DDBSn += ddbs.GetNecessaryExpansions();
+            if (ddbs.GetNodesExpanded() == ddbs.GetNecessaryExpansions()) notie_DDBS++;
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
+            else if (optimal_cost != toh.GetPathLength(thePath)) {
+                printf("DDBS reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, toh.GetPathLength(thePath));
+                exit(0);
+            }
+        }
+
+        // DDBS-p
+        if (1) {
+            DDBS<TOHState < N>, TOHMove, TOH < N >> ddbs(false);
+            timer.StartTimer();
+            ddbs.GetPath(&toh, s, g, f, b, thePath);
+            timer.EndTimer();
+            printf("DDBS-p found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   toh.GetPathLength(thePath),
+                   ddbs.GetNodesExpanded(), ddbs.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_DDBSp += ddbs.GetNodesExpanded();
+            nodes_DDBSpn += ddbs.GetNecessaryExpansions();
+            if (ddbs.GetNodesExpanded() == ddbs.GetNecessaryExpansions()) notie_DDBSp++;
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
+            else if (optimal_cost != toh.GetPathLength(thePath)) {
+                printf("DDBS-p reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, toh.GetPathLength(thePath));
+                exit(0);
+            }
+        }
+
         // BS*
         if (1) {
             BSStar<TOHState < N>, TOHMove, TOH < N >> bs;
@@ -502,6 +550,12 @@ void TestTOH(int first, int last) {
     std::cout << "ToH" << " DBS-p " << nodes_DBSp / experiments << " expanded; "
               << nodes_DBSpn / experiments << " necessary; "
               << notie_DBSp / (float) experiments << " no last layer" << std::endl;
+    std::cout << "ToH" << " DDBS " << nodes_DDBS / experiments << " expanded; "
+              << nodes_DDBSn / experiments << " necessary; "
+              << notie_DDBS / (float) experiments << " no last layer" << std::endl;
+    std::cout << "ToH" << " DDBS-p " << nodes_DDBSp / experiments << " expanded; "
+              << nodes_DDBSpn / experiments << " necessary; "
+              << notie_DDBSp / (float) experiments << " no last layer" << std::endl;
 
     printf("+++++++++++++++++++++++++++++++++++++++++\n");
 

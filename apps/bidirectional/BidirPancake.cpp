@@ -13,6 +13,7 @@
 #include "Baseline.h"
 #include "GBFHS.h"
 #include "DBS.h"
+#include "DDBS.h"
 #include "IDAStar.h"
 #include "MM.h"
 #include "BSStar.h"
@@ -41,6 +42,7 @@ void TestPancakeRandom() {
         std::vector <PancakePuzzleState<N>> baselinePath;
         std::vector <PancakePuzzleState<N>> gbfhsPath;
         std::vector <PancakePuzzleState<N>> dbsPath;
+        std::vector <PancakePuzzleState<N>> ddbsPath;
         std::vector <PancakePuzzleState<N>> dvcbsEpsilonPath;
         std::vector <PancakePuzzleState<N>> bsPath;
         std::vector <PancakePuzzleState<N>> baePath;
@@ -63,7 +65,8 @@ void TestPancakeRandom() {
                 nodes_GBFHS = 0, nodes_GBFHSn = 0, notie_GBFHS = 0, nodes_GBFHSl = 0, nodes_GBFHSln = 0, notie_GBFHSl = 0,
                 nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0, notie_GBFHSbest = 0,
                 nodes_BAE = 0, nodes_BAEn = 0, notie_BAE = 0, nodes_BAEp = 0, nodes_BAEpn = 0, notie_BAEp = 0,
-                nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0;
+                nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0,
+                nodes_DDBS = 0, nodes_DDBSn = 0, notie_DDBS = 0, nodes_DDBSp = 0, nodes_DDBSpn = 0, notie_DDBSp = 0;
 
         for (int count = 0; count < INSTANCES; count++) {
 
@@ -427,7 +430,7 @@ void TestPancakeRandom() {
                 }
             }
 
-            // DBS
+            // DBS-p
             if (1) {
                 DBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> dbs(false);
                 goal.Reset();
@@ -449,6 +452,58 @@ void TestPancakeRandom() {
                 else if (optimal_cost != pancake.GetPathLength(dbsPath)) {
                     printf("GAP-%d DBS-p reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
                            optimal_cost, pancake.GetPathLength(dbsPath));
+                    exit(0);
+                }
+            }
+
+            // DDBS
+            if (1) {
+                DDBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> ddbs;
+                goal.Reset();
+                start = original;
+                t8.StartTimer();
+                ddbs.GetPath(&pancake, start, goal, &pancake, &pancake2, ddbsPath);
+                t8.EndTimer();
+                std::cout << "GAP-" << gap << " DDBS found path length " << pancake.GetPathLength(ddbsPath) << "; "
+                          << ddbs.GetNodesExpanded() << " expanded; " << ddbs.GetNecessaryExpansions()
+                          << " necessary; "
+                          << t8.GetElapsedTime() << "s elapsed" << std::endl;
+
+                nodes_DDBS += ddbs.GetNodesExpanded();
+                nodes_DDBSn += ddbs.GetNecessaryExpansions();
+                if (ddbs.GetNodesExpanded() == ddbs.GetNecessaryExpansions()) notie_DDBS++;
+
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(ddbsPath);
+                else if (optimal_cost != pancake.GetPathLength(ddbsPath)) {
+                    printf("GAP-%d DDBS reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
+                           optimal_cost, pancake.GetPathLength(ddbsPath));
+                    exit(0);
+                }
+            }
+
+            // DDBS-p
+            if (1) {
+                DDBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> ddbs(false);
+                goal.Reset();
+                start = original;
+                t8.StartTimer();
+                ddbs.GetPath(&pancake, start, goal, &pancake, &pancake2, ddbsPath);
+                t8.EndTimer();
+                std::cout << "GAP-" << gap << " DDBS-p found path length " << pancake.GetPathLength(ddbsPath) << "; "
+                          << ddbs.GetNodesExpanded() << " expanded; " << ddbs.GetNecessaryExpansions()
+                          << " necessary; "
+                          << t8.GetElapsedTime() << "s elapsed" << std::endl;
+
+                nodes_DDBSp += ddbs.GetNodesExpanded();
+                nodes_DDBSpn += ddbs.GetNecessaryExpansions();
+                if (ddbs.GetNodesExpanded() == ddbs.GetNecessaryExpansions()) notie_DDBSp++;
+
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(ddbsPath);
+                else if (optimal_cost != pancake.GetPathLength(ddbsPath)) {
+                    printf("GAP-%d DDBS-p reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
+                           optimal_cost, pancake.GetPathLength(ddbsPath));
                     exit(0);
                 }
             }
@@ -621,6 +676,12 @@ void TestPancakeRandom() {
         std::cout << "Pancake" << " DBS-p " << nodes_DBSp / INSTANCES << " expanded; "
                   << nodes_DBSpn / INSTANCES << " necessary; "
                   << notie_DBSp / (float) INSTANCES << " no last layer" << std::endl;
+        std::cout << "Pancake" << " DDBS " << nodes_DDBS / INSTANCES << " expanded; "
+                  << nodes_DDBSn / INSTANCES << " necessary; "
+                  << notie_DDBS / (float) INSTANCES << " no last layer" << std::endl;
+        std::cout << "Pancake" << " DDBS-p " << nodes_DDBSp / INSTANCES << " expanded; "
+                  << nodes_DDBSpn / INSTANCES << " necessary; "
+                  << notie_DDBSp / (float) INSTANCES << " no last layer" << std::endl;
 
         printf("+++++++++++++++++++++++++++++++++++++++++\n");
 

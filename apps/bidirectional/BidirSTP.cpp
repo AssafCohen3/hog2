@@ -18,6 +18,7 @@
 #include "Baseline.h"
 #include "GBFHS.h"
 #include "DBS.h"
+#include "DDBS.h"
 
 MNPuzzleState<4, 4> GetKorfInstance(int which) {
     int instances[100][16] =
@@ -146,7 +147,8 @@ void TestSTP() {
             nodes_GBFHS = 0, nodes_GBFHSn = 0, notie_GBFHS = 0, nodes_GBFHSl = 0, nodes_GBFHSln = 0, notie_GBFHSl = 0,
             nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0, notie_GBFHSbest = 0,
             nodes_BAE = 0, nodes_BAEn = 0, notie_BAE = 0, nodes_BAEp = 0, nodes_BAEpn = 0, notie_BAEp = 0,
-            nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0;
+            nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0,
+            nodes_DDBS = 0, nodes_DDBSn = 0, notie_DDBS = 0, nodes_DDBSp = 0, nodes_DDBSpn = 0, notie_DDBSp = 0;
 
     for (int x = 0; x < 100; x++) // 547 to 540
     {
@@ -417,6 +419,56 @@ void TestSTP() {
             }
         }
 
+        // DDBS
+        if (1) {
+            std::vector <MNPuzzleState<4, 4>> solutionPath;
+            DDBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> ddbs;
+            Timer timer;
+            timer.StartTimer();
+            ddbs.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
+            timer.EndTimer();
+            printf("DDBS found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   mnp.GetPathLength(solutionPath),
+                   ddbs.GetNodesExpanded(), ddbs.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_DDBS += ddbs.GetNodesExpanded();
+            nodes_DDBSn += ddbs.GetNecessaryExpansions();
+            if (ddbs.GetNodesExpanded() == ddbs.GetNecessaryExpansions()) notie_DDBS++;
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
+            else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
+                printf("DDBS reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(solutionPath));
+                exit(0);
+            }
+        }
+
+        // DDBS-p
+        if (1) {
+            std::vector <MNPuzzleState<4, 4>> solutionPath;
+            DDBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> ddbs(false);
+            Timer timer;
+            timer.StartTimer();
+            ddbs.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
+            timer.EndTimer();
+            printf("DDBS-p found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   mnp.GetPathLength(solutionPath),
+                   ddbs.GetNodesExpanded(), ddbs.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_DDBSp += ddbs.GetNodesExpanded();
+            nodes_DDBSpn += ddbs.GetNecessaryExpansions();
+            if (ddbs.GetNodesExpanded() == ddbs.GetNecessaryExpansions()) notie_DDBSp++;
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
+            else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
+                printf("DDBS-p reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(solutionPath));
+                exit(0);
+            }
+        }
+
         // BS*
         if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
@@ -589,6 +641,12 @@ void TestSTP() {
     std::cout << "STP" << " DBS-p " << nodes_DBSp / 100 << " expanded; "
               << nodes_DBSpn / 100 << " necessary; "
               << notie_DBSp / (float) 100 << " no last layer" << std::endl;
+    std::cout << "STP" << " DDBS " << nodes_DDBS / 100 << " expanded; "
+              << nodes_DDBSn / 100 << " necessary; "
+              << notie_DDBS / (float) 100 << " no last layer" << std::endl;
+    std::cout << "STP" << " DDBS-p " << nodes_DDBSp / 100 << " expanded; "
+              << nodes_DDBSpn / 100 << " necessary; "
+              << notie_DDBSp / (float) 100 << " no last layer" << std::endl;
 
     printf("+++++++++++++++++++++++++++++++++++++++++\n");
 

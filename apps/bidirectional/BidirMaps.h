@@ -13,6 +13,7 @@
 #include "Baseline.h"
 #include "GBFHS.h"
 #include "DBS.h"
+#include "DDBS.h"
 #include "TemplateAStar.h"
 #include "BSStar.h"
 #include "BAE.h"
@@ -34,7 +35,8 @@ class MapExperiment {
             nodes_GBFHS = 0, nodes_GBFHSn = 0, notie_GBFHS = 0, nodes_GBFHSl = 0, nodes_GBFHSln = 0, notie_GBFHSl = 0,
             nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0, notie_GBFHSbest = 0,
             nodes_BAE = 0, nodes_BAEn = 0, notie_BAE = 0, nodes_BAEp = 0, nodes_BAEpn = 0, notie_BAEp = 0,
-            nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0;
+            nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0,
+            nodes_DDBS = 0, nodes_DDBSn = 0, notie_DDBS = 0, nodes_DDBSp = 0, nodes_DDBSpn = 0, notie_DDBSp = 0;
 
     int experiments = 0;
 
@@ -56,7 +58,8 @@ public:
         nodes_GBFHS = 0, nodes_GBFHSn = 0, notie_GBFHS = 0, nodes_GBFHSl = 0, nodes_GBFHSln = 0, notie_GBFHSl = 0,
         nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0, notie_GBFHSbest = 0,
         nodes_BAE = 0, nodes_BAEn = 0, notie_BAE = 0, nodes_BAEp = 0, nodes_BAEpn = 0, notie_BAEp = 0,
-        nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0;
+        nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0,
+        nodes_DDBS = 0, nodes_DDBSn = 0, notie_DDBS = 0, nodes_DDBSp = 0, nodes_DDBSpn = 0, notie_DDBSp = 0;
 
         experiments = 0;
 
@@ -114,6 +117,12 @@ public:
         std::cout << "Maps" << " DBS-p " << nodes_DBSp / experiments << " expanded; "
                   << nodes_DBSpn / experiments << " necessary; "
                   << notie_DBSp / (float) experiments << " no last layer" << std::endl;
+        std::cout << "Maps" << " DDBS " << nodes_DDBS / experiments << " expanded; "
+                  << nodes_DDBSn / experiments << " necessary; "
+                  << notie_DDBS / (float) experiments << " no last layer" << std::endl;
+        std::cout << "Maps" << " DDBS-p " << nodes_DDBSp / experiments << " expanded; "
+                  << nodes_DDBSpn / experiments << " necessary; "
+                  << notie_DDBSp / (float) experiments << " no last layer" << std::endl;
 
         printf("+++++++++++++++++++++++++++++++++++++++++\n");
 
