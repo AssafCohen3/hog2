@@ -120,7 +120,7 @@ private:
 
         double totalErrorForward = forwardQueue.Lookup(forwardQueue.Peek()).h;
         double totalErrorBackward = backwardQueue.Lookup(backwardQueue.Peek()).h;
-        double unroundedLowerBound = h0 + ((totalErrorForward + totalErrorBackward) / 2);
+        double unroundedLowerBound = (totalErrorForward + totalErrorBackward) / 2;
 
         // round up to the next multiple of gcd
         return ceil(unroundedLowerBound/gcd) * gcd;
@@ -145,7 +145,6 @@ private:
 
     double gcd;
     bool alternating;
-    double h0;
     bool expandForward;
 
     std::map<double, int> counts;
@@ -186,20 +185,8 @@ bool BAE<state, action, environment, priorityQueue>::InitializeSearch(environmen
     lastMinForwardG = 0;
     lastMinBackwardG = 0;
 
-    double h0f = forwardHeuristic->HCost(start, goal);
-    double h0b = backwardHeuristic->HCost(goal, start);
-
-    if (h0f != h0b) {
-        std::cerr << "  !! Non-symmetric heuristic: " << h0f << " - " << h0b << std::endl;
-        exit(0);
-    }
-
-    // TODO taking the max fixes the suboptimality problem, maybe? but it surely would render BAE less efficient
-    // TODO see if BAE can work with assymetric heuristics (by taking the mean of h0f and h0b, for instance)
-    h0 = std::max(h0f, h0b);
-
-    forwardQueue.AddOpenNode(start, env->GetStateHash(start), 0, h0f - h0);
-    backwardQueue.AddOpenNode(goal, env->GetStateHash(goal), 0, h0b - h0);
+    forwardQueue.AddOpenNode(start, env->GetStateHash(start), 0, forwardHeuristic->HCost(start, goal));
+    backwardQueue.AddOpenNode(goal, env->GetStateHash(goal), 0, backwardHeuristic->HCost(goal, start));
 
     expandForward = true;
     return true;
@@ -344,7 +331,7 @@ void BAE<state, action, environment, priorityQueue>::Expand(priorityQueue &curre
                 if (!fless(g + h, currentCost))
                     break;
 
-                double totalError = (2 * g) + h - h0 - reverse_heuristic->HCost(succ, source);
+                double totalError = (2 * g) + h - reverse_heuristic->HCost(succ, source);
 
                 current.AddOpenNode(succ, // This may invalidate our references
                                     hash,
