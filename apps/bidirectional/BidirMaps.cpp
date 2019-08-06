@@ -224,7 +224,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // DBS
         if (1) {
-            DBS<xyLoc, tDirection, MapEnvironment> dbs(true, 1.0, 0.5);
+            DBBS<xyLoc, tDirection, MapEnvironment, false> dbs(true, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
@@ -249,7 +249,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // DBS-p
         if (1) {
-            DBS<xyLoc, tDirection, MapEnvironment> dbs(false, 1.0, 0.5);
+            DBBS<xyLoc, tDirection, MapEnvironment, false> dbs(false, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
@@ -274,19 +274,19 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // DDBS
         if (1) {
-            DDBS<xyLoc, tDirection, MapEnvironment> ddbs(true, 1.0, 0.5);
+            DBBS<xyLoc, tDirection, MapEnvironment> dbbs(true, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
-            ddbs.GetPath(me, start, goal, me, me, path);
+            dbbs.GetPath(me, start, goal, me, me, path);
             timer.EndTimer();
             printf("DDBS found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
                    me->GetPathLength(path),
-                   ddbs.GetNodesExpanded(), ddbs.GetNecessaryExpansions(), timer.GetElapsedTime());
+                   dbbs.GetNodesExpanded(), dbbs.GetNecessaryExpansions(), timer.GetElapsedTime());
 
-            nodes_DDBS += ddbs.GetNodesExpanded();
-            nodes_DDBSn += ddbs.GetNecessaryExpansions();
-            if (ddbs.GetNodesExpanded() == ddbs.GetNecessaryExpansions()) notie_DDBS++;
+            nodes_DBBS += dbbs.GetNodesExpanded();
+            nodes_DBBSn += dbbs.GetNecessaryExpansions();
+            if (dbbs.GetNodesExpanded() == dbbs.GetNecessaryExpansions()) notie_DBBS++;
 
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
@@ -299,19 +299,19 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // DDBS-p
         if (1) {
-            DDBS<xyLoc, tDirection, MapEnvironment> ddbs(false, 1.0, 0.5);
+            DBBS<xyLoc, tDirection, MapEnvironment> dbbs(false, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
-            ddbs.GetPath(me, start, goal, me, me, path);
+            dbbs.GetPath(me, start, goal, me, me, path);
             timer.EndTimer();
             printf("DDBS-p found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
                    me->GetPathLength(path),
-                   ddbs.GetNodesExpanded(), ddbs.GetNecessaryExpansions(), timer.GetElapsedTime());
+                   dbbs.GetNodesExpanded(), dbbs.GetNecessaryExpansions(), timer.GetElapsedTime());
 
-            nodes_DDBSp += ddbs.GetNodesExpanded();
-            nodes_DDBSpn += ddbs.GetNecessaryExpansions();
-            if (ddbs.GetNodesExpanded() == ddbs.GetNecessaryExpansions()) notie_DDBSp++;
+            nodes_DBBSp += dbbs.GetNodesExpanded();
+            nodes_DBBSpn += dbbs.GetNecessaryExpansions();
+            if (dbbs.GetNodesExpanded() == dbbs.GetNecessaryExpansions()) notie_DBBSp++;
 
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);

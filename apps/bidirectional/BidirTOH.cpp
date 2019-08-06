@@ -16,8 +16,7 @@
 #include "BAE.h"
 #include "Baseline.h"
 #include "GBFHS.h"
-#include "DBS.h"
-#include "DDBS.h"
+#include "DBBS.h"
 #include "CalculateWVC.h"
 
 
@@ -290,7 +289,7 @@ void TestTOH(int first, int last) {
 
         // DBS
         if (1) {
-            DBS<TOHState < N>, TOHMove, TOH < N >> dbs;
+            DBBS<TOHState < N>, TOHMove, TOH < N >, false> dbs;
             timer.StartTimer();
             dbs.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();
@@ -313,7 +312,7 @@ void TestTOH(int first, int last) {
 
         // DBS-p
         if (1) {
-            DBS<TOHState < N>, TOHMove, TOH < N >> dbs(false);
+            DBBS<TOHState < N>, TOHMove, TOH < N >, false> dbs(false);
             timer.StartTimer();
             dbs.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();
@@ -336,7 +335,7 @@ void TestTOH(int first, int last) {
 
         // DDBS
         if (1) {
-            DDBS<TOHState < N>, TOHMove, TOH < N >> ddbs;
+            DBBS<TOHState < N>, TOHMove, TOH < N >> ddbs;
             timer.StartTimer();
             ddbs.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();
@@ -359,7 +358,7 @@ void TestTOH(int first, int last) {
 
         // DDBS-p
         if (1) {
-            DDBS<TOHState < N>, TOHMove, TOH < N >> ddbs(false);
+            DBBS<TOHState < N>, TOHMove, TOH < N >> ddbs(false);
             timer.StartTimer();
             ddbs.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();

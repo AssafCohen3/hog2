@@ -12,8 +12,7 @@
 #include "NBS.h"
 #include "Baseline.h"
 #include "GBFHS.h"
-#include "DBS.h"
-#include "DDBS.h"
+#include "DBBS.h"
 #include "IDAStar.h"
 #include "MM.h"
 #include "BSStar.h"
@@ -42,7 +41,7 @@ void TestPancakeRandom() {
         std::vector <PancakePuzzleState<N>> baselinePath;
         std::vector <PancakePuzzleState<N>> gbfhsPath;
         std::vector <PancakePuzzleState<N>> dbsPath;
-        std::vector <PancakePuzzleState<N>> ddbsPath;
+        std::vector <PancakePuzzleState<N>> dbbsPath;
         std::vector <PancakePuzzleState<N>> dvcbsEpsilonPath;
         std::vector <PancakePuzzleState<N>> bsPath;
         std::vector <PancakePuzzleState<N>> baePath;
@@ -66,7 +65,7 @@ void TestPancakeRandom() {
                 nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0, notie_GBFHSbest = 0,
                 nodes_BAE = 0, nodes_BAEn = 0, notie_BAE = 0, nodes_BAEp = 0, nodes_BAEpn = 0, notie_BAEp = 0,
                 nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0,
-                nodes_DDBS = 0, nodes_DDBSn = 0, notie_DDBS = 0, nodes_DDBSp = 0, nodes_DDBSpn = 0, notie_DDBSp = 0;
+                nodes_DBBS = 0, nodes_DBBSn = 0, notie_DBBS = 0, nodes_DBBSp = 0, nodes_DBBSpn = 0, notie_DBBSp = 0;
 
         for (int count = 0; count < INSTANCES; count++) {
 
@@ -406,7 +405,7 @@ void TestPancakeRandom() {
 
             // DBS
             if (1) {
-                DBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> dbs;
+                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >, false> dbs;
                 goal.Reset();
                 start = original;
                 t8.StartTimer();
@@ -432,7 +431,7 @@ void TestPancakeRandom() {
 
             // DBS-p
             if (1) {
-                DBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> dbs(false);
+                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >, false> dbs(false);
                 goal.Reset();
                 start = original;
                 t8.StartTimer();
@@ -456,54 +455,54 @@ void TestPancakeRandom() {
                 }
             }
 
-            // DDBS
+            // DBBS
             if (1) {
-                DDBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> ddbs;
+                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> dbbs;
                 goal.Reset();
                 start = original;
                 t8.StartTimer();
-                ddbs.GetPath(&pancake, start, goal, &pancake, &pancake2, ddbsPath);
+                dbbs.GetPath(&pancake, start, goal, &pancake, &pancake2, dbbsPath);
                 t8.EndTimer();
-                std::cout << "GAP-" << gap << " DDBS found path length " << pancake.GetPathLength(ddbsPath) << "; "
-                          << ddbs.GetNodesExpanded() << " expanded; " << ddbs.GetNecessaryExpansions()
+                std::cout << "GAP-" << gap << " DBBS found path length " << pancake.GetPathLength(dbbsPath) << "; "
+                          << dbbs.GetNodesExpanded() << " expanded; " << dbbs.GetNecessaryExpansions()
                           << " necessary; "
                           << t8.GetElapsedTime() << "s elapsed" << std::endl;
 
-                nodes_DDBS += ddbs.GetNodesExpanded();
-                nodes_DDBSn += ddbs.GetNecessaryExpansions();
-                if (ddbs.GetNodesExpanded() == ddbs.GetNecessaryExpansions()) notie_DDBS++;
+                nodes_DBBS += dbbs.GetNodesExpanded();
+                nodes_DBBSn += dbbs.GetNecessaryExpansions();
+                if (dbbs.GetNodesExpanded() == dbbs.GetNecessaryExpansions()) notie_DBBS++;
 
                 // test optimality
-                if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(ddbsPath);
-                else if (optimal_cost != pancake.GetPathLength(ddbsPath)) {
-                    printf("GAP-%d DDBS reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
-                           optimal_cost, pancake.GetPathLength(ddbsPath));
+                if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(dbbsPath);
+                else if (optimal_cost != pancake.GetPathLength(dbbsPath)) {
+                    printf("GAP-%d DBBS reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
+                           optimal_cost, pancake.GetPathLength(dbbsPath));
                     exit(0);
                 }
             }
 
-            // DDBS-p
+            // DBBS-p
             if (1) {
-                DDBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> ddbs(false);
+                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> dbbs(false);
                 goal.Reset();
                 start = original;
                 t8.StartTimer();
-                ddbs.GetPath(&pancake, start, goal, &pancake, &pancake2, ddbsPath);
+                dbbs.GetPath(&pancake, start, goal, &pancake, &pancake2, dbbsPath);
                 t8.EndTimer();
-                std::cout << "GAP-" << gap << " DDBS-p found path length " << pancake.GetPathLength(ddbsPath) << "; "
-                          << ddbs.GetNodesExpanded() << " expanded; " << ddbs.GetNecessaryExpansions()
+                std::cout << "GAP-" << gap << " DBBS-p found path length " << pancake.GetPathLength(dbbsPath) << "; "
+                          << dbbs.GetNodesExpanded() << " expanded; " << dbbs.GetNecessaryExpansions()
                           << " necessary; "
                           << t8.GetElapsedTime() << "s elapsed" << std::endl;
 
-                nodes_DDBSp += ddbs.GetNodesExpanded();
-                nodes_DDBSpn += ddbs.GetNecessaryExpansions();
-                if (ddbs.GetNodesExpanded() == ddbs.GetNecessaryExpansions()) notie_DDBSp++;
+                nodes_DBBSp += dbbs.GetNodesExpanded();
+                nodes_DBBSpn += dbbs.GetNecessaryExpansions();
+                if (dbbs.GetNodesExpanded() == dbbs.GetNecessaryExpansions()) notie_DBBSp++;
 
                 // test optimality
-                if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(ddbsPath);
-                else if (optimal_cost != pancake.GetPathLength(ddbsPath)) {
-                    printf("GAP-%d DDBS-p reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
-                           optimal_cost, pancake.GetPathLength(ddbsPath));
+                if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(dbbsPath);
+                else if (optimal_cost != pancake.GetPathLength(dbbsPath)) {
+                    printf("GAP-%d DBBS-p reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
+                           optimal_cost, pancake.GetPathLength(dbbsPath));
                     exit(0);
                 }
             }
@@ -676,12 +675,12 @@ void TestPancakeRandom() {
         std::cout << "Pancake" << " DBS-p " << nodes_DBSp / INSTANCES << " expanded; "
                   << nodes_DBSpn / INSTANCES << " necessary; "
                   << notie_DBSp / (float) INSTANCES << " no last layer" << std::endl;
-        std::cout << "Pancake" << " DDBS " << nodes_DDBS / INSTANCES << " expanded; "
-                  << nodes_DDBSn / INSTANCES << " necessary; "
-                  << notie_DDBS / (float) INSTANCES << " no last layer" << std::endl;
-        std::cout << "Pancake" << " DDBS-p " << nodes_DDBSp / INSTANCES << " expanded; "
-                  << nodes_DDBSpn / INSTANCES << " necessary; "
-                  << notie_DDBSp / (float) INSTANCES << " no last layer" << std::endl;
+        std::cout << "Pancake" << " DBBS " << nodes_DBBS / INSTANCES << " expanded; "
+                  << nodes_DBBSn / INSTANCES << " necessary; "
+                  << notie_DBBS / (float) INSTANCES << " no last layer" << std::endl;
+        std::cout << "Pancake" << " DBBS-p " << nodes_DBBSp / INSTANCES << " expanded; "
+                  << nodes_DBBSpn / INSTANCES << " necessary; "
+                  << notie_DBBSp / (float) INSTANCES << " no last layer" << std::endl;
 
         printf("+++++++++++++++++++++++++++++++++++++++++\n");
 
