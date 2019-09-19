@@ -4,6 +4,7 @@
 #include <cassert>
 #include <vector>
 #include <map>
+#include <set>
 #include <unordered_map>
 #include <stdint.h>
 #include <limits>
@@ -12,6 +13,13 @@
 
 enum MinCriterion {
     MinG, MinF, MinD, MinB
+};
+
+struct NodeValues {
+    std::set<double> g_values;
+    std::set<double> f_values;
+    std::set<double> d_values;
+    std::set<double> b_values;
 };
 
 template<typename state, class environment, bool useB = true, class dataStructure = BucketNodeData<state> >
@@ -78,6 +86,8 @@ public:
     inline void setEnvironment(environment *env_) { env = env_; }
 
     int countMinimumGNodes();
+
+    NodeValues getNodeValues();
 
     bool isBestBucketComputed() { return bestBucket != nullptr; }
 
@@ -269,6 +279,27 @@ int BidirErrorBucketBasedList<state, environment, useB, dataStructure>::countMin
 
     return minExpandableG == DBL_MAX ? 0 : nodeCount;
 
+}
+
+template<typename state, class environment, bool useB, class dataStructure>
+NodeValues BidirErrorBucketBasedList<state, environment, useB, dataStructure>::getNodeValues() {
+
+    NodeValues result;
+
+    for (const auto &glayer : fLayers) {
+        result.g_values.insert(glayer.first);
+
+        for (const auto &fLayer : glayer.second) {
+            result.f_values.insert(fLayer.first);
+
+            for (const auto &bucket : fLayer.second) {
+                result.d_values.insert(bucket.first);
+                result.b_values.insert(fLayer.first + bucket.first);
+            }
+        }
+    }
+
+    return result;
 }
 
 #endif

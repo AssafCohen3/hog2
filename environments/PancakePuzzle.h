@@ -409,7 +409,7 @@ double PancakePuzzle<N>::DefaultH(const PancakePuzzleState<N> &state) const {
 }
 
 template<int N>
-double oldversion(const PancakePuzzleState<N> &state, const std::vector<int> &goal_locs, int gap) {
+double PancakePuzzle<N>::DefaultH(const PancakePuzzleState<N> &state, const std::vector<int> &goal_locs) const {
 
     double h_count = 0.0;
     unsigned i = 0;
@@ -429,8 +429,8 @@ double oldversion(const PancakePuzzleState<N> &state, const std::vector<int> &go
 }
 
 template<int N>
-double PancakePuzzle<N>::DefaultH(const PancakePuzzleState<N> &state, const std::vector<int> &goal_locs) const {
-    // TODO: symmetric version, probably slower but also more intuitive. maybe inadmissible?
+double symmetric_version(const PancakePuzzleState<N> &state, const std::vector<int> &goal_locs, int gap) {
+    // TODO: symmetric version, probably slower but also more intuitive
     // TODO: also, experiments seem to indicate that it is stronger for some reason... investigate
 
     int numberPancakes = N - gap;
