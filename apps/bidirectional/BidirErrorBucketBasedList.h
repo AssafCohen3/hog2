@@ -140,14 +140,14 @@ void BidirErrorBucketBasedList<state, environment, useB, dataStructure>::AddOpen
             auto &bucket = fLayers[g][f][d];
             nodeIt->second = dataStructure(g, parent, bucket.size()); // node exists but with worse g value, update
             bucket.push_back(&(nodeIt->first));
-            if (g < minG || f < minF || d < minD || (f + d) < minB)
+            if (g < minG || f < minF || d < minD || (useB && (f + d) < minB))
                 invalidateCachedValues();
         }
     } else {  // node doesn't exist
         auto &bucket = fLayers[g][f][d];
         auto it_pair = table.insert(std::make_pair(val, dataStructure(g, parent, bucket.size())));
         bucket.push_back(&(it_pair.first->first));
-        if (g < minG || f < minF || d < minD || (f + d) < minB)
+        if (g < minG || f < minF || d < minD || (useB && (f + d) < minB))
             invalidateCachedValues();
     }
 
