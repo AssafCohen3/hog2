@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <math.h>
 
-template<class state, int epsilon = 1>
+template<class state>
 struct BAECompare {
     bool operator()(const AStarOpenClosedData <state> &i1, const AStarOpenClosedData <state> &i2) const {
         double p1 = i1.h;
@@ -22,11 +22,12 @@ struct BAECompare {
 template<class state, class action, class environment, class priorityQueue = AStarOpenClosed <state, BAECompare<state>>>
 class BAE {
 public:
-    BAE(bool alternating_ = true, double gcd_ = 1.0) {
+    BAE(bool alternating_ = true, double epsilon_ = 1.0, double gcd_ = 1.0) {
         forwardHeuristic = 0;
         backwardHeuristic = 0;
         env = 0;
         ResetNodeCount();
+        epsilon = epsilon_;
         gcd = gcd_;
         alternating = alternating_;
     }
@@ -135,7 +136,6 @@ private:
     double currentCost;
     double lastMinForwardG;
     double lastMinBackwardG;
-    double epsilon;
 
     std::vector <state> neighbors;
     environment *env;
@@ -143,7 +143,9 @@ private:
     Heuristic <state> *forwardHeuristic;
     Heuristic <state> *backwardHeuristic;
 
+    double epsilon;
     double gcd;
+
     bool alternating;
     bool expandForward;
 
@@ -325,7 +327,7 @@ void BAE<state, action, environment, priorityQueue>::Expand(priorityQueue &curre
                 break;
             case kNotFound: {
                 double g = parentData.g + edgeCost;
-                double h = heuristic->HCost(succ, target);
+                double h = std::max(heuristic->HCost(succ, target), epsilon);
 
                 // Ignore nodes that don't have lower f-cost than the incumbant solution
                 if (!fless(g + h, currentCost))
