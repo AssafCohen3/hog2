@@ -99,14 +99,16 @@ private:
     double GetNextC();
 
     MinCriterion getMinCriterion(bool forwardQueue) {
-        switch (criterion) {
-            case RiseG:
-                return MinCriterion::MinG;
-            case RiseForward:
-                return forwardQueue ? MinCriterion::MinF : MinCriterion::MinD;
-            case RiseBackward:
-                return forwardQueue ? MinCriterion::MinD : MinCriterion::MinF;
-        }
+//        switch (criterion) {
+//            case RiseG:
+//                return MinCriterion::MinG;
+//            case RiseForward:
+//                return forwardQueue ? MinCriterion::MinF : MinCriterion::MinD;
+//            case RiseBackward:
+//                return forwardQueue ? MinCriterion::MinD : MinCriterion::MinF;
+//        }
+
+        return useB ? MinCriterion::MinB : MinCriterion::MinF;
     }
 
     priorityQueue forwardQueue, backwardQueue;
@@ -182,7 +184,7 @@ bool DBBS<state, action, environment, useB, priorityQueue>::UpdateC() {
 
     bool incrementedC = false;
 
-    while (C < currentCost && !forwardQueue.isBestBucketComputed() || !backwardQueue.isBestBucketComputed()) {
+    while (C < currentCost && (!forwardQueue.isBestBucketComputed() || !backwardQueue.isBestBucketComputed())) {
 
         // initial forward queue limits
         forwardQueue.computeBestBucket(getMinCriterion(true), C, C, C, 2.0 * C);
