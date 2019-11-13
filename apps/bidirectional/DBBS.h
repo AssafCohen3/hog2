@@ -384,8 +384,10 @@ void DBBS<state, action, environment, useB, priorityQueue>::Expand(priorityQueue
         if (fgreatereq(succG + h, currentCost))
             continue;
 
+        double h_nx = reverseHeuristic->HCost(succ, source);
+
         // check if there is a collision
-        auto collision = opposite.getNodeG(succ, reverseHeuristic->HCost(succ, source));
+        auto collision = opposite.getNodeG(succ, h_nx);
         if (collision.first) {
             auto gValue = collision.second;
             double collisionCost = succG + gValue.second;
@@ -395,7 +397,7 @@ void DBBS<state, action, environment, useB, priorityQueue>::Expand(priorityQueue
 
                 if (fgreatereq(C, currentCost)) {
                     // add the node so the plan can be extracted
-                    current.AddOpenNode(succ, succG, h, succG - reverseHeuristic->HCost(succ, source), node);
+                    current.AddOpenNode(succ, succG, h, h_nx, node);
                     break; // step out, don't generate more nodes
                 }
             } else if (gValue.first) {
@@ -404,7 +406,7 @@ void DBBS<state, action, environment, useB, priorityQueue>::Expand(priorityQueue
         }
 
         // add it to the open list
-        current.AddOpenNode(succ, succG, h, succG - reverseHeuristic->HCost(succ, source), node);
+        current.AddOpenNode(succ, succG, h, h_nx, node);
     }
 }
 

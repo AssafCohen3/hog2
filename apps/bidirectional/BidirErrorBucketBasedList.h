@@ -38,7 +38,7 @@ public:
         fLayers.clear();
     }
 
-    void AddOpenNode(const state val, double g, double h, double d, const state *parent = nullptr);
+    void AddOpenNode(const state val, double g, double h, double h_nx, const state *parent = nullptr);
 
     std::pair<const state *, double> Pop();
 
@@ -101,8 +101,8 @@ private:
 
     std::unordered_map<const state, dataStructure, decltype(stateHasher)> table;
 
-    // fist key is g, second is f, third is d
-    std::map<double, std::map<double, std::map < double, Bucket> >> fLayers;
+    // fist key is g, second is h, third is h_nx (h_nx is sorted in reverse to traverse by ascending d)
+    std::map<double, std::map<double, std::map < double, Bucket, std::greater<int>> >> fLayers;
 
     Bucket *bestBucket = nullptr;
 
@@ -123,9 +123,10 @@ template<typename state, class environment, bool useB, class dataStructure>
 void BidirErrorBucketBasedList<state, environment, useB, dataStructure>::AddOpenNode(const state val,
                                                                                const double g,
                                                                                const double h,
-                                                                               const double d,
+                                                                               const double h_nx,
                                                                                const state *parent) {
     const double f = g + h;
+    const double d = g - h_nx;
 
     auto nodeIt = table.find(val);
     if (nodeIt != table.end()) { // node already exists
@@ -135,16 +136,16 @@ void BidirErrorBucketBasedList<state, environment, useB, dataStructure>::AddOpen
         } else {
             // invalidate pointer with higher g value in the open list
             // remember to get the right d, which depends on old_g!
-            fLayers[old_g][old_g + h][d + (old_g - g)][nodeIt->second.bucket_index] = nullptr;
+            fLayers[old_g][h][h_nx][nodeIt->second.bucket_index] = nullptr;
 
-            auto &bucket = fLayers[g][f][d];
+            auto &bucket = fLayers[g][h][h_nx];
             nodeIt->second = dataStructure(g, parent, bucket.size()); // node exists but with worse g value, update
             bucket.push_back(&(nodeIt->first));
             if (g < minG || f < minF || d < minD || (useB && (f + d) < minB))
                 invalidateCachedValues();
         }
     } else {  // node doesn't exist
-        auto &bucket = fLayers[g][f][d];
+        auto &bucket = fLayers[g][h][h_nx];
         auto it_pair = table.insert(std::make_pair(val, dataStructure(g, parent, bucket.size())));
         bucket.push_back(&(it_pair.first->first));
         if (g < minG || f < minF || d < minD || (useB && (f + d) < minB))
@@ -164,7 +165,10 @@ void BidirErrorBucketBasedList<state, environment, useB, dataStructure>::compute
     gLim = gLim_, fLim = fLim_, dLim = dLim_, bLim = bLim_;
 
     auto gLayerIt = fLayers.begin();
-    while (gLayerIt != fLayers.end() && gLayerIt->first <= gLim) {
+    while (gLayerIt != fLayers.end()) {
+        double g = gLayerIt->first;
+
+        if (g > gLim) break;
 
         auto &gLayer = gLayerIt->second;
 
@@ -174,7 +178,12 @@ void BidirErrorBucketBasedList<state, environment, useB, dataStructure>::compute
         }
 
         auto fLayerIt = gLayer.begin();
-        while (fLayerIt != gLayer.end() && fLayerIt->first <= fLim) {
+        while (fLayerIt != gLayer.end()) {
+            double h = fLayerIt->first;
+            double f = g + h;
+
+            if (f > fLim) break;
+
             auto &fLayer = fLayerIt->second;
 
             if (fLayer.size() == 0) { // if the whole f layer is empty, erase it
@@ -183,7 +192,8 @@ void BidirErrorBucketBasedList<state, environment, useB, dataStructure>::compute
             }
 
             auto dLayerIt = fLayer.begin();
-            while (dLayerIt != fLayer.end() && dLayerIt->first <= dLim) {
+            while (dLayerIt != fLayer.end()) {
+                double d = g - dLayerIt->first;
 
                 // deal with bucket - first, check that is not empty
                 Bucket &bucket = dLayerIt->second;
@@ -192,26 +202,28 @@ void BidirErrorBucketBasedList<state, environment, useB, dataStructure>::compute
                     continue;
                 }
 
+                if (d > dLim) break;
+
                 // check its b value against bLim
-                double bValue = fLayerIt->first + dLayerIt->first;
+                double bValue = f + d;
                 if (useB && bValue > bLim) {
                     dLayerIt++;
                     continue;
                 }
 
                 // pick it if it is the best based on the criterion
-                if (gLayerIt->first < minG) {
-                    minG = gLayerIt->first;
+                if (g < minG) {
+                    minG = g;
                     if (criterion == MinCriterion::MinG) bestBucket = &bucket;
                 }
 
-                if (fLayerIt->first < minF) {
-                    minF = fLayerIt->first;
+                if (f < minF) {
+                    minF = f;
                     if (criterion == MinCriterion::MinF) bestBucket = &bucket;
                 }
 
-                if (dLayerIt->first < minD) {
-                    minD = dLayerIt->first;
+                if (d < minD) {
+                    minD = d;
                     if (criterion == MinCriterion::MinD) bestBucket = &bucket;
                 }
 
@@ -256,20 +268,26 @@ int BidirErrorBucketBasedList<state, environment, useB, dataStructure>::countMin
 
     double minExpandableG = DBL_MAX;
     int nodeCount = 0;
-    for (const auto &glayer : fLayers) {
-        if (glayer.first > gLim)
+    for (const auto &gLayer : fLayers) {
+        double g = gLayer.first;
+
+        if (g > gLim)
             break;
 
-        for (const auto &fLayer : glayer.second) {
-            if (fLayer.first > fLim)
+        for (const auto &fLayer : gLayer.second) {
+            double f = g + fLayer.first;
+
+            if (f > fLim)
                 break;
 
             for (const auto &bucket : fLayer.second) {
-                if (bucket.first > dLim || (useB && fLayer.first + bucket.first > bLim))
+                double d = g - bucket.first;
+
+                if (d > dLim || (useB && f + d > bLim))
                     break;
 
-                if (glayer.first < minExpandableG) { // we found a lower g bucket with expandable nodes
-                    minExpandableG = glayer.first;
+                if (g < minExpandableG) { // we found a lower g bucket with expandable nodes
+                    minExpandableG = g;
                     nodeCount = 0;
                 }
                 nodeCount += bucket.second.size();
@@ -287,14 +305,17 @@ NodeValues BidirErrorBucketBasedList<state, environment, useB, dataStructure>::g
     NodeValues result;
 
     for (const auto &glayer : fLayers) {
-        result.g_values.insert(glayer.first);
+        double g = glayer.first;
+        result.g_values.insert(g);
 
         for (const auto &fLayer : glayer.second) {
-            result.f_values.insert(fLayer.first);
+            double f = g + fLayer.first;
+            result.f_values.insert(f);
 
             for (const auto &bucket : fLayer.second) {
-                result.d_values.insert(bucket.first);
-                result.b_values.insert(fLayer.first + bucket.first);
+                double d = g - bucket.first;
+                result.d_values.insert(d);
+                result.b_values.insert(f + d);
             }
         }
     }
