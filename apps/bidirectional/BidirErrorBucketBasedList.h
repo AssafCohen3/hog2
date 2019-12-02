@@ -20,6 +20,8 @@ struct NodeValues {
     std::set<double> f_values;
     std::set<double> d_values;
     std::set<double> b_values;
+    std::set<double> rf_values;
+    std::set<double> rd_values;
 };
 
 template<typename state, class environment, bool useB = true, class dataStructure = BucketNodeData<state> >
@@ -33,7 +35,7 @@ public:
 
     ~BidirErrorBucketBasedList() {}
 
-    void Reset() {
+    inline void Reset() {
         table.clear();
         fLayers.clear();
     }
@@ -63,22 +65,22 @@ public:
         }
     }
 
-    double getMinG() {
+    inline double getMinG() {
         if (bestBucket == nullptr) throw std::runtime_error("No cached best bucket");
         return minG;
     }
 
-    double getMinF() {
+    inline double getMinF() {
         if (bestBucket == nullptr) throw std::runtime_error("No cached best bucket");
         return minF;
     }
 
-    double getMinD() {
+    inline double getMinD() {
         if (bestBucket == nullptr) throw std::runtime_error("No cached best bucket");
         return minD;
     }
 
-    double getMinB() {
+    inline double getMinB() {
         if (bestBucket == nullptr) throw std::runtime_error("No cached best bucket");
         return minB;
     }
@@ -89,7 +91,7 @@ public:
 
     NodeValues getNodeValues();
 
-    bool isBestBucketComputed() { return bestBucket != nullptr; }
+    inline bool isBestBucketComputed() { return bestBucket != nullptr; }
 
     void computeBestBucket(MinCriterion criterion, double gLim_, double fLim_, double dLim_, double bLim_);
 
@@ -185,6 +187,13 @@ void BidirErrorBucketBasedList<state, environment, useB, dataStructure>::compute
 
             if (f > fLim) break;
 
+            // check its rf value against rfLim
+            double rfValue = g - h;
+            if (useRC && rfValue > rfLim) {
+                fLayerIt++;
+                continue; // continue because rf is decreasing
+            }
+
             auto &fLayer = fLayerIt->second;
 
             if (fLayer.size() == 0) { // if the whole f layer is empty, erase it
@@ -209,10 +218,10 @@ void BidirErrorBucketBasedList<state, environment, useB, dataStructure>::compute
                 double bValue = f + d;
                 if (useB && bValue > bLim) {
                     dLayerIt++;
-                    continue;
+                    break;
                 }
 
-                // pick it if it is the best based on the criterion
+                // pick the bucket as best bucket if it is the best based on the criterion
                 if (g < minG) {
                     minG = g;
                     if (criterion == MinCriterion::MinG) bestBucket = &bucket;
@@ -275,15 +284,23 @@ int BidirErrorBucketBasedList<state, environment, useB, dataStructure>::countMin
         if (g > gLim) break;
 
         for (const auto &fLayer : glayer.second) {
-            double f = g + fLayer.first;
+            double h = fLayer.first;
+            double f = g + h;
+            double rf = g - h;
 
             if (f > fLim) break;
 
+            if (useRC && rf > rfLim) continue; // continue because rf is decreasing
+
             for (const auto &bucket : fLayer.second) {
-                double d = g - bucket.first;
+                double h_nx = bucket.first;
+                double d = g - h_nx;
+                double rd = g + h_nx;
                 double b = f + d;
 
                 if (d > dLim || (useB && b > bLim)) break;
+
+                if (useRC && rd > rdLim) continue; // continue because rd is decreasing
 
                 if (g < minExpandableG) { // we found a lower g bucket with expandable nodes
                     minExpandableG = g;
@@ -308,13 +325,19 @@ NodeValues BidirErrorBucketBasedList<state, environment, useB, dataStructure>::g
         result.g_values.insert(g);
 
         for (const auto &fLayer : glayer.second) {
-            double f = g + fLayer.first;
+            double h = fLayer.first;
+            double f = g + h;
+            double rf = g - h;
             result.f_values.insert(f);
+            result.rf_values.insert(rf);
 
             for (const auto &bucket : fLayer.second) {
-                double d = g - bucket.first;
+                double h_nx = bucket.first;
+                double d = g - h_nx;
+                double rd = g + h_nx;
                 double b = f + d;
                 result.d_values.insert(d);
+                result.rd_values.insert(rd);
                 result.b_values.insert(b);
             }
         }

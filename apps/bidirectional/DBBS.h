@@ -99,15 +99,6 @@ private:
     double GetNextC();
 
     MinCriterion getMinCriterion(bool forwardQueue) {
-//        switch (criterion) {
-//            case RiseG:
-//                return MinCriterion::MinG;
-//            case RiseForward:
-//                return forwardQueue ? MinCriterion::MinF : MinCriterion::MinD;
-//            case RiseBackward:
-//                return forwardQueue ? MinCriterion::MinD : MinCriterion::MinF;
-//        }
-
         return useB ? MinCriterion::MinB : MinCriterion::MinF;
     }
 
@@ -304,9 +295,33 @@ double DBBS<state, action, environment, useB, priorityQueue>::GetNextC() {
             }
     }
 
+    // forward rc bound
+    if (useRC) {
+        const auto &forward_rf_values = forwardValues.rf_values;
+        const auto &backward_rd_values = backwardValues.rd_values;
+
+        for (const double fw_rf_value : forward_rf_values)
+            for (const double bw_rd_value : backward_rd_values) {
+                double fw_RC_bound = fw_rf_value + bw_rd_value;
+                if (fw_RC_bound > C && fw_RC_bound < result)
+                    result = fw_RC_bound;
+            }
+    }
+
+    // backward rc bound
+    if (useRC) {
+        const auto &forward_rd_values = forwardValues.rd_values;
+        const auto &backward_rf_values = backwardValues.rf_values;
+
+        for (const double bw_rf_value : backward_rf_values)
+            for (const double fw_rd_value : forward_rd_values) {
+                double bw_RC_bound = bw_rf_value + fw_rd_value;
+                if (bw_RC_bound > C && bw_RC_bound < result)
+                    result = bw_RC_bound;
+            }
+    }
 
     return result;
-
 }
 
 template<class state, class action, class environment, bool useB, class priorityQueue>
