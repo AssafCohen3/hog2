@@ -288,7 +288,7 @@ void TestTOH(int first, int last) {
         }
 
         // DBS
-        if (1) {
+        if (0) {
             DBBS<TOHState < N>, TOHMove, TOH < N >, false> dbs;
             timer.StartTimer();
             dbs.GetPath(&toh, s, g, f, b, thePath);
@@ -311,7 +311,7 @@ void TestTOH(int first, int last) {
         }
 
         // DBS-p
-        if (1) {
+        if (0) {
             DBBS<TOHState < N>, TOHMove, TOH < N >, false> dbs(false);
             timer.StartTimer();
             dbs.GetPath(&toh, s, g, f, b, thePath);
@@ -333,6 +333,8 @@ void TestTOH(int first, int last) {
             }
         }
 
+        int tempDBBS;
+
         // DDBS
         if (1) {
             DBBS<TOHState < N>, TOHMove, TOH < N >> ddbs;
@@ -345,6 +347,9 @@ void TestTOH(int first, int last) {
 
             nodes_DDBS += ddbs.GetNodesExpanded();
             nodes_DDBSn += ddbs.GetNecessaryExpansions();
+
+            tempDBBS = ddbs.GetNecessaryExpansions();
+
             if (ddbs.GetNodesExpanded() == ddbs.GetNecessaryExpansions()) notie_DDBS++;
 
             // test optimality
@@ -355,6 +360,33 @@ void TestTOH(int first, int last) {
                 exit(0);
             }
         }
+
+        // DDBS-norc
+//        if (1) {
+//            DBBS<TOHState < N>, TOHMove, TOH < N >, true, false> ddbs;
+//            timer.StartTimer();
+//            ddbs.GetPath(&toh, s, g, f, b, thePath);
+//            timer.EndTimer();
+//            printf("DDBS found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+//                   toh.GetPathLength(thePath),
+//                   ddbs.GetNodesExpanded(), ddbs.GetNecessaryExpansions(), timer.GetElapsedTime());
+//
+//            nodes_DDBS += ddbs.GetNodesExpanded();
+//            nodes_DDBSn += ddbs.GetNecessaryExpansions();
+//            if (ddbs.GetNodesExpanded() == ddbs.GetNecessaryExpansions()) notie_DDBS++;
+//
+//            if (tempDBBS != ddbs.GetNecessaryExpansions()) {
+//                std::cout << "  !!!!!!!!!!! rc bound pruned something!" << std::endl;
+//            }
+//
+//            // test optimality
+//            if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
+//            else if (optimal_cost != toh.GetPathLength(thePath)) {
+//                printf("DDBS reported bad value!! optimal %1.0f; reported %1.0f;\n",
+//                       optimal_cost, toh.GetPathLength(thePath));
+//                exit(0);
+//            }
+//        }
 
         // DDBS-p
         if (1) {
@@ -449,7 +481,7 @@ void TestTOH(int first, int last) {
         }
 
         // BAE*-p
-        if (1) {
+        if (0) {
             BAE<TOHState < N>, TOHMove, TOH < N >> bae(false);
             timer.StartTimer();
             bae.GetPath(&toh, s, g, f, b, thePath);

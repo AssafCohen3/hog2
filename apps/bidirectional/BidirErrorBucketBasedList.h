@@ -24,7 +24,7 @@ struct NodeValues {
     std::set<double> rd_values;
 };
 
-template<typename state, class environment, bool useB = true, class dataStructure = BucketNodeData<state> >
+template<typename state, class environment, bool useB = true, bool useRC = true, class dataStructure = BucketNodeData<state> >
 class BidirErrorBucketBasedList {
 
     using Bucket = std::vector<const state *>;
@@ -65,25 +65,17 @@ public:
         }
     }
 
-    inline double getMinG() {
-        if (bestBucket == nullptr) throw std::runtime_error("No cached best bucket");
-        return minG;
-    }
+    inline double getMinG() { return checkBestBucketAndReturnValue(minG); }
 
-    inline double getMinF() {
-        if (bestBucket == nullptr) throw std::runtime_error("No cached best bucket");
-        return minF;
-    }
+    inline double getMinF() { return checkBestBucketAndReturnValue(minF); }
 
-    inline double getMinD() {
-        if (bestBucket == nullptr) throw std::runtime_error("No cached best bucket");
-        return minD;
-    }
+    inline double getMinD() { return checkBestBucketAndReturnValue(minD); }
 
-    inline double getMinB() {
-        if (bestBucket == nullptr) throw std::runtime_error("No cached best bucket");
-        return minB;
-    }
+    inline double getMinB() { return checkBestBucketAndReturnValue(minB); }
+
+    inline double getMinRF() { return checkBestBucketAndReturnValue(minRF); }
+
+    inline double getMinRD() { return checkBestBucketAndReturnValue(minRD); }
 
     inline void setEnvironment(environment *env_) { env = env_; }
 
@@ -93,7 +85,9 @@ public:
 
     inline bool isBestBucketComputed() { return bestBucket != nullptr; }
 
-    void computeBestBucket(MinCriterion criterion, double gLim_, double fLim_, double dLim_, double bLim_);
+    void computeBestBucket(MinCriterion criterion,
+                           double gLim_, double fLim_, double dLim_,
+                           double bLim_, double rfLim_, double rdLim_);
 
 private:
 
@@ -109,25 +103,32 @@ private:
 
     Bucket *bestBucket = nullptr;
 
-    double minG = DBL_MAX, minF = DBL_MAX, minD = DBL_MAX, minB = DBL_MAX;
-    double gLim = DBL_MAX, fLim = DBL_MAX, dLim = DBL_MAX, bLim = DBL_MAX;
+    double minG = DBL_MAX, minF = DBL_MAX, minD = DBL_MAX, minB = DBL_MAX, minRF = DBL_MAX, minRD = DBL_MAX;
+    double gLim = DBL_MAX, fLim = DBL_MAX, dLim = DBL_MAX, bLim = DBL_MAX, rfLim = DBL_MAX, rdLim = DBL_MAX;
 
-    void invalidateCachedValues() {
+    inline double checkBestBucketAndReturnValue(double value) {
+        if (bestBucket == nullptr) throw std::runtime_error("No cached best bucket");
+        return value;
+    }
+
+    inline void invalidateCachedValues() {
         bestBucket = nullptr;
         minG = DBL_MAX;
         minF = DBL_MAX;
         minD = DBL_MAX;
         minB = DBL_MAX;
+        minRF = DBL_MAX;
+        minRD = DBL_MAX;
     }
 
 };
 
-template<typename state, class environment, bool useB, class dataStructure>
-void BidirErrorBucketBasedList<state, environment, useB, dataStructure>::AddOpenNode(const state val,
-                                                                                     const double g,
-                                                                                     const double h,
-                                                                                     const double h_nx,
-                                                                                     const state *parent) {
+template<typename state, class environment, bool useB, bool useRC, class dataStructure>
+void BidirErrorBucketBasedList<state, environment, useB, useRC, dataStructure>::AddOpenNode(const state val,
+                                                                                            const double g,
+                                                                                            const double h,
+                                                                                            const double h_nx,
+                                                                                            const state *parent) {
     const double f = g + h;
     const double d = g - h_nx;
 
@@ -138,35 +139,39 @@ void BidirErrorBucketBasedList<state, environment, useB, dataStructure>::AddOpen
             return;    // existing node has no worse g value, don't store
         } else {
             // invalidate pointer with higher g value in the open list
-            // remember to get the right d, which depends on old_g!
             fLayers[old_g][h][h_nx][nodeIt->second.bucket_index] = nullptr;
 
             auto &bucket = fLayers[g][h][h_nx];
             nodeIt->second = dataStructure(g, parent, bucket.size()); // node exists but with worse g value, update
             bucket.push_back(&(nodeIt->first));
-            if (g < minG || f < minF || d < minD || (useB && (f + d) < minB))
+            if (g < minG || f < minF || d < minD
+                || (useB && (f + d) < minB)
+                || (useRC && (g - h) < minRF) || (useRC && (g + h_nx) < minRD))
                 invalidateCachedValues();
         }
     } else {  // node doesn't exist
         auto &bucket = fLayers[g][h][h_nx];
         auto it_pair = table.insert(std::make_pair(val, dataStructure(g, parent, bucket.size())));
         bucket.push_back(&(it_pair.first->first));
-        if (g < minG || f < minF || d < minD || (f + d) < minB)
-            if (g < minG || f < minF || d < minD || (useB && (f + d) < minB))
-                invalidateCachedValues();
+        if (g < minG || f < minF || d < minD
+            || (useB && (f + d) < minB)
+            || (useRC && (g - h) < minRF) || (useRC && (g + h_nx) < minRD))
+            invalidateCachedValues();
     }
 
 }
 
-template<typename state, class environment, bool useB, class dataStructure>
-void BidirErrorBucketBasedList<state, environment, useB, dataStructure>::computeBestBucket(MinCriterion criterion,
-                                                                                           double gLim_,
-                                                                                           double fLim_,
-                                                                                           double dLim_,
-                                                                                           double bLim_) {
-
+template<typename state, class environment, bool useB, bool useRC, class dataStructure>
+void
+BidirErrorBucketBasedList<state, environment, useB, useRC, dataStructure>::computeBestBucket(MinCriterion criterion,
+                                                                                             double gLim_,
+                                                                                             double fLim_,
+                                                                                             double dLim_,
+                                                                                             double bLim_,
+                                                                                             double rfLim_,
+                                                                                             double rdLim_) {
     invalidateCachedValues();
-    gLim = gLim_, fLim = fLim_, dLim = dLim_, bLim = bLim_;
+    gLim = gLim_, fLim = fLim_, dLim = dLim_, bLim = bLim_, rfLim = rfLim_, rdLim = rdLim_;
 
     auto gLayerIt = fLayers.begin();
     while (gLayerIt != fLayers.end()) {
@@ -183,7 +188,8 @@ void BidirErrorBucketBasedList<state, environment, useB, dataStructure>::compute
 
         auto fLayerIt = gLayer.begin();
         while (fLayerIt != gLayer.end()) {
-            double f = g + fLayerIt->first;
+            double h = fLayerIt->first;
+            double f = g + h;
 
             if (f > fLim) break;
 
@@ -203,9 +209,8 @@ void BidirErrorBucketBasedList<state, environment, useB, dataStructure>::compute
 
             auto dLayerIt = fLayer.begin();
             while (dLayerIt != fLayer.end()) {
-                double d = g - dLayerIt->first;
-
-                if (d > dLim) break;
+                double h_nx = dLayerIt->first;
+                double d = g - h_nx;
 
                 // deal with bucket - first, check that is not empty
                 Bucket &bucket = dLayerIt->second;
@@ -214,11 +219,20 @@ void BidirErrorBucketBasedList<state, environment, useB, dataStructure>::compute
                     continue;
                 }
 
+                if (d > dLim) break;
+
                 // check its b value against bLim
                 double bValue = f + d;
                 if (useB && bValue > bLim) {
                     dLayerIt++;
                     break;
+                }
+
+                // check its rd value against rdLim
+                double rdValue = g + h_nx;
+                if (useRC && rdValue > rdLim) {
+                    dLayerIt++;
+                    continue; // continue because rd is decreasing
                 }
 
                 // pick the bucket as best bucket if it is the best based on the criterion
@@ -242,6 +256,14 @@ void BidirErrorBucketBasedList<state, environment, useB, dataStructure>::compute
                     if (criterion == MinCriterion::MinB) bestBucket = &bucket;
                 }
 
+                if (useRC && rfValue < minRF) {
+                    minRF = rfValue;
+                }
+
+                if (useRC && rdValue < minRD) {
+                    minRD = rdValue;
+                }
+
                 dLayerIt++;
             }
             fLayerIt++;
@@ -250,9 +272,9 @@ void BidirErrorBucketBasedList<state, environment, useB, dataStructure>::compute
     }
 }
 
-template<typename state, class environment, bool useB, class dataStructure>
+template<typename state, class environment, bool useB, bool useRC, class dataStructure>
 std::pair<const state *, double>
-BidirErrorBucketBasedList<state, environment, useB, dataStructure>::Pop() {
+BidirErrorBucketBasedList<state, environment, useB, useRC, dataStructure>::Pop() {
     const state *poppedState = nullptr;
 
     while (poppedState == nullptr) {
@@ -271,8 +293,8 @@ BidirErrorBucketBasedList<state, environment, useB, dataStructure>::Pop() {
     return std::make_pair(poppedState, node.g);
 }
 
-template<typename state, class environment, bool useB, class dataStructure>
-int BidirErrorBucketBasedList<state, environment, useB, dataStructure>::countMinimumGNodes() {
+template<typename state, class environment, bool useB, bool useRC, class dataStructure>
+int BidirErrorBucketBasedList<state, environment, useB, useRC, dataStructure>::countMinimumGNodes() {
 
     if (fLayers.empty()) return 0;
 
@@ -312,11 +334,10 @@ int BidirErrorBucketBasedList<state, environment, useB, dataStructure>::countMin
     }
 
     return minExpandableG == DBL_MAX ? 0 : nodeCount;
-
 }
 
-template<typename state, class environment, bool useB, class dataStructure>
-NodeValues BidirErrorBucketBasedList<state, environment, useB, dataStructure>::getNodeValues() {
+template<typename state, class environment, bool useB, bool useRC, class dataStructure>
+NodeValues BidirErrorBucketBasedList<state, environment, useB, useRC, dataStructure>::getNodeValues() {
 
     NodeValues result;
 

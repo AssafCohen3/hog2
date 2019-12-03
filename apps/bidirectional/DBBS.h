@@ -7,7 +7,7 @@
 #include <iostream>
 #include <math.h>
 
-template<class state, class action, class environment, bool useB = true, class priorityQueue = BidirErrorBucketBasedList<state, environment, useB, BucketNodeData<state>>>
+template<class state, class action, class environment, bool useB = true, bool useRC = true, class priorityQueue = BidirErrorBucketBasedList<state, environment, useB, useRC, BucketNodeData<state>>>
 class DBBS {
 public:
     DBBS(bool alternating_ = true, double epsilon_ = 1.0, double gcd_ = 1.0) {
@@ -49,9 +49,7 @@ public:
 
     inline const int GetNumBackwardItems() { return backwardQueue.size(); }
 
-    inline const BucketNodeData<state> &GetBackwardItem(unsigned int which) {
-        return backwardQueue.Lookat(which);
-    }
+    inline const BucketNodeData<state> &GetBackwardItem(unsigned int which) { return backwardQueue.Lookat(which); }
 
     uint64_t GetUniqueNodesExpanded() const { return nodesExpanded; }
 
@@ -126,24 +124,25 @@ private:
     double C = 0.0;
 };
 
-template<class state, class action, class environment, bool useB, class priorityQueue>
+template<class state, class action, class environment, bool useB, bool useRC, class priorityQueue>
 void
-DBBS<state, action, environment, useB, priorityQueue>::GetPath(environment *env, const state &from, const state &to,
-                                                               Heuristic <state> *forward,
-                                                               Heuristic <state> *backward,
-                                                               std::vector <state> &thePath) {
+DBBS<state, action, environment, useB, useRC, priorityQueue>::GetPath(environment *env, const state &from,
+                                                                      const state &to,
+                                                                      Heuristic <state> *forward,
+                                                                      Heuristic <state> *backward,
+                                                                      std::vector <state> &thePath) {
     if (!InitializeSearch(env, from, to, forward, backward, thePath))
         return;
 
     while (!DoSingleSearchStep(thePath)) {}
 }
 
-template<class state, class action, class environment, bool useB, class priorityQueue>
-bool DBBS<state, action, environment, useB, priorityQueue>::InitializeSearch(environment *env, const state &from,
-                                                                             const state &to,
-                                                                             Heuristic <state> *forward,
-                                                                             Heuristic <state> *backward,
-                                                                             std::vector <state> &thePath) {
+template<class state, class action, class environment, bool useB, bool useRC, class priorityQueue>
+bool DBBS<state, action, environment, useB, useRC, priorityQueue>::InitializeSearch(environment *env, const state &from,
+                                                                                    const state &to,
+                                                                                    Heuristic <state> *forward,
+                                                                                    Heuristic <state> *backward,
+                                                                                    std::vector <state> &thePath) {
     this->env = env;
     forwardHeuristic = forward;
     backwardHeuristic = backward;
@@ -167,8 +166,8 @@ bool DBBS<state, action, environment, useB, priorityQueue>::InitializeSearch(env
     return true;
 }
 
-template<class state, class action, class environment, bool useB, class priorityQueue>
-bool DBBS<state, action, environment, useB, priorityQueue>::UpdateC() {
+template<class state, class action, class environment, bool useB, bool useRC, class priorityQueue>
+bool DBBS<state, action, environment, useB, useRC, priorityQueue>::UpdateC() {
 
     if (forwardQueue.isBestBucketComputed() && backwardQueue.isBestBucketComputed())
         return false; // no need to recompute anything, and no need to rise C
@@ -178,21 +177,25 @@ bool DBBS<state, action, environment, useB, priorityQueue>::UpdateC() {
     while (C < currentCost && (!forwardQueue.isBestBucketComputed() || !backwardQueue.isBestBucketComputed())) {
 
         // initial forward queue limits
-        forwardQueue.computeBestBucket(getMinCriterion(true), C, C, C, 2.0 * C);
+        forwardQueue.computeBestBucket(getMinCriterion(true), C, C, C, 2.0 * C, DBL_MAX, DBL_MAX);
 
         double gMinF = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinG() : C;
         double fMinF = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinF() : C;
         double dMinF = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinD() : C;
         double bMinF = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinB() : 2 * C;
+        double rfMinF = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinRF() : C;
+        double rdMinF = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinRD() : C;
 
         // initial backwards queue limits
         backwardQueue.computeBestBucket(getMinCriterion(false), C - (gMinF + epsilon), C - dMinF, C - fMinF,
-                                        2.0 * C - bMinF);
+                                        2.0 * C - bMinF, C - rdMinF, C - rfMinF);
 
         double gMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinG() : C;
         double fMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinF() : C;
         double dMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinD() : C;
         double bMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinB() : 2 * C;
+        double rfMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinRF() : DBL_MAX;
+        double rdMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinRD() : DBL_MAX;
 
         bool limitsChanged = true;
 
@@ -203,29 +206,37 @@ bool DBBS<state, action, environment, useB, priorityQueue>::UpdateC() {
 
             // forward queue limits
             forwardQueue.computeBestBucket(getMinCriterion(true), C - (gMinB + epsilon), C - dMinB, C - fMinB,
-                                           2.0 * C - bMinB);
+                                           2.0 * C - bMinB, C - rdMinB, C - rfMinB);
 
             double gMinF_new = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinG() : C;
             double fMinF_new = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinF() : C;
             double dMinF_new = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinD() : C;
             double bMinF_new = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinB() : 2 * C;
+            double rfMinF_new = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinRF() : DBL_MAX;
+            double rdMinF_new = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinRD() : DBL_MAX;
 
-            limitsChanged |= gMinF != gMinF_new || fMinF != fMinF_new || dMinF != dMinF_new || bMinF != bMinF_new;
+            limitsChanged |= gMinF != gMinF_new || fMinF != fMinF_new || dMinF != dMinF_new
+                             || bMinF != bMinF_new || rfMinF != rfMinF_new || rdMinF != rdMinF_new;
 
-            gMinF = gMinF_new, fMinF = fMinF_new, dMinF = dMinF_new, bMinF = bMinF_new;
+            gMinF = gMinF_new, fMinF = fMinF_new, dMinF = dMinF_new,
+            bMinF = bMinF_new, rfMinF = rfMinF_new, rdMinF = rdMinF_new;
 
             // backwards queue limits
             backwardQueue.computeBestBucket(getMinCriterion(false), C - (gMinF + epsilon), C - dMinF, C - fMinF,
-                                            2.0 * C - bMinF);
+                                            2.0 * C - bMinF, C - rdMinF, C - rfMinF);
 
             double gMinB_new = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinG() : C;
             double fMinB_new = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinF() : C;
             double dMinB_new = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinD() : C;
             double bMinB_new = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinB() : 2 * C;
+            double rfMinB_new = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinRF() : DBL_MAX;
+            double rdMinB_new = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinRD() : DBL_MAX;
 
-            limitsChanged |= gMinB != gMinB_new || fMinB != fMinB_new || dMinB != dMinB_new || bMinB != bMinB_new;
+            limitsChanged |= gMinB != gMinB_new || fMinB != fMinB_new || dMinB != dMinB_new
+                             || bMinB != bMinB_new || rfMinB != rfMinB_new || rdMinB != rdMinB_new;
 
-            gMinB = gMinB_new, fMinB = fMinB_new, dMinB = dMinB_new, bMinB = bMinB_new;
+            gMinB = gMinB_new, fMinB = fMinB_new, dMinB = dMinB_new,
+            bMinB = bMinB_new, rfMinB = rfMinB_new, rdMinB = rdMinB_new;
         };
 
         // if limits don't change and still no expandable bucket is found, increase C
@@ -242,8 +253,10 @@ bool DBBS<state, action, environment, useB, priorityQueue>::UpdateC() {
     return incrementedC;
 }
 
-template<class state, class action, class environment, bool useB, class priorityQueue>
-double DBBS<state, action, environment, useB, priorityQueue>::GetNextC() {
+template<class state, class action, class environment, bool useB, bool useRC, class priorityQueue>
+double DBBS<state, action, environment, useB, useRC, priorityQueue>::GetNextC() {
+
+    // TODO figure out if using more bounds may make increasing C slower
 
     double result = DBL_MAX;
 
@@ -324,8 +337,8 @@ double DBBS<state, action, environment, useB, priorityQueue>::GetNextC() {
     return result;
 }
 
-template<class state, class action, class environment, bool useB, class priorityQueue>
-bool DBBS<state, action, environment, useB, priorityQueue>::DoSingleSearchStep(std::vector <state> &thePath) {
+template<class state, class action, class environment, bool useB, bool useRC, class priorityQueue>
+bool DBBS<state, action, environment, useB, useRC, priorityQueue>::DoSingleSearchStep(std::vector <state> &thePath) {
 
     if (UpdateC()) {
         // TODO think how we are going to parametrize the tie breaker
@@ -364,11 +377,12 @@ bool DBBS<state, action, environment, useB, priorityQueue>::DoSingleSearchStep(s
     return false;
 }
 
-template<class state, class action, class environment, bool useB, class priorityQueue>
-void DBBS<state, action, environment, useB, priorityQueue>::Expand(priorityQueue &current, priorityQueue &opposite,
-                                                                   Heuristic <state> *heuristic,
-                                                                   Heuristic <state> *reverseHeuristic,
-                                                                   const state &target, const state &source) {
+template<class state, class action, class environment, bool useB, bool useRC, class priorityQueue>
+void
+DBBS<state, action, environment, useB, useRC, priorityQueue>::Expand(priorityQueue &current, priorityQueue &opposite,
+                                                                     Heuristic <state> *heuristic,
+                                                                     Heuristic <state> *reverseHeuristic,
+                                                                     const state &target, const state &source) {
 
     auto nodePair = current.Pop();
 
