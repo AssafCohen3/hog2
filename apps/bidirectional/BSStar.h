@@ -13,6 +13,7 @@
 #include "FPUtil.h"
 #include "Timer.h"
 #include <unordered_map>
+#include <map>
 
 template<class state, int epsilon = 1>
 struct BSCompare {
@@ -30,12 +31,13 @@ struct BSCompare {
 template<class state, class action, class environment, class priorityQueue = AStarOpenClosed <state, BSCompare<state>>>
 class BSStar {
 public:
-    BSStar(bool alternating_ = false) {
+    BSStar(bool alternating_ = false, double epsilon_ = 1.0) {
         forwardHeuristic = 0;
         backwardHeuristic = 0;
         env = 0;
         ResetNodeCount();
         alternating = alternating_;
+        epsilon = epsilon_;
     }
 
     virtual ~BSStar() {}
@@ -68,7 +70,16 @@ public:
 
     uint64_t GetNodesTouched() const { return nodesTouched; }
 
-    uint64_t GetNecessaryExpansions() const;
+    uint64_t GetNecessaryExpansions() {
+        uint64_t necessary = 0;
+        for (const auto &count : counts) {
+            if (count.first < currentCost) {
+                // std::cout << "    Counting: " << count.second << " at " << count.first << std::endl;
+                necessary += count.second;
+            }
+        }
+        return necessary;
+    }
 
     void OpenGLDraw() const;
 
@@ -135,6 +146,9 @@ private:
 
     bool alternating;
     bool expandForward = true;
+
+    double C = 0;
+    std::map<double, int> counts;
 };
 
 template<class state, class action, class environment, class priorityQueue>
@@ -144,7 +158,17 @@ void BSStar<state, action, environment, priorityQueue>::GetPath(environment *env
     if (InitializeSearch(env, from, to, forward, backward, thePath) == false)
         return;
     t.StartTimer();
-    while (!DoSingleSearchStep(thePath)) {}
+    while (C < currentCost && !DoSingleSearchStep(thePath)) {}
+
+    // extract solution path
+    if (currentCost != DBL_MAX) {
+        std::vector <state> pFor, pBack;
+        ExtractPathToGoal(middleNode, pBack);
+        ExtractPathToStart(middleNode, pFor);
+        reverse(pFor.begin(), pFor.end());
+        thePath = pFor;
+        thePath.insert(thePath.end(), pBack.begin() + 1, pBack.end());
+    }
 }
 
 template<class state, class action, class environment, class priorityQueue>
@@ -176,14 +200,6 @@ bool BSStar<state, action, environment, priorityQueue>::InitializeSearch(environ
 template<class state, class action, class environment, class priorityQueue>
 bool BSStar<state, action, environment, priorityQueue>::DoSingleSearchStep(std::vector <state> &thePath) {
     if (forwardQueue.OpenSize() == 0 || backwardQueue.OpenSize() == 0) {
-        if (currentCost != DBL_MAX) {
-            std::vector <state> pFor, pBack;
-            ExtractPathToGoal(middleNode, pBack);
-            ExtractPathToStart(middleNode, pFor);
-            reverse(pFor.begin(), pFor.end());
-            thePath = pFor;
-            thePath.insert(thePath.end(), pBack.begin() + 1, pBack.end());
-        }
         return true;
     }
 
@@ -238,10 +254,17 @@ void BSStar<state, action, environment, priorityQueue>::Expand(priorityQueue &cu
 
     bool foundBetterSolution = false;
     nodesExpanded++;
-    if (current.Lookup(nextID).reopened == false)
-        uniqueNodesExpanded++;
 
-    env->GetSuccessors(current.Lookup(nextID).data, neighbors);
+    auto node = current.Lookup(nextID);
+    double f = node.g + node.h;
+    if (f > C) C = f; // increase current C
+
+    if (current.Lookup(nextID).reopened == false) {
+        uniqueNodesExpanded++;
+        counts[C] += 1;
+    }
+
+    env->GetSuccessors(node.data, neighbors);
     for (auto &succ : neighbors) {
         nodesTouched++;
         uint64_t childID;
@@ -259,7 +282,7 @@ void BSStar<state, action, environment, priorityQueue>::Expand(priorityQueue &cu
         switch (loc) {
             case kClosedList: // ignore
                 if (fless(parentData.g + edgeCost, childData.g)) {
-                    childData.h = std::max(childData.h, parentData.h - edgeCost);
+                    childData.h = std::max(childData.h, epsilon);
                     childData.parentID = nextID;
                     childData.g = parentData.g + edgeCost;
                     current.Reopen(childID);
@@ -294,7 +317,7 @@ void BSStar<state, action, environment, priorityQueue>::Expand(priorityQueue &cu
                 break;
             case kNotFound: {
                 double g = parentData.g + edgeCost;
-                double h = std::max(heuristic->HCost(succ, target), parentData.h - edgeCost);
+                double h = std::max(heuristic->HCost(succ, target), epsilon);
 
                 // Ignore nodes that don't have lower f-cost than the incumbant solution
                 if (!fless(g + h, currentCost))
@@ -398,22 +421,6 @@ void BSStar<state, action, environment, priorityQueue>::Trim() {
         }
     }
 
-}
-
-template<class state, class action, class environment, class priorityQueue>
-uint64_t BSStar<state, action, environment, priorityQueue>::GetNecessaryExpansions() const {
-    uint64_t count = 0;
-    for (unsigned int x = 0; x < forwardQueue.size(); x++) {
-        const AStarOpenClosedData <state> &data = forwardQueue.Lookat(x);
-        if ((data.where == kClosedList) && (fless(data.g + data.h, currentCost)))
-            count++;
-    }
-    for (unsigned int x = 0; x < backwardQueue.size(); x++) {
-        const AStarOpenClosedData <state> &data = backwardQueue.Lookat(x);
-        if ((data.where == kClosedList) && (fless(data.g + data.h, currentCost)))
-            count++;
-    }
-    return count;
 }
 
 template<class state, class action, class environment, class priorityQueue>

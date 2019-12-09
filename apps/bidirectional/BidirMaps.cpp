@@ -223,7 +223,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
         }
 
         // DBS
-        if (1) {
+        if (0) {
             DBBS<xyLoc, tDirection, MapEnvironment, false> dbs(true, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
@@ -248,7 +248,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
         }
 
         // DBS-p
-        if (1) {
+        if (0) {
             DBBS<xyLoc, tDirection, MapEnvironment, false> dbs(false, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
@@ -273,7 +273,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
         }
 
         // DDBS
-        if (1) {
+        if (0) {
             DBBS<xyLoc, tDirection, MapEnvironment> dbbs(true, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
@@ -298,7 +298,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
         }
 
         // DDBS-p
-        if (1) {
+        if (0) {
             DBBS<xyLoc, tDirection, MapEnvironment> dbbs(false, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
@@ -322,8 +322,8 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             }
         }
 
-        // BS*
-        if (1) {
+        // BS*-p
+        if (0) {
             BSStar <xyLoc, tDirection, MapEnvironment> bs;
             std::vector <xyLoc> path;
             Timer timer;
@@ -373,8 +373,8 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
         }
 
         // BAE*
-        if (1) {
-            BAE <xyLoc, tDirection, MapEnvironment> bae(true, 0.5);
+        if (0) {
+            BAE <xyLoc, tDirection, MapEnvironment> bae(true, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
@@ -398,7 +398,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
         }
 
         // BAE*-p
-        if (1) {
+        if (0) {
             BAE <xyLoc, tDirection, MapEnvironment> bae(false, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
@@ -422,6 +422,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             }
         }
 
+        // A*
         if (1) {
             TemplateAStar <xyLoc, tDirection, MapEnvironment> astar(false, 1.0);
             std::vector <xyLoc> path;
