@@ -36,7 +36,7 @@ public:
 
     bool DoSingleSearchStep(std::vector <state> &thePath);
 
-    virtual const char *GetName() { return "Baseline"; }
+    virtual const char *GetName() { return "DBBS"; }
 
     void ResetNodeCount() {
         nodesExpanded = nodesTouched = 0;
@@ -260,8 +260,8 @@ double DBBS<state, action, environment, useB, useRC, priorityQueue>::GetNextC() 
 
     double result = DBL_MAX;
 
-    const NodeValues forwardValues = forwardQueue.getNodeValues();
-    const NodeValues backwardValues = backwardQueue.getNodeValues();
+    const NodeValues &forwardValues = forwardQueue.getNodeValues();
+    const NodeValues &backwardValues = backwardQueue.getNodeValues();
 
     // g bound
     const auto &forward_g_values = forwardValues.g_values;

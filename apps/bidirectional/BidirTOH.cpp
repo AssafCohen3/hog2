@@ -17,6 +17,7 @@
 #include "Baseline.h"
 #include "GBFHS.h"
 #include "DBBS.h"
+#include "BTB.h"
 #include "CalculateWVC.h"
 
 
@@ -76,6 +77,7 @@ void TestTOH(int first, int last) {
             nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0, notie_GBFHSbest = 0,
             nodes_BAE = 0, nodes_BAEn = 0, notie_BAE = 0, nodes_BAEp = 0, nodes_BAEpn = 0, notie_BAEp = 0,
             nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0,
+            nodes_BTB = 0, nodes_BTBn = 0, notie_BTB = 0,
             nodes_DDBS = 0, nodes_DDBSn = 0, notie_DDBS = 0, nodes_DDBSp = 0, nodes_DDBSpn = 0, notie_DDBSp = 0;
 
     int table[] = {52058078, 116173544, 208694125, 131936966, 141559500, 133800745, 194246206, 50028346, 167007978,
@@ -335,6 +337,8 @@ void TestTOH(int first, int last) {
 
         int tempDBBS;
 
+        int tempDBBS;
+
         // DDBS
         if (1) {
             DBBS<TOHState < N>, TOHMove, TOH < N >> ddbs;
@@ -351,6 +355,8 @@ void TestTOH(int first, int last) {
             tempDBBS = ddbs.GetNecessaryExpansions();
 
             if (ddbs.GetNodesExpanded() == ddbs.GetNecessaryExpansions()) notie_DDBS++;
+
+            tempDBBS = ddbs.GetNecessaryExpansions();
 
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
@@ -411,6 +417,34 @@ void TestTOH(int first, int last) {
             }
         }
 
+        // BTB alternating
+        if (1) {
+            BTB<TOHState < N>, TOHMove, TOH < N >> btb;
+            timer.StartTimer();
+            btb.GetPath(&toh, s, g, f, b, thePath);
+            timer.EndTimer();
+            printf("BTB found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   toh.GetPathLength(thePath),
+                   btb.GetNodesExpanded(), btb.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_BTB += btb.GetNodesExpanded();
+            nodes_BTBn += btb.GetNecessaryExpansions();
+
+            if (btb.GetNodesExpanded() == btb.GetNecessaryExpansions()) notie_BTB++;
+
+            if (2 * tempDBBS + 2 < btb.GetNecessaryExpansions()) {
+                std::cout << "NOT NEAR-OPTIMAL!!!! " << tempDBBS << " and " << btb.GetNecessaryExpansions() << std::endl;
+            }
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
+            else if (optimal_cost != toh.GetPathLength(thePath)) {
+                printf("BTB reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, toh.GetPathLength(thePath));
+                exit(0);
+            }
+        }
+
         // BS*
         if (1) {
             BSStar<TOHState < N>, TOHMove, TOH < N >> bs;
@@ -435,7 +469,7 @@ void TestTOH(int first, int last) {
         }
 
         // BS*-a
-        if (1) {
+        if (0) {
             BSStar<TOHState < N>, TOHMove, TOH < N >> bs(true);
             timer.StartTimer();
             bs.GetPath(&toh, s, g, f, b, thePath);
@@ -587,6 +621,9 @@ void TestTOH(int first, int last) {
     std::cout << "ToH" << " DDBS-p " << nodes_DDBSp / experiments << " expanded; "
               << nodes_DDBSpn / experiments << " necessary; "
               << notie_DDBSp / (float) experiments << " no last layer" << std::endl;
+    std::cout << "ToH" << " BTB " << nodes_BTB / experiments << " expanded; "
+              << nodes_BTBn / experiments << " necessary; "
+              << notie_BTB / (float) experiments << " no last layer" << std::endl;
 
     printf("+++++++++++++++++++++++++++++++++++++++++\n");
 

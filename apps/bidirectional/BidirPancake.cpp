@@ -13,6 +13,7 @@
 #include "Baseline.h"
 #include "GBFHS.h"
 #include "DBBS.h"
+#include "BTB.h"
 #include "IDAStar.h"
 #include "MM.h"
 #include "BSStar.h"
@@ -26,7 +27,7 @@ const int N = 14;
 const int INSTANCES = 50;
 
 void TestPancakeRandom() {
-    for (int gap = 0; gap < 3; gap++) {
+    for (int gap = 0; gap < 7; gap++) {
         srandom(0);
         PancakePuzzleState <N> start;
         PancakePuzzleState <N> original;
@@ -42,6 +43,7 @@ void TestPancakeRandom() {
         std::vector <PancakePuzzleState<N>> gbfhsPath;
         std::vector <PancakePuzzleState<N>> dbsPath;
         std::vector <PancakePuzzleState<N>> dbbsPath;
+        std::vector <PancakePuzzleState<N>> btbPath;
         std::vector <PancakePuzzleState<N>> dvcbsEpsilonPath;
         std::vector <PancakePuzzleState<N>> bsPath;
         std::vector <PancakePuzzleState<N>> baePath;
@@ -65,6 +67,7 @@ void TestPancakeRandom() {
                 nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0, notie_GBFHSbest = 0,
                 nodes_BAE = 0, nodes_BAEn = 0, notie_BAE = 0, nodes_BAEp = 0, nodes_BAEpn = 0, notie_BAEp = 0,
                 nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0,
+                nodes_BTB = 0, nodes_BTBn = 0, notie_BTB = 0,
                 nodes_DBBS = 0, nodes_DBBSn = 0, notie_DBBS = 0, nodes_DBBSp = 0, nodes_DBBSpn = 0, notie_DBBSp = 0;
 
         for (int count = 0; count < INSTANCES; count++) {
@@ -455,6 +458,8 @@ void TestPancakeRandom() {
                 }
             }
 
+            int tempDBBS;
+
             // DBBS
             if (1) {
                 DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> dbbs;
@@ -471,6 +476,8 @@ void TestPancakeRandom() {
                 nodes_DBBS += dbbs.GetNodesExpanded();
                 nodes_DBBSn += dbbs.GetNecessaryExpansions();
                 if (dbbs.GetNodesExpanded() == dbbs.GetNecessaryExpansions()) notie_DBBS++;
+
+                tempDBBS = dbbs.GetNecessaryExpansions();
 
                 // test optimality
                 if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(dbbsPath);
@@ -532,7 +539,7 @@ void TestPancakeRandom() {
             }
 
             // BS*-a
-            if (1) {
+            if (0) {
                 BSStar<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> bs(true);
                 start = original;
                 t1.StartTimer();
@@ -551,6 +558,36 @@ void TestPancakeRandom() {
                 else if (optimal_cost != pancake.GetPathLength(bsPath)) {
                     printf("GAP-%d BS*-a reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
                            optimal_cost, pancake.GetPathLength(bsPath));
+                    exit(0);
+                }
+            }
+
+            // BTB alternating
+            if (1) {
+                BTB<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> btb;
+                goal.Reset();
+                start = original;
+                t8.StartTimer();
+                btb.GetPath(&pancake, start, goal, &pancake, &pancake2, btbPath);
+                t8.EndTimer();
+                std::cout << "GAP-" << gap << " BTB found path length " << pancake.GetPathLength(btbPath) << "; "
+                          << btb.GetNodesExpanded() << " expanded; " << btb.GetNecessaryExpansions()
+                          << " necessary; "
+                          << t8.GetElapsedTime() << "s elapsed" << std::endl;
+
+                nodes_BTB += btb.GetNodesExpanded();
+                nodes_BTBn += btb.GetNecessaryExpansions();
+                if (btb.GetNodesExpanded() == btb.GetNecessaryExpansions()) notie_BTB++;
+
+                if (22 * tempDBBS + 2 < btb.GetNecessaryExpansions()) {
+                    std::cout << "NOT NEAR-OPTIMAL!!!! " << tempDBBS << " and " << btb.GetNecessaryExpansions() << std::endl;
+                }
+
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(btbPath);
+                else if (optimal_cost != pancake.GetPathLength(btbPath)) {
+                    printf("GAP-%d BTB reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
+                           optimal_cost, pancake.GetPathLength(btbPath));
                     exit(0);
                 }
             }
@@ -604,7 +641,7 @@ void TestPancakeRandom() {
             }
 
             // A*
-            if (1) {
+            if (0) {
                 TemplateAStar <PancakePuzzleState<N>, PancakePuzzleAction, PancakePuzzle<N>> astar(false, 1.0);
                 start = original;
                 t1.StartTimer();
@@ -681,6 +718,9 @@ void TestPancakeRandom() {
         std::cout << "Pancake" << " DBBS-p " << nodes_DBBSp / INSTANCES << " expanded; "
                   << nodes_DBBSpn / INSTANCES << " necessary; "
                   << notie_DBBSp / (float) INSTANCES << " no last layer" << std::endl;
+        std::cout << "Pancake" << " BTB alt " << nodes_BTB / INSTANCES << " expanded; "
+                  << nodes_BTBn / INSTANCES << " necessary; "
+                  << notie_BTB / (float) INSTANCES << " no last layer" << std::endl;
 
         printf("+++++++++++++++++++++++++++++++++++++++++\n");
 

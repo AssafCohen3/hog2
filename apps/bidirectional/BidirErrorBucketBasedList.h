@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <stdint.h>
 #include <limits>
+#include <climits>
 #include <functional>
 #include "BucketBasedList.h"
 
@@ -22,6 +23,33 @@ struct NodeValues {
     std::set<double> b_values;
     std::set<double> rf_values;
     std::set<double> rd_values;
+};
+
+struct BucketInfo {
+
+    BucketInfo() : g(DBL_MAX), h(DBL_MAX), h_nx(DBL_MAX), nodes(INT_MAX) {}
+
+    BucketInfo(double g_, double h_, double h_nx_, int nodes_) : g(g_), h(h_), h_nx(h_nx_), nodes(nodes_) {}
+
+    bool operator==(const BucketInfo &info) const { return g == info.g && h == info.h && h_nx == info.h_nx; }
+
+    double g, h, h_nx;
+    int nodes; // the nodes attribute doesn't count for equals nor hash
+};
+
+struct BucketHash {
+
+    std::size_t operator()(const BucketInfo &info) const {
+        std::size_t hash = 0;
+        hash = hash_combine(hash, info.g);
+        hash = hash_combine(hash, info.h);
+        hash = hash_combine(hash, info.h_nx);
+        return hash;
+    }
+
+    inline std::size_t hash_combine(std::size_t &seed, const double value) const {
+        return std::hash < double > {}(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    }
 };
 
 template<typename state, class environment, bool useB = true, bool useRC = true, class dataStructure = BucketNodeData<state> >
@@ -43,6 +71,10 @@ public:
     void AddOpenNode(const state val, double g, double h, double h_nx, const state *parent = nullptr);
 
     std::pair<const state *, double> Pop();
+
+    bool RemoveIfEmpty(double g, double h, double h_nx);
+
+    const state *PopBucket(double g, double h, double h_nx);
 
     inline const dataStructure &Lookup(const state &objKey) const { return table.at(objKey); }
 
@@ -78,6 +110,8 @@ public:
     inline double getMinRD() { return checkBestBucketAndReturnValue(minRD); }
 
     inline void setEnvironment(environment *env_) { env = env_; }
+
+    std::vector <BucketInfo> getBucketInfo();
 
     int countMinimumGNodes();
 
@@ -291,6 +325,76 @@ BidirErrorBucketBasedList<state, environment, useB, useRC, dataStructure>::Pop()
     auto &node = table.at(*poppedState);
     node.bucket_index = -1;
     return std::make_pair(poppedState, node.g);
+}
+
+
+template<typename state, class environment, bool useB, bool useRC, class dataStructure>
+bool BidirErrorBucketBasedList<state, environment, useB, useRC, dataStructure>::RemoveIfEmpty(double g,
+                                                                                              double h,
+                                                                                              double h_nx) {
+    Bucket &bucket = fLayers[g][h][h_nx];
+
+    // remove erased entries to make sure that the bucket does not contain only invalid entries
+    while (bucket.size() > 0 && bucket.back() == nullptr) {
+        bucket.pop_back();
+    }
+
+    bool bucketEmptied = false;
+
+    // delete empty dimensions
+    if (bucket.size() == 0) {
+        bucketEmptied = true;
+        auto &fLayer = fLayers[g][h];
+        fLayer.erase(h_nx);
+        if (fLayer.size() == 0) {
+            auto &gLayer = fLayers[g];
+            gLayer.erase(h);
+            if (gLayer.size() == 0) {
+                fLayers.erase(g);
+            }
+        }
+    }
+
+    return bucketEmptied;
+}
+
+template<typename state, class environment, bool useB, bool useRC, class dataStructure>
+const state *BidirErrorBucketBasedList<state, environment, useB, useRC, dataStructure>::PopBucket(double g,
+                                                                                                  double h,
+                                                                                                  double h_nx) {
+    // pop state - it has to be a proper bucket, so call RemoveIfInvalid if needed
+    Bucket &bucket = fLayers[g][h][h_nx];
+    const state *poppedState = bucket.back();
+    bucket.pop_back();
+    RemoveIfEmpty(g, h, h_nx); // remove if it is empty
+
+    // invalidate node 2 bucket index
+    auto &node = table.at(*poppedState);
+    node.bucket_index = -1;
+
+    return poppedState;
+}
+
+template<typename state, class environment, bool useB, bool useRC, class dataStructure>
+std::vector <BucketInfo> BidirErrorBucketBasedList<state, environment, useB, useRC, dataStructure>::getBucketInfo() {
+
+    std::vector <BucketInfo> result;
+
+    for (const auto &glayer : fLayers) {
+        double g = glayer.first;
+        for (const auto &fLayer : glayer.second) {
+            double h = fLayer.first;
+            for (const auto &bucket : fLayer.second) {
+                double h_nx = bucket.first;
+                result.push_back(BucketInfo(g, h, h_nx, bucket.second.size()));
+
+                if (!useRC) break; // subsequent buckets will be dominated if RC is not used
+            }
+        }
+    }
+
+    return result;
+
 }
 
 template<typename state, class environment, bool useB, bool useRC, class dataStructure>

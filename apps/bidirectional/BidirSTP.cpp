@@ -18,6 +18,7 @@
 #include "Baseline.h"
 #include "GBFHS.h"
 #include "DBBS.h"
+#include "BTB.h"
 
 MNPuzzleState<4, 4> GetKorfInstance(int which) {
     int instances[100][16] =
@@ -147,6 +148,7 @@ void TestSTP() {
             nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0, notie_GBFHSbest = 0,
             nodes_BAE = 0, nodes_BAEn = 0, notie_BAE = 0, nodes_BAEp = 0, nodes_BAEpn = 0, notie_BAEp = 0,
             nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0,
+            nodes_BTB = 0, nodes_BTBn = 0, notie_BTB = 0,
             nodes_DBBS = 0, nodes_DBBSn = 0, notie_DBBS = 0, nodes_DBBSp = 0, nodes_DBBSpn = 0, notie_DBBSp = 0;
 
     for (int x = 0; x < 100; x++) // 547 to 540
@@ -418,6 +420,8 @@ void TestSTP() {
             }
         }
 
+        int tempDBBS;
+
         // DBBS
         if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
@@ -433,6 +437,8 @@ void TestSTP() {
             nodes_DBBS += dbbs.GetNodesExpanded();
             nodes_DBBSn += dbbs.GetNecessaryExpansions();
             if (dbbs.GetNodesExpanded() == dbbs.GetNecessaryExpansions()) notie_DBBS++;
+
+            tempDBBS = dbbs.GetNecessaryExpansions();
 
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
@@ -468,6 +474,35 @@ void TestSTP() {
             }
         }
 
+        // BTB alternating
+        if (1) {
+            std::vector <MNPuzzleState<4, 4>> solutionPath;
+            BTB<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> btb;
+            Timer timer;
+            timer.StartTimer();
+            btb.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
+            timer.EndTimer();
+            printf("BTB alt found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   mnp.GetPathLength(solutionPath),
+                   btb.GetNodesExpanded(), btb.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_BTB += btb.GetNodesExpanded();
+            nodes_BTBn += btb.GetNecessaryExpansions();
+            if (btb.GetNodesExpanded() == btb.GetNecessaryExpansions()) notie_BTB++;
+
+            if (2 * tempDBBS + 2 < btb.GetNecessaryExpansions()) {
+                std::cout << "NOT NEAR-OPTIMAL!!!! " << tempDBBS << " and " << btb.GetNecessaryExpansions() << std::endl;
+            }
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
+            else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
+                printf("BTB reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(solutionPath));
+                exit(0);
+            }
+        }
+
         // BS*
         if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
@@ -494,7 +529,7 @@ void TestSTP() {
         }
 
         // BS*-a
-        if (1) {
+        if (0) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
             BSStar<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> bs(true);
             Timer timer;
@@ -646,6 +681,9 @@ void TestSTP() {
     std::cout << "STP" << " DBBS-p " << nodes_DBBSp / 100 << " expanded; "
               << nodes_DBBSpn / 100 << " necessary; "
               << notie_DBBSp / (float) 100 << " no last layer" << std::endl;
+    std::cout << "STP" << " BTB alt " << nodes_BTB / 100 << " expanded; "
+              << nodes_BTBn / 100 << " necessary; "
+              << notie_BTB / (float) 100 << " no last layer" << std::endl;
 
     printf("+++++++++++++++++++++++++++++++++++++++++\n");
 
