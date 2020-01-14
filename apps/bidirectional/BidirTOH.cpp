@@ -293,7 +293,7 @@ void TestTOH(int first, int last) {
 
         // DBS
         if (0) {
-            DBBS<TOHState < N>, TOHMove, TOH < N >, false > dbs;
+            DBBS<TOHState < N>, TOHMove, TOH < N >, false > dbs(MinCriterion::MinF, true);
             timer.StartTimer();
             dbs.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();
@@ -316,7 +316,7 @@ void TestTOH(int first, int last) {
 
         // DBS-p
         if (0) {
-            DBBS<TOHState < N>, TOHMove, TOH < N >, false > dbs(false);
+            DBBS<TOHState < N>, TOHMove, TOH < N >, false > dbs(MinCriterion::MinF, false);
             timer.StartTimer();
             dbs.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();
@@ -341,7 +341,7 @@ void TestTOH(int first, int last) {
 
         // DDBS
         if (1) {
-            DBBS<TOHState < N>, TOHMove, TOH < N >> ddbs;
+            DBBS<TOHState < N>, TOHMove, TOH < N >> ddbs(MinCriterion::MinB, true);
             timer.StartTimer();
             ddbs.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();
@@ -367,7 +367,7 @@ void TestTOH(int first, int last) {
 
         // DDBS-p
         if (0) {
-            DBBS<TOHState < N>, TOHMove, TOH < N >> ddbs(false);
+            DBBS<TOHState < N>, TOHMove, TOH < N >> ddbs(MinCriterion::MinB, false);
             timer.StartTimer();
             ddbs.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();
@@ -392,7 +392,7 @@ void TestTOH(int first, int last) {
 
         // BTB alternating
         if (1) {
-            BTB<TOHState < N>, TOHMove, TOH < N >> btb;
+            BTB<TOHState < N>, TOHMove, TOH < N >> btb(BTBPolicy::Alternating);
             timer.StartTimer();
             btb.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();
@@ -423,7 +423,7 @@ void TestTOH(int first, int last) {
 
         // BTB smallest bucket
         if (1) {
-            BTB<TOHState < N>, TOHMove, TOH < N >> btb(false, false);
+            BTB<TOHState < N>, TOHMove, TOH < N >> btb(BTBPolicy::Smallest);
             timer.StartTimer();
             btb.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();
@@ -452,7 +452,7 @@ void TestTOH(int first, int last) {
 
         // BTB most connected bucket
         if (1) {
-            BTB<TOHState < N>, TOHMove, TOH < N >> btb(false, true);
+            BTB<TOHState < N>, TOHMove, TOH < N >> btb(BTBPolicy::MostConnected);
             timer.StartTimer();
             btb.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();

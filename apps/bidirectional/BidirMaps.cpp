@@ -224,7 +224,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // DBS
         if (0) {
-            DBBS<xyLoc, tDirection, MapEnvironment, false> dbs(true, 1.0, 0.5);
+            DBBS<xyLoc, tDirection, MapEnvironment, false> dbs(MinCriterion::MinF, true, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
@@ -249,7 +249,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // DBS-p
         if (0) {
-            DBBS<xyLoc, tDirection, MapEnvironment, false> dbs(false, 1.0, 0.5);
+            DBBS<xyLoc, tDirection, MapEnvironment, false> dbs(MinCriterion::MinF, false, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
@@ -276,7 +276,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // DBBS
         if (1) {
-            DBBS<xyLoc, tDirection, MapEnvironment> dbbs(true, 1.0, 0.5);
+            DBBS<xyLoc, tDirection, MapEnvironment> dbbs(MinCriterion::MinB, true, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
@@ -303,7 +303,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // DBBS-p
         if (0) {
-            DBBS<xyLoc, tDirection, MapEnvironment> dbbs(false, 1.0, 0.5);
+            DBBS<xyLoc, tDirection, MapEnvironment> dbbs(MinCriterion::MinB, false, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
@@ -330,7 +330,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // BTB alternating
         if (1) {
-            BTB<xyLoc, tDirection, MapEnvironment> btb(true, true, 1.0);
+            BTB<xyLoc, tDirection, MapEnvironment> btb(BTBPolicy::Alternating, 1.0);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
@@ -361,7 +361,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // BTB smallest bucket
         if (1) {
-            BTB<xyLoc, tDirection, MapEnvironment> btb(false, false, 1.0);
+            BTB<xyLoc, tDirection, MapEnvironment> btb(BTBPolicy::Smallest, 1.0);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
@@ -390,7 +390,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // BTB most connected bucket
         if (1) {
-            BTB<xyLoc, tDirection, MapEnvironment> btb(false, true, 1.0);
+            BTB<xyLoc, tDirection, MapEnvironment> btb(BTBPolicy::MostConnected, 1.0);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
@@ -419,7 +419,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // BS*-p
         if (0) {
-            BSStar <xyLoc, tDirection, MapEnvironment> bs;
+            BSStar<xyLoc, tDirection, MapEnvironment> bs;
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
@@ -444,7 +444,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // BS*-a
         if (0) {
-            BSStar <xyLoc, tDirection, MapEnvironment> bs(true);
+            BSStar<xyLoc, tDirection, MapEnvironment> bs(true);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
@@ -469,7 +469,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // BAE*
         if (1) {
-            BAE <xyLoc, tDirection, MapEnvironment> bae(true, 1.0, 0.5);
+            BAE<xyLoc, tDirection, MapEnvironment> bae(true, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
@@ -494,7 +494,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // BAE*-p
         if (0) {
-            BAE <xyLoc, tDirection, MapEnvironment> bae(false, 0.5);
+            BAE<xyLoc, tDirection, MapEnvironment> bae(false, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();

@@ -378,7 +378,7 @@ void TestSTP() {
         // DBS
         if (0) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
-            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, false> dbs;
+            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, false > dbs(MinCriterion::MinF, true);
             Timer timer;
             timer.StartTimer();
             dbs.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
@@ -403,7 +403,7 @@ void TestSTP() {
         // DBS-p
         if (0) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
-            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, false> dbs(false);
+            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, false > dbs(MinCriterion::MinB, false);
             Timer timer;
             timer.StartTimer();
             dbs.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
@@ -430,7 +430,7 @@ void TestSTP() {
         // DBBS
         if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
-            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> dbbs;
+            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> dbbs(MinCriterion::MinB, true);
             Timer timer;
             timer.StartTimer();
             dbbs.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
@@ -457,7 +457,7 @@ void TestSTP() {
         // DBBS-p
         if (0) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
-            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> dbbs(false);
+            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> dbbs(MinCriterion::MinB, false);
             Timer timer;
             timer.StartTimer();
             dbbs.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
@@ -484,7 +484,7 @@ void TestSTP() {
         // BTB alternating
         if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
-            BTB<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> btb;
+            BTB<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> btb(BTBPolicy::Alternating);
             Timer timer;
             timer.StartTimer();
             btb.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
@@ -513,7 +513,7 @@ void TestSTP() {
         // BTB smallest bucket
         if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
-            BTB<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> btb(false, false);
+            BTB<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> btb(BTBPolicy::Smallest);
             Timer timer;
             timer.StartTimer();
             btb.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
@@ -542,7 +542,7 @@ void TestSTP() {
         // BTB most connected bucket
         if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
-            BTB<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> btb(false, true);
+            BTB<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> btb(BTBPolicy::MostConnected);
             Timer timer;
             timer.StartTimer();
             btb.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);

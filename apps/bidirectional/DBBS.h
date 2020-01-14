@@ -10,7 +10,7 @@
 template<class state, class action, class environment, bool useB = true, bool useRC = true, class priorityQueue = BidirErrorBucketBasedList<state, environment, useB, useRC, BucketNodeData<state>>>
 class DBBS {
 public:
-    DBBS(bool alternating_ = true, double epsilon_ = 1.0, double gcd_ = 1.0) {
+    DBBS(MinCriterion minCriterion_, bool alternating_, double epsilon_ = 1.0, double gcd_ = 1.0) {
         forwardHeuristic = 0;
         backwardHeuristic = 0;
         env = 0;
@@ -21,6 +21,7 @@ public:
         epsilon = epsilon_;
         gcd = gcd_;
         alternating = alternating_;
+        minCriterion = minCriterion_;
     }
 
     ~DBBS() {
@@ -75,10 +76,6 @@ public:
 
 private:
 
-    enum RiseCriterion {
-        RiseG, RiseForward, RiseBackward
-    };
-
     void ExtractPath(const priorityQueue &queue, state &collisionState, std::vector <state> &thePath) {
         thePath.push_back(collisionState);
         auto parent = queue.Lookup(collisionState).parent;
@@ -96,10 +93,6 @@ private:
 
     double GetNextC();
 
-    MinCriterion getMinCriterion(bool forwardQueue) {
-        return useB ? MinCriterion::MinB : MinCriterion::MinF;
-    }
-
     priorityQueue forwardQueue, backwardQueue;
     state goal, start;
 
@@ -112,14 +105,13 @@ private:
     double epsilon;
     double gcd;
 
-    RiseCriterion criterion = RiseCriterion::RiseG;
-
     environment *env;
     Heuristic <state> *forwardHeuristic;
     Heuristic <state> *backwardHeuristic;
 
     bool expandForward = true;
     bool alternating;
+    MinCriterion minCriterion;
 
     double C = 0.0;
 };
@@ -177,7 +169,7 @@ bool DBBS<state, action, environment, useB, useRC, priorityQueue>::UpdateC() {
     while (C < currentCost && (!forwardQueue.isBestBucketComputed() || !backwardQueue.isBestBucketComputed())) {
 
         // initial forward queue limits
-        forwardQueue.computeBestBucket(getMinCriterion(true), C, C, C, 2.0 * C, DBL_MAX, DBL_MAX);
+        forwardQueue.computeBestBucket(minCriterion, C, C, C, 2.0 * C, DBL_MAX, DBL_MAX);
 
         double gMinF = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinG() : C;
         double fMinF = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinF() : C;
@@ -187,7 +179,7 @@ bool DBBS<state, action, environment, useB, useRC, priorityQueue>::UpdateC() {
         double rdMinF = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinRD() : C;
 
         // initial backwards queue limits
-        backwardQueue.computeBestBucket(getMinCriterion(false), C - (gMinF + epsilon), C - dMinF, C - fMinF,
+        backwardQueue.computeBestBucket(minCriterion, C - (gMinF + epsilon), C - dMinF, C - fMinF,
                                         2.0 * C - bMinF, C - rdMinF, C - rfMinF);
 
         double gMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinG() : C;
@@ -205,7 +197,7 @@ bool DBBS<state, action, environment, useB, useRC, priorityQueue>::UpdateC() {
             limitsChanged = false;
 
             // forward queue limits
-            forwardQueue.computeBestBucket(getMinCriterion(true), C - (gMinB + epsilon), C - dMinB, C - fMinB,
+            forwardQueue.computeBestBucket(minCriterion, C - (gMinB + epsilon), C - dMinB, C - fMinB,
                                            2.0 * C - bMinB, C - rdMinB, C - rfMinB);
 
             double gMinF_new = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinG() : C;
@@ -222,7 +214,7 @@ bool DBBS<state, action, environment, useB, useRC, priorityQueue>::UpdateC() {
             bMinF = bMinF_new, rfMinF = rfMinF_new, rdMinF = rdMinF_new;
 
             // backwards queue limits
-            backwardQueue.computeBestBucket(getMinCriterion(false), C - (gMinF + epsilon), C - dMinF, C - fMinF,
+            backwardQueue.computeBestBucket(minCriterion, C - (gMinF + epsilon), C - dMinF, C - fMinF,
                                             2.0 * C - bMinF, C - rdMinF, C - rfMinF);
 
             double gMinB_new = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinG() : C;
@@ -246,9 +238,6 @@ bool DBBS<state, action, environment, useB, useRC, priorityQueue>::UpdateC() {
             incrementedC = true;
         }
     }
-
-    // TODO: parametrize criterion strategy
-    criterion = RiseCriterion::RiseG;
 
     return incrementedC;
 }

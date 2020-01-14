@@ -412,7 +412,8 @@ void TestPancakeRandom() {
 
             // DBS
             if (0) {
-                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >, false > dbs;
+                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >, false >
+                                                                                        dbs(MinCriterion::MinF, true);
                 goal.Reset();
                 start = original;
                 t8.StartTimer();
@@ -438,7 +439,8 @@ void TestPancakeRandom() {
 
             // DBS-p
             if (0) {
-                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >, false > dbs(false);
+                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >, false >
+                                                                                        dbs(MinCriterion::MinF, false);
                 goal.Reset();
                 start = original;
                 t8.StartTimer();
@@ -466,7 +468,7 @@ void TestPancakeRandom() {
 
             // DBBS
             if (1) {
-                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> dbbs;
+                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> dbbs(MinCriterion::MinB, true);
                 goal.Reset();
                 start = original;
                 t8.StartTimer();
@@ -494,7 +496,7 @@ void TestPancakeRandom() {
 
             // DBBS-p
             if (0) {
-                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> dbbs(false);
+                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> dbbs(MinCriterion::MinB, false);
                 goal.Reset();
                 start = original;
                 t8.StartTimer();
@@ -570,7 +572,7 @@ void TestPancakeRandom() {
 
             // BTB alternating
             if (1) {
-                BTB<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> btb;
+                BTB<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> btb(BTBPolicy::Alternating);
                 goal.Reset();
                 start = original;
                 t8.StartTimer();
@@ -602,7 +604,7 @@ void TestPancakeRandom() {
 
             // BTB smallest bucket
             if (1) {
-                BTB<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> btb(false, false);
+                BTB<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> btb(BTBPolicy::Smallest);
                 goal.Reset();
                 start = original;
                 t8.StartTimer();
@@ -634,7 +636,7 @@ void TestPancakeRandom() {
 
             // BTB most connected bucket
             if (1) {
-                BTB<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> btb(false, true);
+                BTB<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> btb(BTBPolicy::MostConnected);
                 goal.Reset();
                 start = original;
                 t8.StartTimer();

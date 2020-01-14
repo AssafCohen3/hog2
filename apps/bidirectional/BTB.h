@@ -21,10 +21,14 @@ struct PairsInfo {
     std::pair <BucketInfo, BucketInfo> smallestPair;
 };
 
+enum BTBPolicy {
+    Alternating = 31414, Smallest, MostConnected
+};
+
 template<class state, class action, class environment, bool useRC = true, class priorityQueue = BidirErrorBucketBasedList<state, environment, true, useRC, BucketNodeData<state>>>
 class BTB {
 public:
-    BTB(bool alternating_ = true, bool mostConnected_ = true, double epsilon_ = 1.0) {
+    BTB(BTBPolicy policy_, double epsilon_ = 1.0) {
         forwardHeuristic = 0;
         backwardHeuristic = 0;
         env = 0;
@@ -32,8 +36,7 @@ public:
         nodesExpanded = nodesTouched = 0;
         currentCost = DBL_MAX;
         epsilon = epsilon_;
-        alternating = alternating_;
-        mostConnected = mostConnected_;
+        policy = policy_;
     }
 
     ~BTB() {
@@ -121,8 +124,7 @@ private:
     Heuristic <state> *forwardHeuristic;
     Heuristic <state> *backwardHeuristic;
 
-    bool alternating;
-    bool mostConnected;
+    BTBPolicy policy;
 
     double C = 0.0;
 
@@ -149,8 +151,7 @@ void BTB<state, action, environment, useRC, priorityQueue>::GetPath(environment 
 
         const PairsInfo &pairsInfo = pairComputation.second;
 
-        // TODO: parametrize better whether we want to alternate or to take a look at the open lists
-        if (alternating) { // alternate directions
+        if (policy == BTBPolicy::Alternating) { // alternate directions
             const BucketInfo &fwInfo = pairsInfo.smallestPair.first;
             const BucketInfo &bwInfo = pairsInfo.smallestPair.second;
 
@@ -165,17 +166,15 @@ void BTB<state, action, environment, useRC, priorityQueue>::GetPath(environment 
                        backwardHeuristic, forwardHeuristic, start, goal);
             }
 
-        } else { // choose bucket with a better pairing ration
-            // expand the bucket which is connected with the most other nodes
-            if (mostConnected) {
-                ExpandBucket(pairsInfo.forward, pairsInfo.mostConnected);
-            } else { // expand the smallest bucket of the smallest pair
-                bool forward = pairsInfo.smallestPair.first.nodes < pairsInfo.smallestPair.second.nodes;
-                ExpandBucket(forward, forward ? pairsInfo.smallestPair.first : pairsInfo.smallestPair.second);
-            }
-        }
+        } else if (policy == BTBPolicy::MostConnected) { // expand the bucket with most connected nodes
+            ExpandBucket(pairsInfo.forward, pairsInfo.mostConnected);
+        } else if (policy == BTBPolicy::Smallest) { // expand the smallest bucket of the smallest pair
+            bool forward = pairsInfo.smallestPair.first.nodes < pairsInfo.smallestPair.second.nodes;
+            ExpandBucket(forward, forward ? pairsInfo.smallestPair.first : pairsInfo.smallestPair.second);
+        } else { exit(0); }
 
         if (CheckSolution(thePath)) break;
+
     }
 
     // reconstruct the solution path
