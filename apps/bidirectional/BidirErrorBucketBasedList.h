@@ -72,6 +72,8 @@ public:
 
     std::pair<const state *, double> Pop();
 
+    bool IsEmpty() { return fLayers.size() == 0; }
+
     bool RemoveIfEmpty(double g, double h, double h_nx);
 
     const state *PopBucket(double g, double h, double h_nx);

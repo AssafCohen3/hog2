@@ -37,6 +37,8 @@ class MapExperiment {
             nodes_BAE = 0, nodes_BAEn = 0, notie_BAE = 0, nodes_BAEp = 0, nodes_BAEpn = 0, notie_BAEp = 0,
             nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0,
             nodes_BTB = 0, nodes_BTBn = 0, notie_BTB = 0,
+            nodes_BTB_small = 0, nodes_BTB_smalln = 0, notie_BTB_small = 0,
+            nodes_BTB_conn = 0, nodes_BTB_connn = 0, notie_BTB_conn = 0,
             nodes_DBBS = 0, nodes_DBBSn = 0, notie_DBBS = 0, nodes_DBBSp = 0, nodes_DBBSpn = 0, notie_DBBSp = 0;
 
     int experiments = 0;
@@ -69,8 +71,8 @@ public:
                    ("../../scenarios/" + folder + "/" + scenarioFiles[i]).c_str(), 1.0);
         }
 
-//        runMap(("../../maps/dao/brc505d.map"),
-//               ("../../scenarios/dao/brc505d.map.scen"), 1.0);
+//        runMap(("../../maps/dao/lak400d.map"),
+//               ("../../scenarios/dao/lak400d.map.scen"), 1.0);
 
         printf("+++++++++++++++++++++++++++++++++++++++++\n");
 
@@ -127,6 +129,12 @@ public:
         std::cout << "Maps" << " BTB alt " << nodes_BTB / experiments << " expanded; "
                   << nodes_BTBn / experiments << " necessary; "
                   << notie_BTB / (float) experiments << " no last layer" << std::endl;
+        std::cout << "Maps" << " BTB small " << nodes_BTB_small / experiments << " expanded; "
+                  << nodes_BTB_smalln / experiments << " necessary; "
+                  << notie_BTB_small / (float) experiments << " no last layer" << std::endl;
+        std::cout << "Maps" << " BTB conn " << nodes_BTB_conn / experiments << " expanded; "
+                  << nodes_BTB_connn / experiments << " necessary; "
+                  << notie_BTB_conn / (float) experiments << " no last layer" << std::endl;
 
         printf("+++++++++++++++++++++++++++++++++++++++++\n");
 

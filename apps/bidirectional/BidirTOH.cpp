@@ -78,6 +78,8 @@ void TestTOH(int first, int last) {
             nodes_BAE = 0, nodes_BAEn = 0, notie_BAE = 0, nodes_BAEp = 0, nodes_BAEpn = 0, notie_BAEp = 0,
             nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0,
             nodes_BTB = 0, nodes_BTBn = 0, notie_BTB = 0,
+            nodes_BTB_small = 0, nodes_BTB_smalln = 0, notie_BTB_small = 0,
+            nodes_BTB_conn = 0, nodes_BTB_connn = 0, notie_BTB_conn = 0,
             nodes_DDBS = 0, nodes_DDBSn = 0, notie_DDBS = 0, nodes_DDBSp = 0, nodes_DDBSpn = 0, notie_DDBSp = 0;
 
     int table[] = {52058078, 116173544, 208694125, 131936966, 141559500, 133800745, 194246206, 50028346, 167007978,
@@ -113,7 +115,7 @@ void TestTOH(int first, int last) {
 
         double optimal_cost = -1.0;
 
-        if (1) {
+        if (0) {
             NBS<TOHState < N>, TOHMove, TOH < N >, NBSQueue<TOHState < N>, 1, false >> nbsEpsilon(false);
             timer.StartTimer();
             nbsEpsilon.GetPath(&toh, s, g, f, b, thePath);
@@ -138,7 +140,7 @@ void TestTOH(int first, int last) {
             }
         }
 
-        if (1) {
+        if (0) {
             NBS<TOHState < N>, TOHMove, TOH < N >, NBSQueue<TOHState < N>, 1, true >> nbsEpsilon(false, true);
             timer.StartTimer();
             nbsEpsilon.GetPath(&toh, s, g, f, b, thePath);
@@ -163,7 +165,7 @@ void TestTOH(int first, int last) {
             }
 
         }
-        if (1) {
+        if (0) {
             DVCBS<TOHState < N>, TOHMove, TOH < N >, DVCBSQueue<TOHState < N>, 1, false >> dvcbs(false);
             timer.StartTimer();
             dvcbs.GetPath(&toh, s, g, f, b, thePath);
@@ -188,7 +190,7 @@ void TestTOH(int first, int last) {
             }
 
         }
-        if (1) {
+        if (0) {
             DVCBS<TOHState < N>, TOHMove, TOH < N >, DVCBSQueue<TOHState < N>, 1, true >> dvcbs(false, true);
             timer.StartTimer();
             dvcbs.GetPath(&toh, s, g, f, b, thePath);
@@ -213,7 +215,7 @@ void TestTOH(int first, int last) {
             }
         }
 
-        if (1) {
+        if (0) {
             Baseline<TOHState < N>, TOHMove, TOH < N >> baseline;
             timer.StartTimer();
             baseline.GetPath(&toh, s, g, f, b, thePath);
@@ -235,7 +237,7 @@ void TestTOH(int first, int last) {
             }
         }
 
-        if (1) {
+        if (0) {
             GBFHS<TOHState < N>, TOHMove, TOH < N >> gbfhs(true);
             timer.StartTimer();
             gbfhs.GetPath(&toh, s, g, f, b, thePath);
@@ -262,7 +264,7 @@ void TestTOH(int first, int last) {
             }
         }
 
-        if (1) {
+        if (0) {
             GBFHS<TOHState < N>, TOHMove, TOH < N >> gbfhs(false);
             timer.StartTimer();
             gbfhs.GetPath(&toh, s, g, f, b, thePath);
@@ -291,7 +293,7 @@ void TestTOH(int first, int last) {
 
         // DBS
         if (0) {
-            DBBS<TOHState < N>, TOHMove, TOH < N >, false> dbs;
+            DBBS<TOHState < N>, TOHMove, TOH < N >, false > dbs;
             timer.StartTimer();
             dbs.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();
@@ -314,7 +316,7 @@ void TestTOH(int first, int last) {
 
         // DBS-p
         if (0) {
-            DBBS<TOHState < N>, TOHMove, TOH < N >, false> dbs(false);
+            DBBS<TOHState < N>, TOHMove, TOH < N >, false > dbs(false);
             timer.StartTimer();
             dbs.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();
@@ -337,8 +339,6 @@ void TestTOH(int first, int last) {
 
         int tempDBBS;
 
-        int tempDBBS;
-
         // DDBS
         if (1) {
             DBBS<TOHState < N>, TOHMove, TOH < N >> ddbs;
@@ -351,8 +351,6 @@ void TestTOH(int first, int last) {
 
             nodes_DDBS += ddbs.GetNodesExpanded();
             nodes_DDBSn += ddbs.GetNecessaryExpansions();
-
-            tempDBBS = ddbs.GetNecessaryExpansions();
 
             if (ddbs.GetNodesExpanded() == ddbs.GetNecessaryExpansions()) notie_DDBS++;
 
@@ -367,35 +365,8 @@ void TestTOH(int first, int last) {
             }
         }
 
-        // DDBS-norc
-//        if (1) {
-//            DBBS<TOHState < N>, TOHMove, TOH < N >, true, false> ddbs;
-//            timer.StartTimer();
-//            ddbs.GetPath(&toh, s, g, f, b, thePath);
-//            timer.EndTimer();
-//            printf("DDBS found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
-//                   toh.GetPathLength(thePath),
-//                   ddbs.GetNodesExpanded(), ddbs.GetNecessaryExpansions(), timer.GetElapsedTime());
-//
-//            nodes_DDBS += ddbs.GetNodesExpanded();
-//            nodes_DDBSn += ddbs.GetNecessaryExpansions();
-//            if (ddbs.GetNodesExpanded() == ddbs.GetNecessaryExpansions()) notie_DDBS++;
-//
-//            if (tempDBBS != ddbs.GetNecessaryExpansions()) {
-//                std::cout << "  !!!!!!!!!!! rc bound pruned something!" << std::endl;
-//            }
-//
-//            // test optimality
-//            if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
-//            else if (optimal_cost != toh.GetPathLength(thePath)) {
-//                printf("DDBS reported bad value!! optimal %1.0f; reported %1.0f;\n",
-//                       optimal_cost, toh.GetPathLength(thePath));
-//                exit(0);
-//            }
-//        }
-
         // DDBS-p
-        if (1) {
+        if (0) {
             DBBS<TOHState < N>, TOHMove, TOH < N >> ddbs(false);
             timer.StartTimer();
             ddbs.GetPath(&toh, s, g, f, b, thePath);
@@ -417,13 +388,15 @@ void TestTOH(int first, int last) {
             }
         }
 
+        int tempBTBalt;
+
         // BTB alternating
         if (1) {
             BTB<TOHState < N>, TOHMove, TOH < N >> btb;
             timer.StartTimer();
             btb.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();
-            printf("BTB found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+            printf("BTB alt found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
                    toh.GetPathLength(thePath),
                    btb.GetNodesExpanded(), btb.GetNecessaryExpansions(), timer.GetElapsedTime());
 
@@ -432,21 +405,82 @@ void TestTOH(int first, int last) {
 
             if (btb.GetNodesExpanded() == btb.GetNecessaryExpansions()) notie_BTB++;
 
-            if (2 * tempDBBS + 2 < btb.GetNecessaryExpansions()) {
-                std::cout << "NOT NEAR-OPTIMAL!!!! " << tempDBBS << " and " << btb.GetNecessaryExpansions() << std::endl;
+            tempBTBalt = btb.GetNecessaryExpansions();
+
+            if (2 * tempDBBS + 2 < tempBTBalt) {
+                std::cout << "NOT NEAR-OPTIMAL!!!! " << tempDBBS << " and " << btb.GetNecessaryExpansions()
+                          << std::endl;
             }
 
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
             else if (optimal_cost != toh.GetPathLength(thePath)) {
-                printf("BTB reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                printf("BTB small reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, toh.GetPathLength(thePath));
+                exit(0);
+            }
+        }
+
+        // BTB smallest bucket
+        if (1) {
+            BTB<TOHState < N>, TOHMove, TOH < N >> btb(false, false);
+            timer.StartTimer();
+            btb.GetPath(&toh, s, g, f, b, thePath);
+            timer.EndTimer();
+            printf("BTB small found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   toh.GetPathLength(thePath),
+                   btb.GetNodesExpanded(), btb.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_BTB_small += btb.GetNodesExpanded();
+            nodes_BTB_smalln += btb.GetNecessaryExpansions();
+
+            if (btb.GetNodesExpanded() == btb.GetNecessaryExpansions()) notie_BTB_small++;
+
+            if (2 * btb.GetNecessaryExpansions() + 2 < tempBTBalt) {
+                std::cout << "NOT NEAR-OPTIMAL!!!! " << btb.GetNecessaryExpansions()
+                          << " and " << tempBTBalt << std::endl;
+            }
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
+            else if (optimal_cost != toh.GetPathLength(thePath)) {
+                printf("BTB small reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, toh.GetPathLength(thePath));
+                exit(0);
+            }
+        }
+
+        // BTB most connected bucket
+        if (1) {
+            BTB<TOHState < N>, TOHMove, TOH < N >> btb(false, true);
+            timer.StartTimer();
+            btb.GetPath(&toh, s, g, f, b, thePath);
+            timer.EndTimer();
+            printf("BTB conn found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   toh.GetPathLength(thePath),
+                   btb.GetNodesExpanded(), btb.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_BTB_conn += btb.GetNodesExpanded();
+            nodes_BTB_connn += btb.GetNecessaryExpansions();
+
+            if (btb.GetNodesExpanded() == btb.GetNecessaryExpansions()) notie_BTB_conn++;
+
+            if (2 * btb.GetNecessaryExpansions() + 2 < tempBTBalt) {
+                std::cout << "NOT NEAR-OPTIMAL!!!! " << btb.GetNecessaryExpansions()
+                          << " and " << tempBTBalt << std::endl;
+            }
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
+            else if (optimal_cost != toh.GetPathLength(thePath)) {
+                printf("BTB conn reported bad value!! optimal %1.0f; reported %1.0f;\n",
                        optimal_cost, toh.GetPathLength(thePath));
                 exit(0);
             }
         }
 
         // BS*
-        if (1) {
+        if (0) {
             BSStar<TOHState < N>, TOHMove, TOH < N >> bs;
             timer.StartTimer();
             bs.GetPath(&toh, s, g, f, b, thePath);
@@ -537,7 +571,8 @@ void TestTOH(int first, int last) {
             }
         }
 
-        if (1) {
+        // A*
+        if (0) {
             TemplateAStar <TOHState<N>, TOHMove, TOH<N>> astar(false, 1);
             astar.SetHeuristic(f);
             timer.StartTimer();
@@ -621,9 +656,15 @@ void TestTOH(int first, int last) {
     std::cout << "ToH" << " DDBS-p " << nodes_DDBSp / experiments << " expanded; "
               << nodes_DDBSpn / experiments << " necessary; "
               << notie_DDBSp / (float) experiments << " no last layer" << std::endl;
-    std::cout << "ToH" << " BTB " << nodes_BTB / experiments << " expanded; "
+    std::cout << "ToH" << " BTB alt " << nodes_BTB / experiments << " expanded; "
               << nodes_BTBn / experiments << " necessary; "
               << notie_BTB / (float) experiments << " no last layer" << std::endl;
+    std::cout << "ToH" << " BTB small " << nodes_BTB_small / experiments << " expanded; "
+              << nodes_BTB_smalln / experiments << " necessary; "
+              << notie_BTB_small / (float) experiments << " no last layer" << std::endl;
+    std::cout << "ToH" << " BTB conn " << nodes_BTB_conn / experiments << " expanded; "
+              << nodes_BTB_connn / experiments << " necessary; "
+              << notie_BTB_conn / (float) experiments << " no last layer" << std::endl;
 
     printf("+++++++++++++++++++++++++++++++++++++++++\n");
 

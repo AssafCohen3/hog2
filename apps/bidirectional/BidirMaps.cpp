@@ -31,7 +31,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         double optimal_cost = -1.0;
 
-        if (1) {
+        if (0) {
             NBS<xyLoc, tDirection, MapEnvironment, NBSQueue<xyLoc, 1, false>> nbs(false);
             std::vector <xyLoc> path;
             Timer timer;
@@ -58,7 +58,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             }
         }
 
-        if (1) {
+        if (0) {
             NBS<xyLoc, tDirection, MapEnvironment, NBSQueue<xyLoc, 1, true>> nbsA(false, true);
             std::vector <xyLoc> path;
             Timer timer;
@@ -86,7 +86,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             }
         }
 
-        if (1) {
+        if (0) {
             DVCBS<xyLoc, tDirection, MapEnvironment, DVCBSQueue<xyLoc, 1, false>> dvcbs(false);
             std::vector <xyLoc> path;
             Timer timer;
@@ -114,7 +114,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             }
         }
 
-        if (1) {
+        if (0) {
             DVCBS<xyLoc, tDirection, MapEnvironment, DVCBSQueue<xyLoc, 1, true>> dvcbs(false, true);
             std::vector <xyLoc> path;
             Timer timer;
@@ -142,7 +142,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             }
         }
 
-        if (1) {
+        if (0) {
             Baseline<xyLoc, tDirection, MapEnvironment> baseline(1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
@@ -166,7 +166,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             }
         }
 
-        if (1) {
+        if (0) {
             GBFHS<xyLoc, tDirection, MapEnvironment> gbfhs(true, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
@@ -194,7 +194,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             }
         }
 
-        if (1) {
+        if (0) {
             GBFHS<xyLoc, tDirection, MapEnvironment> gbfhs(false, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
@@ -326,6 +326,8 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             }
         }
 
+        int tempBTBalt;
+
         // BTB alternating
         if (1) {
             BTB<xyLoc, tDirection, MapEnvironment> btb(true, true, 1.0);
@@ -342,14 +344,74 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             nodes_BTBn += btb.GetNecessaryExpansions();
             if (btb.GetNodesExpanded() == btb.GetNecessaryExpansions()) notie_BTB++;
 
-            if (2 * tempDBBS + 2 < btb.GetNecessaryExpansions()) {
-                std::cout << "NOT NEAR-OPTIMAL!!!! " << tempDBBS << " and " << btb.GetNecessaryExpansions() << std::endl;
+            tempBTBalt = btb.GetNecessaryExpansions();
+
+            if (2 * tempDBBS + 2 < tempBTBalt) {
+                std::cout << "NOT NEAR-OPTIMAL!!!! " << tempDBBS << " and " << tempBTBalt << std::endl;
             }
 
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
             else if (optimal_cost != me->GetPathLength(path)) {
                 printf("BTB alt reported bad value!! optimal %1.2f; reported %1.2f;\n",
+                       optimal_cost, me->GetPathLength(path));
+                exit(0);
+            }
+        }
+
+        // BTB smallest bucket
+        if (1) {
+            BTB<xyLoc, tDirection, MapEnvironment> btb(false, false, 1.0);
+            std::vector <xyLoc> path;
+            Timer timer;
+            timer.StartTimer();
+            btb.GetPath(me, start, goal, me, me, path);
+            timer.EndTimer();
+            printf("BTB small found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   me->GetPathLength(path),
+                   btb.GetNodesExpanded(), btb.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_BTB_small += btb.GetNodesExpanded();
+            nodes_BTB_smalln += btb.GetNecessaryExpansions();
+            if (btb.GetNodesExpanded() == btb.GetNecessaryExpansions()) notie_BTB_small++;
+
+            if (2 * btb.GetNecessaryExpansions() + 2 < tempBTBalt) {
+                std::cout << "NOT NEAR-OPTIMAL!!!! " << tempDBBS << " and " << tempBTBalt << std::endl;
+            }
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
+            else if (optimal_cost != me->GetPathLength(path)) {
+                printf("BTB small reported bad value!! optimal %1.2f; reported %1.2f;\n",
+                       optimal_cost, me->GetPathLength(path));
+                exit(0);
+            }
+        }
+
+        // BTB most connected bucket
+        if (1) {
+            BTB<xyLoc, tDirection, MapEnvironment> btb(false, true, 1.0);
+            std::vector <xyLoc> path;
+            Timer timer;
+            timer.StartTimer();
+            btb.GetPath(me, start, goal, me, me, path);
+            timer.EndTimer();
+            printf("BTB conn found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   me->GetPathLength(path),
+                   btb.GetNodesExpanded(), btb.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_BTB_conn += btb.GetNodesExpanded();
+            nodes_BTB_connn += btb.GetNecessaryExpansions();
+            if (btb.GetNodesExpanded() == btb.GetNecessaryExpansions()) notie_BTB_conn++;
+
+            if (2 * btb.GetNecessaryExpansions() + 2 < tempBTBalt) {
+                std::cout << "NOT NEAR-OPTIMAL!!!! " << tempDBBS << " and " << tempBTBalt << std::endl;
+            }
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
+            else if (optimal_cost != me->GetPathLength(path)) {
+                printf("BTB conn reported bad value!! optimal %1.2f; reported %1.2f;\n",
                        optimal_cost, me->GetPathLength(path));
                 exit(0);
             }
@@ -380,8 +442,8 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             }
         }
 
-        // BS*-p
-        if (1) {
+        // BS*-a
+        if (0) {
             BSStar <xyLoc, tDirection, MapEnvironment> bs(true);
             std::vector <xyLoc> path;
             Timer timer;

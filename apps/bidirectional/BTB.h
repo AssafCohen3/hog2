@@ -8,6 +8,8 @@
 #include <math.h>
 #include <utility>
 
+#include <chrono>
+
 struct PairsInfo {
 
     PairsInfo(bool forward_, BucketInfo mostConnected_,
@@ -45,9 +47,9 @@ public:
     bool InitializeSearch(environment *env, const state &from, const state &to, Heuristic <state> *forward,
                           Heuristic <state> *backward, std::vector <state> &thePath);
 
-    bool CheckSolution(std::vector <state> &thePath);
+    bool CheckSolution(std::vector <state> &thePath) { return fgreatereq(C, currentCost); }
 
-    void ExpandBucket(bool forward, BucketInfo info);
+    void ExpandBucket(bool forward, const BucketInfo &info);
 
     virtual const char *GetName() { return "BTB"; }
 
@@ -136,9 +138,8 @@ void BTB<state, action, environment, useRC, priorityQueue>::GetPath(environment 
     if (!InitializeSearch(env, from, to, forward, backward, thePath))
         return;
 
-    while (true) { // TODO the condition should be non-empty lists
+    while (!forwardQueue.IsEmpty() && !backwardQueue.IsEmpty()) {
         auto pairComputation = ComputePairs();
-
         if (pairComputation.first) {
             // check solution after increasing C
             if (CheckSolution(thePath)) break;
@@ -176,17 +177,25 @@ void BTB<state, action, environment, useRC, priorityQueue>::GetPath(environment 
 
         if (CheckSolution(thePath)) break;
     }
+
+    // reconstruct the solution path
+    std::vector <state> pFor, pBack;
+    ExtractPath(backwardQueue, middleNode, pBack);
+    ExtractPath(forwardQueue, middleNode, pFor);
+    reverse(pFor.begin(), pFor.end());
+    thePath = pFor;
+    thePath.insert(thePath.end(), pBack.begin() + 1, pBack.end());
 }
 
 template<class state, class action, class environment, bool useRC, class priorityQueue>
-void BTB<state, action, environment, useRC, priorityQueue>::ExpandBucket(bool forward, BucketInfo info) {
+void BTB<state, action, environment, useRC, priorityQueue>::ExpandBucket(bool forward, const BucketInfo &info) {
     if (forward) {
-        while (forwardQueue.RemoveIfEmpty(info.g, info.h, info.h_nx)) {
+        while (!forwardQueue.RemoveIfEmpty(info.g, info.h, info.h_nx)) {
             auto pop = forwardQueue.PopBucket(info.g, info.h, info.h_nx);
             Expand(pop, info.g, forwardQueue, backwardQueue, forwardHeuristic, backwardHeuristic, goal, start);
         }
     } else {
-        while (backwardQueue.RemoveIfEmpty(info.g, info.h, info.h_nx)) {
+        while (!backwardQueue.RemoveIfEmpty(info.g, info.h, info.h_nx)) {
             auto pop = backwardQueue.PopBucket(info.g, info.h, info.h_nx);
             Expand(pop, info.g, backwardQueue, forwardQueue, backwardHeuristic, forwardHeuristic, start, goal);
         }
@@ -223,6 +232,7 @@ bool BTB<state, action, environment, useRC, priorityQueue>::InitializeSearch(env
 
 template<class state, class action, class environment, bool useRC, class priorityQueue>
 std::pair<bool, PairsInfo> BTB<state, action, environment, useRC, priorityQueue>::ComputePairs() {
+
     auto fwBuckets = forwardQueue.getBucketInfo();
     auto bwBuckets = backwardQueue.getBucketInfo();
 
@@ -290,23 +300,6 @@ std::pair<bool, PairsInfo> BTB<state, action, environment, useRC, priorityQueue>
     C = btbC;
 
     return std::make_pair(updatedC, PairsInfo(forward, mostConnected, smallestBucketPair));
-}
-
-
-template<class state, class action, class environment, bool useRC, class priorityQueue>
-bool BTB<state, action, environment, useRC, priorityQueue>::CheckSolution(std::vector <state> &thePath) {
-
-    if (fgreatereq(C, currentCost)) { // optimal solution found
-        std::vector <state> pFor, pBack;
-        ExtractPath(backwardQueue, middleNode, pBack);
-        ExtractPath(forwardQueue, middleNode, pFor);
-        reverse(pFor.begin(), pFor.end());
-        thePath = pFor;
-        thePath.insert(thePath.end(), pBack.begin() + 1, pBack.end());
-        return true;
-    }
-
-    return false;
 }
 
 template<class state, class action, class environment, bool useRC, class priorityQueue>

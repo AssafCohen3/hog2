@@ -149,6 +149,8 @@ void TestSTP() {
             nodes_BAE = 0, nodes_BAEn = 0, notie_BAE = 0, nodes_BAEp = 0, nodes_BAEpn = 0, notie_BAEp = 0,
             nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0,
             nodes_BTB = 0, nodes_BTBn = 0, notie_BTB = 0,
+            nodes_BTB_small = 0, nodes_BTB_smalln = 0, notie_BTB_small = 0,
+            nodes_BTB_conn = 0, nodes_BTB_connn = 0, notie_BTB_conn = 0,
             nodes_DBBS = 0, nodes_DBBSn = 0, notie_DBBS = 0, nodes_DBBSp = 0, nodes_DBBSpn = 0, notie_DBBSp = 0;
 
     for (int x = 0; x < 100; x++) // 547 to 540
@@ -168,7 +170,7 @@ void TestSTP() {
 
         double optimal_cost = -1.0;
 
-        if (1) {
+        if (0) {
             NBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, NBSQueue<MNPuzzleState < 4, 4>, 1, false
                     >> nbsEpsilon(false);
             goal.Reset();
@@ -198,7 +200,7 @@ void TestSTP() {
             }
         }
 
-        if (1) {
+        if (0) {
             NBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, NBSQueue<MNPuzzleState < 4, 4>, 1, true
                     >> nbsEpsilon(false, true);
             goal.Reset();
@@ -228,7 +230,7 @@ void TestSTP() {
             }
         }
 
-        if (1) {
+        if (0) {
             DVCBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, DVCBSQueue<MNPuzzleState < 4, 4>, 1, false
                     >> dvcbs(false);
             goal.Reset();
@@ -259,7 +261,7 @@ void TestSTP() {
             }
         }
 
-        if (1) {
+        if (0) {
             DVCBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, DVCBSQueue<MNPuzzleState < 4, 4>, 1, true
                     >> dvcbs(false, true);
             goal.Reset();
@@ -290,7 +292,7 @@ void TestSTP() {
             }
         }
 
-        if (1) {
+        if (0) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
             Baseline<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> baseline;
             Timer timer;
@@ -314,7 +316,7 @@ void TestSTP() {
             }
         }
 
-        if (1) {
+        if (0) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
             GBFHS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> gbfhs(true);
             Timer timer;
@@ -342,7 +344,7 @@ void TestSTP() {
             }
         }
 
-        if (1) {
+        if (0) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
             GBFHS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> gbfhs(false);
             Timer timer;
@@ -370,8 +372,11 @@ void TestSTP() {
             }
         }
 
+        goal.Reset();
+        start = GetKorfInstance(x);
+
         // DBS
-        if (1) {
+        if (0) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
             DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, false> dbs;
             Timer timer;
@@ -396,7 +401,7 @@ void TestSTP() {
         }
 
         // DBS-p
-        if (1) {
+        if (0) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
             DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, false> dbs(false);
             Timer timer;
@@ -450,7 +455,7 @@ void TestSTP() {
         }
 
         // DBBS-p
-        if (1) {
+        if (0) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
             DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> dbbs(false);
             Timer timer;
@@ -474,6 +479,8 @@ void TestSTP() {
             }
         }
 
+        int tempBTBalt;
+
         // BTB alternating
         if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
@@ -490,21 +497,79 @@ void TestSTP() {
             nodes_BTBn += btb.GetNecessaryExpansions();
             if (btb.GetNodesExpanded() == btb.GetNecessaryExpansions()) notie_BTB++;
 
-            if (2 * tempDBBS + 2 < btb.GetNecessaryExpansions()) {
-                std::cout << "NOT NEAR-OPTIMAL!!!! " << tempDBBS << " and " << btb.GetNecessaryExpansions() << std::endl;
+            if (2 * tempDBBS + 2 < tempBTBalt) {
+                std::cout << "NOT NEAR-OPTIMAL!!!! " << tempDBBS << " and " << tempBTBalt << std::endl;
             }
 
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
             else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
-                printf("BTB reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                printf("BTB alt reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(solutionPath));
+                exit(0);
+            }
+        }
+
+        // BTB smallest bucket
+        if (1) {
+            std::vector <MNPuzzleState<4, 4>> solutionPath;
+            BTB<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> btb(false, false);
+            Timer timer;
+            timer.StartTimer();
+            btb.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
+            timer.EndTimer();
+            printf("BTB small found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   mnp.GetPathLength(solutionPath),
+                   btb.GetNodesExpanded(), btb.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_BTB_small += btb.GetNodesExpanded();
+            nodes_BTB_smalln += btb.GetNecessaryExpansions();
+            if (btb.GetNodesExpanded() == btb.GetNecessaryExpansions()) notie_BTB_small++;
+
+            if (2 * btb.GetNecessaryExpansions() + 2 < tempBTBalt) {
+                std::cout << "NOT NEAR-OPTIMAL!!!! " << tempDBBS << " and " << tempBTBalt << std::endl;
+            }
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
+            else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
+                printf("BTB small reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(solutionPath));
+                exit(0);
+            }
+        }
+
+        // BTB most connected bucket
+        if (1) {
+            std::vector <MNPuzzleState<4, 4>> solutionPath;
+            BTB<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> btb(false, true);
+            Timer timer;
+            timer.StartTimer();
+            btb.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
+            timer.EndTimer();
+            printf("BTB conn found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   mnp.GetPathLength(solutionPath),
+                   btb.GetNodesExpanded(), btb.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_BTB_conn += btb.GetNodesExpanded();
+            nodes_BTB_connn += btb.GetNecessaryExpansions();
+            if (btb.GetNodesExpanded() == btb.GetNecessaryExpansions()) notie_BTB_conn++;
+
+            if (2 * btb.GetNecessaryExpansions() + 2 < tempBTBalt) {
+                std::cout << "NOT NEAR-OPTIMAL!!!! " << tempDBBS << " and " << tempBTBalt << std::endl;
+            }
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
+            else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
+                printf("BTB conn reported bad value!! optimal %1.0f; reported %1.0f;\n",
                        optimal_cost, mnp.GetPathLength(solutionPath));
                 exit(0);
             }
         }
 
         // BS*
-        if (1) {
+        if (0) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
             BSStar<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> bs;
             Timer timer;
@@ -579,7 +644,7 @@ void TestSTP() {
         }
 
         // BAE*
-        if (1) {
+        if (0) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
             BAE<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> bae(false);
             Timer timer;
@@ -603,7 +668,8 @@ void TestSTP() {
             }
         }
 
-        if (1) {
+        // A*
+        if (0) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
             TemplateAStar <MNPuzzleState<4, 4>, slideDir, MNPuzzle<4, 4>> astar(false, 1.0);
             astar.SetHeuristic(&mnp);
@@ -684,6 +750,12 @@ void TestSTP() {
     std::cout << "STP" << " BTB alt " << nodes_BTB / 100 << " expanded; "
               << nodes_BTBn / 100 << " necessary; "
               << notie_BTB / (float) 100 << " no last layer" << std::endl;
+    std::cout << "STP" << " BTB small " << nodes_BTB_small / 100 << " expanded; "
+              << nodes_BTB_smalln / 100 << " necessary; "
+              << notie_BTB_small / (float) 100 << " no last layer" << std::endl;
+    std::cout << "STP" << " BTB conn " << nodes_BTB_conn / 100 << " expanded; "
+              << nodes_BTB_connn / 100 << " necessary; "
+              << notie_BTB_conn / (float) 100 << " no last layer" << std::endl;
 
     printf("+++++++++++++++++++++++++++++++++++++++++\n");
 
