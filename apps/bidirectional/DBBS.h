@@ -178,27 +178,30 @@ bool DBBS<state, action, environment, useB, useRC, priorityQueue>::UpdateC() {
         double rfMinF = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinRF() : C;
         double rdMinF = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinRD() : C;
 
-        // initial backwards queue limits
-        backwardQueue.computeBestBucket(minCriterion, C - (gMinF + epsilon), C - dMinF, C - fMinF,
-                                        2.0 * C - bMinF, C - rdMinF, C - rfMinF);
-
-        double gMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinG() : C;
-        double fMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinF() : C;
-        double dMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinD() : C;
-        double bMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinB() : 2 * C;
-        double rfMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinRF() : DBL_MAX;
-        double rdMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinRD() : DBL_MAX;
-
         bool limitsChanged = true;
 
         // fixpoint computation of limits
-        while (limitsChanged && forwardQueue.isBestBucketComputed() && backwardQueue.isBestBucketComputed()) {
+        while (limitsChanged) {
 
             limitsChanged = false;
+
+            backwardQueue.computeBestBucket(minCriterion, C - (gMinF + epsilon), C - dMinF, C - fMinF,
+                                            2.0 * C - bMinF, C - rdMinF, C - rfMinF);
+            if (!backwardQueue.isBestBucketComputed()) break;
+
+
+            double gMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinG() : C;
+            double fMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinF() : C;
+            double dMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinD() : C;
+            double bMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinB() : 2 * C;
+            double rfMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinRF() : DBL_MAX;
+            double rdMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinRD() : DBL_MAX;
 
             // forward queue limits
             forwardQueue.computeBestBucket(minCriterion, C - (gMinB + epsilon), C - dMinB, C - fMinB,
                                            2.0 * C - bMinB, C - rdMinB, C - rfMinB);
+
+            if (!forwardQueue.isBestBucketComputed()) break;
 
             double gMinF_new = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinG() : C;
             double fMinF_new = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinF() : C;
@@ -207,28 +210,11 @@ bool DBBS<state, action, environment, useB, useRC, priorityQueue>::UpdateC() {
             double rfMinF_new = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinRF() : DBL_MAX;
             double rdMinF_new = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinRD() : DBL_MAX;
 
-            limitsChanged |= gMinF != gMinF_new || fMinF != fMinF_new || dMinF != dMinF_new
-                             || bMinF != bMinF_new || rfMinF != rfMinF_new || rdMinF != rdMinF_new;
+            limitsChanged = gMinF != gMinF_new || fMinF != fMinF_new || dMinF != dMinF_new
+                            || bMinF != bMinF_new || rfMinF != rfMinF_new || rdMinF != rdMinF_new;
 
             gMinF = gMinF_new, fMinF = fMinF_new, dMinF = dMinF_new,
             bMinF = bMinF_new, rfMinF = rfMinF_new, rdMinF = rdMinF_new;
-
-            // backwards queue limits
-            backwardQueue.computeBestBucket(minCriterion, C - (gMinF + epsilon), C - dMinF, C - fMinF,
-                                            2.0 * C - bMinF, C - rdMinF, C - rfMinF);
-
-            double gMinB_new = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinG() : C;
-            double fMinB_new = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinF() : C;
-            double dMinB_new = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinD() : C;
-            double bMinB_new = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinB() : 2 * C;
-            double rfMinB_new = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinRF() : DBL_MAX;
-            double rdMinB_new = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinRD() : DBL_MAX;
-
-            limitsChanged |= gMinB != gMinB_new || fMinB != fMinB_new || dMinB != dMinB_new
-                             || bMinB != bMinB_new || rfMinB != rfMinB_new || rdMinB != rdMinB_new;
-
-            gMinB = gMinB_new, fMinB = fMinB_new, dMinB = dMinB_new,
-            bMinB = bMinB_new, rfMinB = rfMinB_new, rdMinB = rdMinB_new;
         };
 
         // if limits don't change and still no expandable bucket is found, increase C
