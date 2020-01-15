@@ -225,6 +225,12 @@ bool DBBS<state, action, environment, useB, useRC, priorityQueue>::UpdateC() {
         }
     }
 
+    // if we don't alternate, count nodes on both sides
+    if (!alternating && forwardQueue.isBestBucketComputed() && backwardQueue.isBestBucketComputed()) {
+        forwardQueue.countExpandableNodes();
+        backwardQueue.countExpandableNodes();
+    }
+
     return incrementedC;
 }
 
@@ -340,8 +346,8 @@ bool DBBS<state, action, environment, useB, useRC, priorityQueue>::DoSingleSearc
         }
     } else { // choose side with the fewest nodes with minimum g
 
-        double gNodesForward = forwardQueue.countMinimumGNodes();
-        double gNodesBackward = backwardQueue.countMinimumGNodes();
+        double gNodesForward = forwardQueue.getExpandableNodes();
+        double gNodesBackward = backwardQueue.getExpandableNodes();
 
         if (gNodesForward <= gNodesBackward)
             Expand(forwardQueue, backwardQueue, forwardHeuristic, backwardHeuristic, goal, start);

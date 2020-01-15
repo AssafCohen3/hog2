@@ -115,7 +115,7 @@ public:
 
     std::vector <BucketInfo> getBucketInfo();
 
-    int countMinimumGNodes();
+    int getExpandableNodes() { return expandableNodes; }
 
     NodeValues getNodeValues();
 
@@ -124,6 +124,8 @@ public:
     void computeBestBucket(MinCriterion criterion,
                            double gLim_, double fLim_, double dLim_,
                            double bLim_, double rfLim_, double rdLim_);
+
+    void countExpandableNodes();
 
 private:
 
@@ -139,6 +141,8 @@ private:
 
     Bucket *bestBucket = nullptr;
 
+    int expandableNodes = INT_MAX;
+
     double minG = DBL_MAX, minF = DBL_MAX, minD = DBL_MAX, minB = DBL_MAX, minRF = DBL_MAX, minRD = DBL_MAX;
     double gLim = DBL_MAX, fLim = DBL_MAX, dLim = DBL_MAX, bLim = DBL_MAX, rfLim = DBL_MAX, rdLim = DBL_MAX;
 
@@ -149,6 +153,7 @@ private:
 
     inline void invalidateCachedValues() {
         bestBucket = nullptr;
+        expandableNodes = INT_MAX;
         minG = DBL_MAX;
         minF = DBL_MAX;
         minD = DBL_MAX;
@@ -156,7 +161,6 @@ private:
         minRF = DBL_MAX;
         minRD = DBL_MAX;
     }
-
 };
 
 template<typename state, class environment, bool useB, bool useRC, class dataStructure>
@@ -326,6 +330,7 @@ BidirErrorBucketBasedList<state, environment, useB, useRC, dataStructure>::Pop()
 
         poppedState = bestBucket->back();
         bestBucket->pop_back();
+        expandableNodes--;
         if (bestBucket->size() == 0)
             invalidateCachedValues(); // whenever a bucket is emptied, the cache must be invalidated
     }
@@ -406,12 +411,9 @@ std::vector <BucketInfo> BidirErrorBucketBasedList<state, environment, useB, use
 }
 
 template<typename state, class environment, bool useB, bool useRC, class dataStructure>
-int BidirErrorBucketBasedList<state, environment, useB, useRC, dataStructure>::countMinimumGNodes() {
+void BidirErrorBucketBasedList<state, environment, useB, useRC, dataStructure>::countExpandableNodes() {
 
-    if (fLayers.empty()) return 0;
-
-    double minExpandableG = DBL_MAX;
-    int nodeCount = 0;
+    expandableNodes = 0;
     for (const auto &glayer : fLayers) {
         double g = glayer.first;
 
@@ -436,16 +438,10 @@ int BidirErrorBucketBasedList<state, environment, useB, useRC, dataStructure>::c
 
                 if (useRC && rd > rdLim) continue; // continue because rd is decreasing
 
-                if (g < minExpandableG) { // we found a lower g bucket with expandable nodes
-                    minExpandableG = g;
-                    nodeCount = 0;
-                }
-                nodeCount += bucket.second.size();
+                expandableNodes += bucket.second.size();
             }
         }
     }
-
-    return minExpandableG == DBL_MAX ? 0 : nodeCount;
 }
 
 template<typename state, class environment, bool useB, bool useRC, class dataStructure>
