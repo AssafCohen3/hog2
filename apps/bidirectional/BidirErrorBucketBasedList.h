@@ -174,8 +174,14 @@ void BidirErrorBucketBasedList<state, environment, useB, useRC, dataStructure>::
         if (old_g <= g) {
             return;    // existing node has no worse g value, don't store
         } else {
+            auto bucketIndex = nodeIt->second.bucket_index;
+            if (bucketIndex == -1) {
+                std::cout << "  -- Node reopened!!!" << std::endl;
+                exit(0);
+            }
+
             // invalidate pointer with higher g value in the open list
-            fLayers[old_g][h][h_nx][nodeIt->second.bucket_index] = nullptr;
+            fLayers[old_g][h][h_nx][bucketIndex] = nullptr;
 
             auto &bucket = fLayers[g][h][h_nx];
             nodeIt->second = dataStructure(g, parent, bucket.size()); // node exists but with worse g value, update

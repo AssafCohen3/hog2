@@ -455,7 +455,7 @@ void TestSTP() {
         }
 
         // DBBS-p
-        if (0) {
+        if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
             DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> dbbs(MinCriterion::MinB, false);
             Timer timer;

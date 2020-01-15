@@ -495,7 +495,7 @@ void TestPancakeRandom() {
             }
 
             // DBBS-p
-            if (0) {
+            if (1) {
                 DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> dbbs(MinCriterion::MinB, false);
                 goal.Reset();
                 start = original;
@@ -692,7 +692,7 @@ void TestPancakeRandom() {
             }
 
             // BAE*-p
-            if (0) {
+            if (1) {
                 BAE<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> bae(false);
                 start = original;
                 t1.StartTimer();

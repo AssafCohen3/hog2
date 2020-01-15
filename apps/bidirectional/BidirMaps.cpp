@@ -302,7 +302,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
         }
 
         // DBBS-p
-        if (0) {
+        if (1) {
             DBBS<xyLoc, tDirection, MapEnvironment> dbbs(MinCriterion::MinB, false, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;

@@ -366,7 +366,7 @@ void TestTOH(int first, int last) {
         }
 
         // DDBS-p
-        if (0) {
+        if (1) {
             DBBS<TOHState < N>, TOHMove, TOH < N >> ddbs(MinCriterion::MinB, false);
             timer.StartTimer();
             ddbs.GetPath(&toh, s, g, f, b, thePath);
