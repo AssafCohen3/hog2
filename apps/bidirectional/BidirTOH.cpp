@@ -80,7 +80,7 @@ void TestTOH(int first, int last) {
             nodes_BTB = 0, nodes_BTBn = 0, notie_BTB = 0,
             nodes_BTB_small = 0, nodes_BTB_smalln = 0, notie_BTB_small = 0,
             nodes_BTB_conn = 0, nodes_BTB_connn = 0, notie_BTB_conn = 0,
-            nodes_DDBS = 0, nodes_DDBSn = 0, notie_DDBS = 0, nodes_DDBSp = 0, nodes_DDBSpn = 0, notie_DDBSp = 0;
+            nodes_DBBS = 0, nodes_DBBSn = 0, notie_DBBS = 0, nodes_DBBSp = 0, nodes_DBBSpn = 0, notie_DBBSp = 0;
 
     int table[] = {52058078, 116173544, 208694125, 131936966, 141559500, 133800745, 194246206, 50028346, 167007978,
                    207116816, 163867037, 119897198, 201847476, 210859515, 117688410, 121633885};
@@ -291,13 +291,13 @@ void TestTOH(int first, int last) {
             }
         }
 
-        // DBS
-        if (0) {
-            DBBS<TOHState < N>, TOHMove, TOH < N >, false > dbs(MinCriterion::MinF, true);
+        // DBGS
+        if (1) {
+            DBBS<TOHState < N>, TOHMove, TOH < N >, true > dbs(MinCriterion::MinG, true);
             timer.StartTimer();
             dbs.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();
-            printf("DBS found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+            printf("DBGS found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
                    toh.GetPathLength(thePath),
                    dbs.GetNodesExpanded(), dbs.GetNecessaryExpansions(), timer.GetElapsedTime());
 
@@ -308,19 +308,19 @@ void TestTOH(int first, int last) {
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
             else if (optimal_cost != toh.GetPathLength(thePath)) {
-                printf("DBS reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                printf("DBGS reported bad value!! optimal %1.0f; reported %1.0f;\n",
                        optimal_cost, toh.GetPathLength(thePath));
                 exit(0);
             }
         }
 
-        // DBS-p
-        if (0) {
-            DBBS<TOHState < N>, TOHMove, TOH < N >, false > dbs(MinCriterion::MinF, false);
+        // DBGS-p
+        if (1) {
+            DBBS<TOHState < N>, TOHMove, TOH < N >, true > dbs(MinCriterion::MinG, false);
             timer.StartTimer();
             dbs.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();
-            printf("DBS-p found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+            printf("DBGS-p found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
                    toh.GetPathLength(thePath),
                    dbs.GetNodesExpanded(), dbs.GetNecessaryExpansions(), timer.GetElapsedTime());
 
@@ -331,7 +331,7 @@ void TestTOH(int first, int last) {
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
             else if (optimal_cost != toh.GetPathLength(thePath)) {
-                printf("DBS-p reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                printf("DBGS-p reported bad value!! optimal %1.0f; reported %1.0f;\n",
                        optimal_cost, toh.GetPathLength(thePath));
                 exit(0);
             }
@@ -339,50 +339,50 @@ void TestTOH(int first, int last) {
 
         int tempDBBS;
 
-        // DDBS
+        // DBBS
         if (1) {
-            DBBS<TOHState < N>, TOHMove, TOH < N >> ddbs(MinCriterion::MinB, true);
+            DBBS<TOHState < N>, TOHMove, TOH < N >> dbbs(MinCriterion::MinB, true);
             timer.StartTimer();
-            ddbs.GetPath(&toh, s, g, f, b, thePath);
+            dbbs.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();
-            printf("DDBS found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+            printf("DBBS found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
                    toh.GetPathLength(thePath),
-                   ddbs.GetNodesExpanded(), ddbs.GetNecessaryExpansions(), timer.GetElapsedTime());
+                   dbbs.GetNodesExpanded(), dbbs.GetNecessaryExpansions(), timer.GetElapsedTime());
 
-            nodes_DDBS += ddbs.GetNodesExpanded();
-            nodes_DDBSn += ddbs.GetNecessaryExpansions();
+            nodes_DBBS += dbbs.GetNodesExpanded();
+            nodes_DBBSn += dbbs.GetNecessaryExpansions();
 
-            if (ddbs.GetNodesExpanded() == ddbs.GetNecessaryExpansions()) notie_DDBS++;
+            if (dbbs.GetNodesExpanded() == dbbs.GetNecessaryExpansions()) notie_DBBS++;
 
-            tempDBBS = ddbs.GetNecessaryExpansions();
+            tempDBBS = dbbs.GetNecessaryExpansions();
 
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
             else if (optimal_cost != toh.GetPathLength(thePath)) {
-                printf("DDBS reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                printf("DBBS reported bad value!! optimal %1.0f; reported %1.0f;\n",
                        optimal_cost, toh.GetPathLength(thePath));
                 exit(0);
             }
         }
 
-        // DDBS-p
+        // DBBS-p
         if (1) {
-            DBBS<TOHState < N>, TOHMove, TOH < N >> ddbs(MinCriterion::MinB, false);
+            DBBS<TOHState < N>, TOHMove, TOH < N >> dbbs(MinCriterion::MinB, false);
             timer.StartTimer();
-            ddbs.GetPath(&toh, s, g, f, b, thePath);
+            dbbs.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();
-            printf("DDBS-p found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+            printf("DBBS-p found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
                    toh.GetPathLength(thePath),
-                   ddbs.GetNodesExpanded(), ddbs.GetNecessaryExpansions(), timer.GetElapsedTime());
+                   dbbs.GetNodesExpanded(), dbbs.GetNecessaryExpansions(), timer.GetElapsedTime());
 
-            nodes_DDBSp += ddbs.GetNodesExpanded();
-            nodes_DDBSpn += ddbs.GetNecessaryExpansions();
-            if (ddbs.GetNodesExpanded() == ddbs.GetNecessaryExpansions()) notie_DDBSp++;
+            nodes_DBBSp += dbbs.GetNodesExpanded();
+            nodes_DBBSpn += dbbs.GetNecessaryExpansions();
+            if (dbbs.GetNodesExpanded() == dbbs.GetNecessaryExpansions()) notie_DBBSp++;
 
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
             else if (optimal_cost != toh.GetPathLength(thePath)) {
-                printf("DDBS-p reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                printf("DBBS-p reported bad value!! optimal %1.0f; reported %1.0f;\n",
                        optimal_cost, toh.GetPathLength(thePath));
                 exit(0);
             }
@@ -549,7 +549,7 @@ void TestTOH(int first, int last) {
         }
 
         // BAE*-p
-        if (0) {
+        if (1) {
             BAE<TOHState < N>, TOHMove, TOH < N >> bae(false);
             timer.StartTimer();
             bae.GetPath(&toh, s, g, f, b, thePath);
@@ -644,18 +644,18 @@ void TestTOH(int first, int last) {
     std::cout << "ToH" << " BAE*-p " << nodes_BAEp / experiments << " expanded; "
               << nodes_BAEpn / experiments << " necessary; "
               << notie_BAEp / (float) experiments << " no last layer" << std::endl;
-    std::cout << "ToH" << " DBS " << nodes_DBS / experiments << " expanded; "
+    std::cout << "ToH" << " DBGS " << nodes_DBS / experiments << " expanded; "
               << nodes_DBSn / experiments << " necessary; "
               << notie_DBS / (float) experiments << " no last layer" << std::endl;
-    std::cout << "ToH" << " DBS-p " << nodes_DBSp / experiments << " expanded; "
+    std::cout << "ToH" << " DBGS-p " << nodes_DBSp / experiments << " expanded; "
               << nodes_DBSpn / experiments << " necessary; "
               << notie_DBSp / (float) experiments << " no last layer" << std::endl;
-    std::cout << "ToH" << " DDBS " << nodes_DDBS / experiments << " expanded; "
-              << nodes_DDBSn / experiments << " necessary; "
-              << notie_DDBS / (float) experiments << " no last layer" << std::endl;
-    std::cout << "ToH" << " DDBS-p " << nodes_DDBSp / experiments << " expanded; "
-              << nodes_DDBSpn / experiments << " necessary; "
-              << notie_DDBSp / (float) experiments << " no last layer" << std::endl;
+    std::cout << "ToH" << " DBBS " << nodes_DBBS / experiments << " expanded; "
+              << nodes_DBBSn / experiments << " necessary; "
+              << notie_DBBS / (float) experiments << " no last layer" << std::endl;
+    std::cout << "ToH" << " DBBS-p " << nodes_DBBSp / experiments << " expanded; "
+              << nodes_DBBSpn / experiments << " necessary; "
+              << notie_DBBSp / (float) experiments << " no last layer" << std::endl;
     std::cout << "ToH" << " BTB alt " << nodes_BTB / experiments << " expanded; "
               << nodes_BTBn / experiments << " necessary; "
               << notie_BTB / (float) experiments << " no last layer" << std::endl;

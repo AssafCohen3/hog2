@@ -375,15 +375,15 @@ void TestSTP() {
         goal.Reset();
         start = GetKorfInstance(x);
 
-        // DBS
-        if (0) {
+        // DBGS
+        if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
-            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, false > dbs(MinCriterion::MinF, true);
+            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, true > dbs(MinCriterion::MinG, true);
             Timer timer;
             timer.StartTimer();
             dbs.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
             timer.EndTimer();
-            printf("DBS found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+            printf("DBGS found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
                    mnp.GetPathLength(solutionPath),
                    dbs.GetNodesExpanded(), dbs.GetNecessaryExpansions(), timer.GetElapsedTime());
 
@@ -394,21 +394,21 @@ void TestSTP() {
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
             else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
-                printf("DBS reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                printf("DBGS reported bad value!! optimal %1.0f; reported %1.0f;\n",
                        optimal_cost, mnp.GetPathLength(solutionPath));
                 exit(0);
             }
         }
 
-        // DBS-p
-        if (0) {
+        // DBGS-p
+        if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
-            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, false > dbs(MinCriterion::MinB, false);
+            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, true > dbs(MinCriterion::MinG, false);
             Timer timer;
             timer.StartTimer();
             dbs.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
             timer.EndTimer();
-            printf("DBS-p found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+            printf("DBGS-p found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
                    mnp.GetPathLength(solutionPath),
                    dbs.GetNodesExpanded(), dbs.GetNecessaryExpansions(), timer.GetElapsedTime());
 
@@ -419,7 +419,7 @@ void TestSTP() {
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
             else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
-                printf("DBS-p reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                printf("DBGS-p reported bad value!! optimal %1.0f; reported %1.0f;\n",
                        optimal_cost, mnp.GetPathLength(solutionPath));
                 exit(0);
             }
@@ -643,8 +643,8 @@ void TestSTP() {
             }
         }
 
-        // BAE*
-        if (0) {
+        // BAE*-p
+        if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
             BAE<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> bae(false);
             Timer timer;
@@ -735,10 +735,10 @@ void TestSTP() {
     std::cout << "STP" << " BAE*-p " << nodes_BAEp / 100 << " expanded; "
               << nodes_BAEpn / 100 << " necessary; "
               << notie_BAEp / (float) 100 << " no last layer" << std::endl;
-    std::cout << "STP" << " DBS " << nodes_DBS / 100 << " expanded; "
+    std::cout << "STP" << " DBGS " << nodes_DBS / 100 << " expanded; "
               << nodes_DBSn / 100 << " necessary; "
               << notie_DBS / (float) 100 << " no last layer" << std::endl;
-    std::cout << "STP" << " DBS-p " << nodes_DBSp / 100 << " expanded; "
+    std::cout << "STP" << " DBGS-p " << nodes_DBSp / 100 << " expanded; "
               << nodes_DBSpn / 100 << " necessary; "
               << notie_DBSp / (float) 100 << " no last layer" << std::endl;
     std::cout << "STP" << " DBBS " << nodes_DBBS / 100 << " expanded; "

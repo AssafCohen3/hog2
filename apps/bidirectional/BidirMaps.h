@@ -114,10 +114,10 @@ public:
         std::cout << "Maps" << " BAE*-p " << nodes_BAEp / experiments << " expanded; "
                   << nodes_BAEpn / experiments << " necessary; "
                   << notie_BAEp / (float) experiments << " no last layer" << std::endl;
-        std::cout << "Maps" << " DBS " << nodes_DBS / experiments << " expanded; "
+        std::cout << "Maps" << " DBGS " << nodes_DBS / experiments << " expanded; "
                   << nodes_DBSn / experiments << " necessary; "
                   << notie_DBS / (float) experiments << " no last layer" << std::endl;
-        std::cout << "Maps" << " DBS-p " << nodes_DBSp / experiments << " expanded; "
+        std::cout << "Maps" << " DBGS-p " << nodes_DBSp / experiments << " expanded; "
                   << nodes_DBSpn / experiments << " necessary; "
                   << notie_DBSp / (float) experiments << " no last layer" << std::endl;
         std::cout << "Maps" << " DBBS " << nodes_DBBS / experiments << " expanded; "

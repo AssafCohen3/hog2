@@ -222,15 +222,15 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             }
         }
 
-        // DBS
-        if (0) {
-            DBBS<xyLoc, tDirection, MapEnvironment, false> dbs(MinCriterion::MinF, true, 1.0, 0.5);
+        // DBGS
+        if (1) {
+            DBBS<xyLoc, tDirection, MapEnvironment, true> dbs(MinCriterion::MinG, true, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
             dbs.GetPath(me, start, goal, me, me, path);
             timer.EndTimer();
-            printf("DBS found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+            printf("DBGS found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
                    me->GetPathLength(path),
                    dbs.GetNodesExpanded(), dbs.GetNecessaryExpansions(), timer.GetElapsedTime());
 
@@ -241,21 +241,21 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
             else if (optimal_cost != me->GetPathLength(path)) {
-                printf("DBS reported bad value!! optimal %1.2f; reported %1.2f;\n",
+                printf("DBGS reported bad value!! optimal %1.2f; reported %1.2f;\n",
                        optimal_cost, me->GetPathLength(path));
                 exit(0);
             }
         }
 
-        // DBS-p
-        if (0) {
-            DBBS<xyLoc, tDirection, MapEnvironment, false> dbs(MinCriterion::MinF, false, 1.0, 0.5);
+        // DBGS-p
+        if (1) {
+            DBBS<xyLoc, tDirection, MapEnvironment, true> dbs(MinCriterion::MinG, false, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
             dbs.GetPath(me, start, goal, me, me, path);
             timer.EndTimer();
-            printf("DBS-p found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+            printf("DBGS-p found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
                    me->GetPathLength(path),
                    dbs.GetNodesExpanded(), dbs.GetNecessaryExpansions(), timer.GetElapsedTime());
 
@@ -266,7 +266,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             // test optimality
             if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
             else if (optimal_cost != me->GetPathLength(path)) {
-                printf("DBS-p reported bad value!! optimal %1.2f; reported %1.2f;\n",
+                printf("DBGS-p reported bad value!! optimal %1.2f; reported %1.2f;\n",
                        optimal_cost, me->GetPathLength(path));
                 exit(0);
             }
@@ -493,7 +493,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
         }
 
         // BAE*-p
-        if (0) {
+        if (1) {
             BAE<xyLoc, tDirection, MapEnvironment> bae(false, 0.5);
             std::vector <xyLoc> path;
             Timer timer;

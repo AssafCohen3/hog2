@@ -410,16 +410,16 @@ void TestPancakeRandom() {
                 }
             }
 
-            // DBS
-            if (0) {
-                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >, false >
-                                                                                        dbs(MinCriterion::MinF, true);
+            // DBGS
+            if (1) {
+                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >, true >
+                                                                                        dbs(MinCriterion::MinG, true);
                 goal.Reset();
                 start = original;
                 t8.StartTimer();
                 dbs.GetPath(&pancake, start, goal, &pancake, &pancake2, dbsPath);
                 t8.EndTimer();
-                std::cout << "GAP-" << gap << " DBS found path length " << pancake.GetPathLength(dbsPath) << "; "
+                std::cout << "GAP-" << gap << " DBGS found path length " << pancake.GetPathLength(dbsPath) << "; "
                           << dbs.GetNodesExpanded() << " expanded; " << dbs.GetNecessaryExpansions()
                           << " necessary; "
                           << t8.GetElapsedTime() << "s elapsed" << std::endl;
@@ -431,22 +431,22 @@ void TestPancakeRandom() {
                 // test optimality
                 if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(dbsPath);
                 else if (optimal_cost != pancake.GetPathLength(dbsPath)) {
-                    printf("GAP-%d DBS reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
+                    printf("GAP-%d DBGS reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
                            optimal_cost, pancake.GetPathLength(dbsPath));
                     exit(0);
                 }
             }
 
             // DBS-p
-            if (0) {
-                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >, false >
-                                                                                        dbs(MinCriterion::MinF, false);
+            if (1) {
+                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >, true >
+                                                                                        dbs(MinCriterion::MinG, false);
                 goal.Reset();
                 start = original;
                 t8.StartTimer();
                 dbs.GetPath(&pancake, start, goal, &pancake, &pancake2, dbsPath);
                 t8.EndTimer();
-                std::cout << "GAP-" << gap << " DBS-p found path length " << pancake.GetPathLength(dbsPath) << "; "
+                std::cout << "GAP-" << gap << " DBGS-p found path length " << pancake.GetPathLength(dbsPath) << "; "
                           << dbs.GetNodesExpanded() << " expanded; " << dbs.GetNecessaryExpansions()
                           << " necessary; "
                           << t8.GetElapsedTime() << "s elapsed" << std::endl;
@@ -458,7 +458,7 @@ void TestPancakeRandom() {
                 // test optimality
                 if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(dbsPath);
                 else if (optimal_cost != pancake.GetPathLength(dbsPath)) {
-                    printf("GAP-%d DBS-p reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
+                    printf("GAP-%d DBGS-p reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
                            optimal_cost, pancake.GetPathLength(dbsPath));
                     exit(0);
                 }
@@ -781,10 +781,10 @@ void TestPancakeRandom() {
         std::cout << "Pancake" << " BAE*-p " << nodes_BAEp / INSTANCES << " expanded; "
                   << nodes_BAEpn / INSTANCES << " necessary; "
                   << notie_BAEp / (float) INSTANCES << " no last layer" << std::endl;
-        std::cout << "Pancake" << " DBS " << nodes_DBS / INSTANCES << " expanded; "
+        std::cout << "Pancake" << " DBGS " << nodes_DBS / INSTANCES << " expanded; "
                   << nodes_DBSn / INSTANCES << " necessary; "
                   << notie_DBS / (float) INSTANCES << " no last layer" << std::endl;
-        std::cout << "Pancake" << " DBS-p " << nodes_DBSp / INSTANCES << " expanded; "
+        std::cout << "Pancake" << " DBGS-p " << nodes_DBSp / INSTANCES << " expanded; "
                   << nodes_DBSpn / INSTANCES << " necessary; "
                   << notie_DBSp / (float) INSTANCES << " no last layer" << std::endl;
         std::cout << "Pancake" << " DBBS " << nodes_DBBS / INSTANCES << " expanded; "
