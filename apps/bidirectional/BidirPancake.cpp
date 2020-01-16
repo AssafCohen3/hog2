@@ -46,6 +46,7 @@ void TestPancakeRandom() {
         std::vector <PancakePuzzleState<N>> btbPath;
         std::vector <PancakePuzzleState<N>> btbSmallestPath;
         std::vector <PancakePuzzleState<N>> btbConnectedPath;
+        std::vector <PancakePuzzleState<N>> btbVertexCoverPath;
         std::vector <PancakePuzzleState<N>> dvcbsEpsilonPath;
         std::vector <PancakePuzzleState<N>> bsPath;
         std::vector <PancakePuzzleState<N>> baePath;
@@ -72,6 +73,7 @@ void TestPancakeRandom() {
                 nodes_BTB = 0, nodes_BTBn = 0, notie_BTB = 0,
                 nodes_BTB_small = 0, nodes_BTB_smalln = 0, notie_BTB_small = 0,
                 nodes_BTB_conn = 0, nodes_BTB_connn = 0, notie_BTB_conn = 0,
+                nodes_BTB_vc = 0, nodes_BTB_vcn = 0, notie_BTB_vc = 0,
                 nodes_DBBS = 0, nodes_DBBSn = 0, notie_DBBS = 0, nodes_DBBSp = 0, nodes_DBBSpn = 0, notie_DBBSp = 0;
 
         for (int count = 0; count < INSTANCES; count++) {
@@ -666,6 +668,38 @@ void TestPancakeRandom() {
                 }
             }
 
+            // BTB vertex cover
+            if (1) {
+                BTB<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> btb(BTBPolicy::VertexCover);
+                goal.Reset();
+                start = original;
+                t8.StartTimer();
+                btb.GetPath(&pancake, start, goal, &pancake, &pancake2, btbVertexCoverPath);
+                t8.EndTimer();
+                std::cout << "GAP-" << gap << " BTB vc found path length " << pancake.GetPathLength(btbVertexCoverPath)
+                          << "; "
+                          << btb.GetNodesExpanded() << " expanded; " << btb.GetNecessaryExpansions()
+                          << " necessary; "
+                          << t8.GetElapsedTime() << "s elapsed" << std::endl;
+
+                nodes_BTB_vc += btb.GetNodesExpanded();
+                nodes_BTB_vcn += btb.GetNecessaryExpansions();
+                if (btb.GetNodesExpanded() == btb.GetNecessaryExpansions()) notie_BTB_vc++;
+
+                if (2 * btb.GetNecessaryExpansions() + 2 < tempBTBalt) {
+                    std::cout << "NOT NEAR-OPTIMAL!!!! " << btb.GetNecessaryExpansions()
+                              << " and " << tempBTBalt << std::endl;
+                }
+
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(btbVertexCoverPath);
+                else if (optimal_cost != pancake.GetPathLength(btbVertexCoverPath)) {
+                    printf("GAP-%d BTB vc reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
+                           optimal_cost, pancake.GetPathLength(btbVertexCoverPath));
+                    exit(0);
+                }
+            }
+
             // BAE*
             if (1) {
                 BAE<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> bae;
@@ -802,6 +836,9 @@ void TestPancakeRandom() {
         std::cout << "Pancake" << " BTB connected " << nodes_BTB_conn / INSTANCES << " expanded; "
                   << nodes_BTB_connn / INSTANCES << " necessary; "
                   << notie_BTB_conn / (float) INSTANCES << " no last layer" << std::endl;
+        std::cout << "Pancake" << " BTB vertex " << nodes_BTB_vc / INSTANCES << " expanded; "
+                  << nodes_BTB_vcn / INSTANCES << " necessary; "
+                  << notie_BTB_vc / (float) INSTANCES << " no last layer" << std::endl;
 
         printf("+++++++++++++++++++++++++++++++++++++++++\n");
 

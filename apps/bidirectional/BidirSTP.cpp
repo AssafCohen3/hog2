@@ -151,6 +151,7 @@ void TestSTP() {
             nodes_BTB = 0, nodes_BTBn = 0, notie_BTB = 0,
             nodes_BTB_small = 0, nodes_BTB_smalln = 0, notie_BTB_small = 0,
             nodes_BTB_conn = 0, nodes_BTB_connn = 0, notie_BTB_conn = 0,
+            nodes_BTB_vc = 0, nodes_BTB_vcn = 0, notie_BTB_vc = 0,
             nodes_DBBS = 0, nodes_DBBSn = 0, notie_DBBS = 0, nodes_DBBSp = 0, nodes_DBBSpn = 0, notie_DBBSp = 0;
 
     for (int x = 0; x < 100; x++) // 547 to 540
@@ -568,6 +569,35 @@ void TestSTP() {
             }
         }
 
+        // BTB vertex cover
+        if (1) {
+            std::vector <MNPuzzleState<4, 4>> solutionPath;
+            BTB<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> btb(BTBPolicy::VertexCover);
+            Timer timer;
+            timer.StartTimer();
+            btb.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
+            timer.EndTimer();
+            printf("BTB vc found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   mnp.GetPathLength(solutionPath),
+                   btb.GetNodesExpanded(), btb.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_BTB_vc += btb.GetNodesExpanded();
+            nodes_BTB_vcn += btb.GetNecessaryExpansions();
+            if (btb.GetNodesExpanded() == btb.GetNecessaryExpansions()) notie_BTB_vc++;
+
+            if (2 * btb.GetNecessaryExpansions() + 2 < tempBTBalt) {
+                std::cout << "NOT NEAR-OPTIMAL!!!! " << tempDBBS << " and " << tempBTBalt << std::endl;
+            }
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = mnp.GetPathLength(solutionPath);
+            else if (optimal_cost != mnp.GetPathLength(solutionPath)) {
+                printf("BTB vc reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, mnp.GetPathLength(solutionPath));
+                exit(0);
+            }
+        }
+
         // BS*
         if (0) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
@@ -756,6 +786,9 @@ void TestSTP() {
     std::cout << "STP" << " BTB conn " << nodes_BTB_conn / 100 << " expanded; "
               << nodes_BTB_connn / 100 << " necessary; "
               << notie_BTB_conn / (float) 100 << " no last layer" << std::endl;
+    std::cout << "STP" << " BTB vc " << nodes_BTB_vc / 100 << " expanded; "
+              << nodes_BTB_vcn / 100 << " necessary; "
+              << notie_BTB_vc / (float) 100 << " no last layer" << std::endl;
 
     printf("+++++++++++++++++++++++++++++++++++++++++\n");
 

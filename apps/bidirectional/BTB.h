@@ -3,26 +3,51 @@
 
 #include "BidirErrorBucketBasedList.h"
 #include "FPUtil.h"
+#include <unordered_set>
 #include <unordered_map>
 #include <iostream>
 #include <math.h>
 #include <utility>
-
-#include <chrono>
+#include <vector>
+#include <queue>
 
 struct PairsInfo {
 
     PairsInfo(bool forward_, BucketInfo mostConnected_,
-              std::pair <BucketInfo, BucketInfo> smallestPair_) :
-            forward(forward_), mostConnected(mostConnected_), smallestPair(smallestPair_) {}
+              std::pair <BucketInfo, BucketInfo> smallestPair_,
+              std::vector <std::pair<bool, BucketInfo>> vertexCover_) :
+            forward(forward_), mostConnected(mostConnected_), smallestPair(smallestPair_), vertexCover(vertexCover_) {}
 
     bool forward;
     BucketInfo mostConnected;
     std::pair <BucketInfo, BucketInfo> smallestPair;
+    std::vector <std::pair<bool, BucketInfo>> vertexCover;
+};
+
+struct MustExpandEdge {
+
+    MustExpandEdge(BucketInfo fwBucket_, BucketInfo bwBucket_) : fwBucket(fwBucket_), bwBucket(bwBucket_) {}
+
+    BucketInfo fwBucket;
+    BucketInfo bwBucket;
+};
+
+struct EdgeCompare {
+    // comparator is actually "greater than" so the heap is a min-heap
+    bool operator()(const MustExpandEdge &e1, const MustExpandEdge &e2) {
+        int e1Min = std::min(e1.fwBucket.nodes, e1.bwBucket.nodes);
+        int e2Min = std::min(e2.fwBucket.nodes, e2.bwBucket.nodes);
+
+        if (e1Min == e2Min)
+            return std::max(e1.fwBucket.nodes, e1.bwBucket.nodes) > std::max(e2.fwBucket.nodes, e2.bwBucket.nodes);
+
+        return e1Min > e2Min;
+
+    }
 };
 
 enum BTBPolicy {
-    Alternating = 31414, Smallest, MostConnected
+    Alternating, Smallest, MostConnected, VertexCover
 };
 
 template<class state, class action, class environment, bool useRC = true, class priorityQueue = BidirErrorBucketBasedList<state, environment, true, useRC, BucketNodeData<state>>>
@@ -107,7 +132,7 @@ private:
                 Heuristic <state> *heuristic, Heuristic <state> *reverseHeuristic,
                 const state &target, const state &source);
 
-    std::pair<bool, PairsInfo> ComputePairs();
+    std::pair<bool, PairsInfo> ComputePairs(bool computeVertexCover = false);
 
     priorityQueue forwardQueue, backwardQueue;
     state goal, start;
@@ -141,7 +166,7 @@ void BTB<state, action, environment, useRC, priorityQueue>::GetPath(environment 
         return;
 
     while (!forwardQueue.IsEmpty() && !backwardQueue.IsEmpty()) {
-        auto pairComputation = ComputePairs();
+        auto pairComputation = ComputePairs(policy == BTBPolicy::VertexCover);
         if (pairComputation.first) {
             // check solution after increasing C
             if (CheckSolution(thePath)) break;
@@ -171,6 +196,13 @@ void BTB<state, action, environment, useRC, priorityQueue>::GetPath(environment 
         } else if (policy == BTBPolicy::Smallest) { // expand the smallest bucket of the smallest pair
             bool forward = pairsInfo.smallestPair.first.nodes < pairsInfo.smallestPair.second.nodes;
             ExpandBucket(forward, forward ? pairsInfo.smallestPair.first : pairsInfo.smallestPair.second);
+        } else if (policy == BTBPolicy::VertexCover) { // expand the bucket with most connected nodes
+            auto vertexCover = pairsInfo.vertexCover;
+            while (!vertexCover.empty()) {
+                auto vertex = vertexCover.back();
+                vertexCover.pop_back();
+                ExpandBucket(vertex.first, vertex.second);
+            }
         } else { exit(0); }
 
         if (CheckSolution(thePath)) break;
@@ -230,7 +262,8 @@ bool BTB<state, action, environment, useRC, priorityQueue>::InitializeSearch(env
 }
 
 template<class state, class action, class environment, bool useRC, class priorityQueue>
-std::pair<bool, PairsInfo> BTB<state, action, environment, useRC, priorityQueue>::ComputePairs() {
+std::pair<bool, PairsInfo>
+BTB<state, action, environment, useRC, priorityQueue>::ComputePairs(bool computeVertexCover) {
 
     auto fwBuckets = forwardQueue.getBucketInfo();
     auto bwBuckets = backwardQueue.getBucketInfo();
@@ -243,6 +276,9 @@ std::pair<bool, PairsInfo> BTB<state, action, environment, useRC, priorityQueue>
 
     // arbitrary lower-bound bucket pair
     std::pair <BucketInfo, BucketInfo> smallestBucketPair;
+
+    // TODO split different techniques into different methods, too much code in here
+    std::priority_queue<MustExpandEdge, std::vector<MustExpandEdge>, EdgeCompare> edgeHeap;
 
     for (const auto &fwInfo: fwBuckets) {
         for (const auto &bwInfo: bwBuckets) {
@@ -263,6 +299,8 @@ std::pair<bool, PairsInfo> BTB<state, action, environment, useRC, priorityQueue>
                 btbC = bound;
                 fwMostConnectedBuckets.clear();
                 bwMostConnectedBuckets.clear();
+                // heaps have no clear method, so reassign it
+                edgeHeap = std::priority_queue<MustExpandEdge, std::vector<MustExpandEdge>, EdgeCompare>();
                 smallestBucketPair = std::make_pair(BucketInfo(), BucketInfo());
             }
 
@@ -280,8 +318,9 @@ std::pair<bool, PairsInfo> BTB<state, action, environment, useRC, priorityQueue>
                 } else if (bwInfo.nodes == num_nodes && fwInfo.nodes < smallestBucketPair.first.nodes) {
                     smallestBucketPair.first = fwInfo;
                 }
-            }
 
+                if (computeVertexCover) edgeHeap.push(MustExpandEdge(fwInfo, bwInfo));
+            }
         }
     }
 
@@ -295,10 +334,26 @@ std::pair<bool, PairsInfo> BTB<state, action, environment, useRC, priorityQueue>
     bool forward = fwMostConnected->second >= bwMostConnected->second;
     auto mostConnected = forward ? fwMostConnected->first : bwMostConnected->first;
 
+    std::vector <std::pair<bool, BucketInfo>> vertexCover;
+    std::unordered_set <BucketInfo, BucketHash> seenBuckets;
+    if (computeVertexCover) {
+        while (!edgeHeap.empty()) {
+            MustExpandEdge edge = edgeHeap.top();
+            edgeHeap.pop();
+            if (seenBuckets.find(edge.fwBucket) != seenBuckets.end() ||
+                seenBuckets.find(edge.bwBucket) != seenBuckets.end())
+                continue;
+
+            bool fw = edge.fwBucket.nodes <= edge.bwBucket.nodes;
+            BucketInfo bucket = fw ? edge.fwBucket : edge.bwBucket;
+            vertexCover.push_back(std::make_pair(fw, bucket));
+        }
+    }
+
     bool updatedC = btbC > C;
     C = btbC;
 
-    return std::make_pair(updatedC, PairsInfo(forward, mostConnected, smallestBucketPair));
+    return std::make_pair(updatedC, PairsInfo(forward, mostConnected, smallestBucketPair, vertexCover));
 }
 
 template<class state, class action, class environment, bool useRC, class priorityQueue>

@@ -80,6 +80,7 @@ void TestTOH(int first, int last) {
             nodes_BTB = 0, nodes_BTBn = 0, notie_BTB = 0,
             nodes_BTB_small = 0, nodes_BTB_smalln = 0, notie_BTB_small = 0,
             nodes_BTB_conn = 0, nodes_BTB_connn = 0, notie_BTB_conn = 0,
+            nodes_BTB_vc = 0, nodes_BTB_vcn = 0, notie_BTB_vc = 0,
             nodes_DBBS = 0, nodes_DBBSn = 0, notie_DBBS = 0, nodes_DBBSp = 0, nodes_DBBSpn = 0, notie_DBBSp = 0;
 
     int table[] = {52058078, 116173544, 208694125, 131936966, 141559500, 133800745, 194246206, 50028346, 167007978,
@@ -479,6 +480,35 @@ void TestTOH(int first, int last) {
             }
         }
 
+        // BTB vertex cover
+        if (1) {
+            BTB<TOHState < N>, TOHMove, TOH < N >> btb(BTBPolicy::VertexCover);
+            timer.StartTimer();
+            btb.GetPath(&toh, s, g, f, b, thePath);
+            timer.EndTimer();
+            printf("BTB vc found path length %1.0f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   toh.GetPathLength(thePath),
+                   btb.GetNodesExpanded(), btb.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_BTB_vc += btb.GetNodesExpanded();
+            nodes_BTB_vcn += btb.GetNecessaryExpansions();
+
+            if (btb.GetNodesExpanded() == btb.GetNecessaryExpansions()) notie_BTB_vc++;
+
+            if (2 * btb.GetNecessaryExpansions() + 2 < tempBTBalt) {
+                std::cout << "NOT NEAR-OPTIMAL!!!! " << btb.GetNecessaryExpansions()
+                          << " and " << tempBTBalt << std::endl;
+            }
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = toh.GetPathLength(thePath);
+            else if (optimal_cost != toh.GetPathLength(thePath)) {
+                printf("BTB vc reported bad value!! optimal %1.0f; reported %1.0f;\n",
+                       optimal_cost, toh.GetPathLength(thePath));
+                exit(0);
+            }
+        }
+
         // BS*
         if (0) {
             BSStar<TOHState < N>, TOHMove, TOH < N >> bs;
@@ -665,6 +695,9 @@ void TestTOH(int first, int last) {
     std::cout << "ToH" << " BTB conn " << nodes_BTB_conn / experiments << " expanded; "
               << nodes_BTB_connn / experiments << " necessary; "
               << notie_BTB_conn / (float) experiments << " no last layer" << std::endl;
+    std::cout << "ToH" << " BTB vertex " << nodes_BTB_vc / experiments << " expanded; "
+              << nodes_BTB_vcn / experiments << " necessary; "
+              << notie_BTB_vc / (float) experiments << " no last layer" << std::endl;
 
     printf("+++++++++++++++++++++++++++++++++++++++++\n");
 

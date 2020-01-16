@@ -417,6 +417,35 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             }
         }
 
+        // BTB vertex
+        if (1) {
+            BTB<xyLoc, tDirection, MapEnvironment> btb(BTBPolicy::VertexCover, 1.0);
+            std::vector <xyLoc> path;
+            Timer timer;
+            timer.StartTimer();
+            btb.GetPath(me, start, goal, me, me, path);
+            timer.EndTimer();
+            printf("BTB vc found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   me->GetPathLength(path),
+                   btb.GetNodesExpanded(), btb.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_BTB_vc += btb.GetNodesExpanded();
+            nodes_BTB_vcn += btb.GetNecessaryExpansions();
+            if (btb.GetNodesExpanded() == btb.GetNecessaryExpansions()) notie_BTB_conn++;
+
+            if (2 * btb.GetNecessaryExpansions() + 2 < tempBTBalt) {
+                std::cout << "NOT NEAR-OPTIMAL!!!! " << tempDBBS << " and " << tempBTBalt << std::endl;
+            }
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
+            else if (optimal_cost != me->GetPathLength(path)) {
+                printf("BTB vc reported bad value!! optimal %1.2f; reported %1.2f;\n",
+                       optimal_cost, me->GetPathLength(path));
+                exit(0);
+            }
+        }
+
         // BS*-p
         if (0) {
             BSStar<xyLoc, tDirection, MapEnvironment> bs;

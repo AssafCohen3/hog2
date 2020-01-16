@@ -39,6 +39,7 @@ class MapExperiment {
             nodes_BTB = 0, nodes_BTBn = 0, notie_BTB = 0,
             nodes_BTB_small = 0, nodes_BTB_smalln = 0, notie_BTB_small = 0,
             nodes_BTB_conn = 0, nodes_BTB_connn = 0, notie_BTB_conn = 0,
+            nodes_BTB_vc = 0, nodes_BTB_vcn = 0, notie_BTB_vc = 0,
             nodes_DBBS = 0, nodes_DBBSn = 0, notie_DBBS = 0, nodes_DBBSp = 0, nodes_DBBSpn = 0, notie_DBBSp = 0;
 
     int experiments = 0;
@@ -135,6 +136,9 @@ public:
         std::cout << "Maps" << " BTB conn " << nodes_BTB_conn / experiments << " expanded; "
                   << nodes_BTB_connn / experiments << " necessary; "
                   << notie_BTB_conn / (float) experiments << " no last layer" << std::endl;
+        std::cout << "Maps" << " BTB vertex " << nodes_BTB_vc / experiments << " expanded; "
+                  << nodes_BTB_vcn / experiments << " necessary; "
+                  << notie_BTB_vc / (float) experiments << " no last layer" << std::endl;
 
         printf("+++++++++++++++++++++++++++++++++++++++++\n");
 
