@@ -523,7 +523,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // BAE*-p
         if (1) {
-            BAE<xyLoc, tDirection, MapEnvironment> bae(false, 0.5);
+            BAE<xyLoc, tDirection, MapEnvironment> bae(false, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
