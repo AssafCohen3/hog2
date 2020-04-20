@@ -414,8 +414,7 @@ void TestPancakeRandom() {
 
             // DBGS
             if (1) {
-                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >, true >
-                                                                                        dbs(MinCriterion::MinG, true);
+                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >, MinCriterion::MinG > dbs(true);
                 goal.Reset();
                 start = original;
                 t8.StartTimer();
@@ -439,10 +438,9 @@ void TestPancakeRandom() {
                 }
             }
 
-            // DBS-p
+            // DBGS-p
             if (1) {
-                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >, true >
-                                                                                        dbs(MinCriterion::MinG, false);
+                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >, MinCriterion::MinG > dbs(false);
                 goal.Reset();
                 start = original;
                 t8.StartTimer();
@@ -470,7 +468,7 @@ void TestPancakeRandom() {
 
             // DBBS
             if (1) {
-                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> dbbs(MinCriterion::MinB, true);
+                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >, MinCriterion::MinB > dbbs(true);
                 goal.Reset();
                 start = original;
                 t8.StartTimer();
@@ -498,7 +496,8 @@ void TestPancakeRandom() {
 
             // DBBS-p
             if (1) {
-                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >> dbbs(MinCriterion::MinB, false);
+                DBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >, MinCriterion::MinB >
+                                                                                        dbbs(false);
                 goal.Reset();
                 start = original;
                 t8.StartTimer();

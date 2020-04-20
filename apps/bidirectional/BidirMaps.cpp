@@ -224,7 +224,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // DBGS
         if (1) {
-            DBBS<xyLoc, tDirection, MapEnvironment, true> dbs(MinCriterion::MinG, true, 1.0, 0.5);
+            DBBS<xyLoc, tDirection, MapEnvironment, MinCriterion::MinG> dbs(true, true, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
@@ -249,7 +249,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // DBGS-p
         if (1) {
-            DBBS<xyLoc, tDirection, MapEnvironment, true> dbs(MinCriterion::MinG, false, 1.0, 0.5);
+            DBBS<xyLoc, tDirection, MapEnvironment, MinCriterion::MinG> dbs(false, true, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
@@ -276,7 +276,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // DBBS
         if (1) {
-            DBBS<xyLoc, tDirection, MapEnvironment> dbbs(MinCriterion::MinB, true, 1.0, 0.5);
+            DBBS<xyLoc, tDirection, MapEnvironment, MinCriterion::MinB> dbbs(true, true, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();
@@ -303,7 +303,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
 
         // DBBS-p
         if (1) {
-            DBBS<xyLoc, tDirection, MapEnvironment> dbbs(MinCriterion::MinB, false, 1.0, 0.5);
+            DBBS<xyLoc, tDirection, MapEnvironment, MinCriterion::MinB> dbbs(false, true, 1.0, 0.5);
             std::vector <xyLoc> path;
             Timer timer;
             timer.StartTimer();

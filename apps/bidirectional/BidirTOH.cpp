@@ -294,7 +294,7 @@ void TestTOH(int first, int last) {
 
         // DBGS
         if (1) {
-            DBBS<TOHState < N>, TOHMove, TOH < N >, true > dbs(MinCriterion::MinG, true);
+            DBBS<TOHState < N>, TOHMove, TOH < N >, MinCriterion::MinG > dbs(true);
             timer.StartTimer();
             dbs.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();
@@ -317,7 +317,7 @@ void TestTOH(int first, int last) {
 
         // DBGS-p
         if (1) {
-            DBBS<TOHState < N>, TOHMove, TOH < N >, true > dbs(MinCriterion::MinG, false);
+            DBBS<TOHState < N>, TOHMove, TOH < N >, MinCriterion::MinG > dbs(false);
             timer.StartTimer();
             dbs.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();
@@ -342,7 +342,7 @@ void TestTOH(int first, int last) {
 
         // DBBS
         if (1) {
-            DBBS<TOHState < N>, TOHMove, TOH < N >> dbbs(MinCriterion::MinB, true);
+            DBBS<TOHState < N>, TOHMove, TOH < N >, MinCriterion::MinB > dbbs(true);
             timer.StartTimer();
             dbbs.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();
@@ -368,7 +368,7 @@ void TestTOH(int first, int last) {
 
         // DBBS-p
         if (1) {
-            DBBS<TOHState < N>, TOHMove, TOH < N >> dbbs(MinCriterion::MinB, false);
+            DBBS<TOHState < N>, TOHMove, TOH < N >, MinCriterion::MinB > dbbs(false);
             timer.StartTimer();
             dbbs.GetPath(&toh, s, g, f, b, thePath);
             timer.EndTimer();

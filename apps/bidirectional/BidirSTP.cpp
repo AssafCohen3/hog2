@@ -379,7 +379,7 @@ void TestSTP() {
         // DBGS
         if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
-            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, true > dbs(MinCriterion::MinG, true);
+            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, MinCriterion::MinG> dbs(true);
             Timer timer;
             timer.StartTimer();
             dbs.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
@@ -404,7 +404,7 @@ void TestSTP() {
         // DBGS-p
         if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
-            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, true > dbs(MinCriterion::MinG, false);
+            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, MinCriterion::MinG> dbs(false);
             Timer timer;
             timer.StartTimer();
             dbs.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
@@ -431,7 +431,7 @@ void TestSTP() {
         // DBBS
         if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
-            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> dbbs(MinCriterion::MinB, true);
+            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, MinCriterion::MinB> dbbs(true);
             Timer timer;
             timer.StartTimer();
             dbbs.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);
@@ -458,7 +458,7 @@ void TestSTP() {
         // DBBS-p
         if (1) {
             std::vector <MNPuzzleState<4, 4>> solutionPath;
-            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >> dbbs(MinCriterion::MinB, false);
+            DBBS<MNPuzzleState < 4, 4>, slideDir, MNPuzzle < 4, 4 >, MinCriterion::MinB> dbbs(false);
             Timer timer;
             timer.StartTimer();
             dbbs.GetPath(&mnp, start, goal, &mnp, &mnp, solutionPath);

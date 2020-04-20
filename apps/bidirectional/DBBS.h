@@ -1,165 +1,68 @@
 #ifndef DBBS_H
 #define DBBS_H
 
-#include "BidirErrorBucketBasedList.h"
+#include "BestBucketBasedList.h"
+#include "MinCriterion.h"
+#include "FrontToEnd.h"
 #include "FPUtil.h"
 #include <unordered_map>
 #include <iostream>
 #include <math.h>
 
-template<class state, class action, class environment, bool useB = true, bool useRC = true, class priorityQueue = BidirErrorBucketBasedList<state, environment, useB, useRC, BucketNodeData<state>>>
-class DBBS {
+template<class state, class action, class environment, MinCriterion criterion, class priorityQueue = BestBucketBasedList<state, environment, BucketNodeData<state>, criterion>>
+class DBBS : public FrontToEnd<state, action, environment, priorityQueue> {
+
+    using FrontToEnd<state, action, environment, priorityQueue>::forwardQueue;
+    using FrontToEnd<state, action, environment, priorityQueue>::backwardQueue;
+    using FrontToEnd<state, action, environment, priorityQueue>::forwardHeuristic;
+    using FrontToEnd<state, action, environment, priorityQueue>::backwardHeuristic;
+    using FrontToEnd<state, action, environment, priorityQueue>::C;
+    using FrontToEnd<state, action, environment, priorityQueue>::currentCost;
+    using FrontToEnd<state, action, environment, priorityQueue>::epsilon;
+    using FrontToEnd<state, action, environment, priorityQueue>::start;
+    using FrontToEnd<state, action, environment, priorityQueue>::goal;
+    using FrontToEnd<state, action, environment, priorityQueue>::nodesExpanded;
+
+    using FrontToEnd<state, action, environment, priorityQueue>::Expand;
+    using FrontToEnd<state, action, environment, priorityQueue>::ExpandBucket;
+    using FrontToEnd<state, action, environment, priorityQueue>::CheckSolution;
+
+
 public:
-    DBBS(MinCriterion minCriterion_, bool alternating_, double epsilon_ = 1.0, double gcd_ = 1.0) {
-        forwardHeuristic = 0;
-        backwardHeuristic = 0;
-        env = 0;
-        ResetNodeCount();
-        expandForward = true;
-        nodesExpanded = nodesTouched = 0;
-        currentCost = DBL_MAX;
-        epsilon = epsilon_;
-        gcd = gcd_;
-        alternating = alternating_;
-        minCriterion = minCriterion_;
-    }
+    DBBS(bool alternating_, bool useB_ = true, double epsilon_ = 1.0, double gcd_ = 1.0)
+            : FrontToEnd<state, action, environment, priorityQueue>(epsilon_),
+              alternating(alternating_), useB(useB_), gcd(gcd_) {}
 
-    ~DBBS() {
-        forwardQueue.Reset();
-        backwardQueue.Reset();
-    }
-
-    void GetPath(environment *env, const state &from, const state &to,
-                 Heuristic <state> *forward, Heuristic <state> *backward, std::vector <state> &thePath);
-
-    bool InitializeSearch(environment *env, const state &from, const state &to, Heuristic <state> *forward,
-                          Heuristic <state> *backward, std::vector <state> &thePath);
-
-    bool DoSingleSearchStep(std::vector <state> &thePath);
+    ~DBBS() {}
 
     virtual const char *GetName() { return "DBBS"; }
 
-    void ResetNodeCount() {
-        nodesExpanded = nodesTouched = 0;
-        counts.clear();
-    }
-
-    inline const int GetNumForwardItems() { return forwardQueue.size(); }
-
-    inline const BucketNodeData<state> &GetForwardItem(unsigned int which) { return forwardQueue.Lookat(which); }
-
-    inline const int GetNumBackwardItems() { return backwardQueue.size(); }
-
-    inline const BucketNodeData<state> &GetBackwardItem(unsigned int which) { return backwardQueue.Lookat(which); }
-
-    uint64_t GetUniqueNodesExpanded() const { return nodesExpanded; }
-
-    uint64_t GetNodesExpanded() const { return nodesExpanded; }
-
-    uint64_t GetNodesTouched() const { return nodesTouched; }
-
-    uint64_t GetNecessaryExpansions() {
-        uint64_t necessary = 0;
-        for (const auto &count : counts) {
-            if (count.first < currentCost)
-                necessary += count.second;
-        }
-        return necessary;
-    }
-
-    void Reset() {
-        currentCost = DBL_MAX;
-        forwardQueue.Reset();
-        backwardQueue.Reset();
-        ResetNodeCount();
-    }
-
-private:
-
-    void ExtractPath(const priorityQueue &queue, state &collisionState, std::vector <state> &thePath) {
-        thePath.push_back(collisionState);
-        auto parent = queue.Lookup(collisionState).parent;
-        while (parent != nullptr) {
-            thePath.push_back(*parent);
-            parent = queue.Lookup(*parent).parent;
-        }
-    }
-
-    void Expand(priorityQueue &current, priorityQueue &opposite,
-                Heuristic <state> *heuristic, Heuristic <state> *reverseHeuristic,
-                const state &target, const state &source);
+protected:
 
     bool UpdateC();
 
     double GetNextC();
 
-    priorityQueue forwardQueue, backwardQueue;
-    state goal, start;
+    virtual void RunAlgorithm();
 
-    uint64_t nodesTouched, nodesExpanded;
+    void ExpandFromBestBucket(priorityQueue &current, priorityQueue &opposite,
+                              Heuristic <state> *heuristic,
+                              Heuristic <state> *reverseHeuristic,
+                              const state &target, const state &source);
 
-    std::map<double, int> counts;
-
-    state middleNode;
-    double currentCost;
-    double epsilon;
+    bool alternating;
+    bool useB;
     double gcd;
 
-    environment *env;
-    Heuristic <state> *forwardHeuristic;
-    Heuristic <state> *backwardHeuristic;
-
     bool expandForward = true;
-    bool alternating;
-    MinCriterion minCriterion;
 
-    double C = 0.0;
+
+    // TODO parametrize this
+    bool useRC = true;
 };
 
-template<class state, class action, class environment, bool useB, bool useRC, class priorityQueue>
-void
-DBBS<state, action, environment, useB, useRC, priorityQueue>::GetPath(environment *env, const state &from,
-                                                                      const state &to,
-                                                                      Heuristic <state> *forward,
-                                                                      Heuristic <state> *backward,
-                                                                      std::vector <state> &thePath) {
-    if (!InitializeSearch(env, from, to, forward, backward, thePath))
-        return;
-
-    while (!DoSingleSearchStep(thePath)) {}
-}
-
-template<class state, class action, class environment, bool useB, bool useRC, class priorityQueue>
-bool DBBS<state, action, environment, useB, useRC, priorityQueue>::InitializeSearch(environment *env, const state &from,
-                                                                                    const state &to,
-                                                                                    Heuristic <state> *forward,
-                                                                                    Heuristic <state> *backward,
-                                                                                    std::vector <state> &thePath) {
-    this->env = env;
-    forwardHeuristic = forward;
-    backwardHeuristic = backward;
-    Reset();
-    start = from;
-    goal = to;
-    if (start == goal)
-        return false;
-    expandForward = true;
-
-    double forwardH = std::max(forwardHeuristic->HCost(start, goal), epsilon);
-    double backwardH = std::max(backwardHeuristic->HCost(goal, start), epsilon);
-
-    forwardQueue.setEnvironment(env);
-    forwardQueue.AddOpenNode(start, 0, forwardH, 0);
-    backwardQueue.setEnvironment(env);
-    backwardQueue.AddOpenNode(goal, 0, backwardH, 0);
-
-    C = std::max(forwardH, backwardH);
-
-    return true;
-}
-
-template<class state, class action, class environment, bool useB, bool useRC, class priorityQueue>
-bool DBBS<state, action, environment, useB, useRC, priorityQueue>::UpdateC() {
+template<class state, class action, class environment, MinCriterion criterion, class priorityQueue>
+bool DBBS<state, action, environment, criterion, priorityQueue>::UpdateC() {
 
     if (forwardQueue.isBestBucketComputed() && backwardQueue.isBestBucketComputed())
         return false; // no need to recompute anything, and no need to rise C
@@ -169,7 +72,7 @@ bool DBBS<state, action, environment, useB, useRC, priorityQueue>::UpdateC() {
     while (C < currentCost && (!forwardQueue.isBestBucketComputed() || !backwardQueue.isBestBucketComputed())) {
 
         // initial forward queue limits
-        forwardQueue.computeBestBucket(minCriterion, C, C, C, 2.0 * C, DBL_MAX, DBL_MAX);
+        forwardQueue.computeBestBucket(C, C, C, 2.0 * C, DBL_MAX, DBL_MAX);
 
         double gMinF = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinG() : C;
         double fMinF = forwardQueue.isBestBucketComputed() ? forwardQueue.getMinF() : C;
@@ -185,10 +88,9 @@ bool DBBS<state, action, environment, useB, useRC, priorityQueue>::UpdateC() {
 
             limitsChanged = false;
 
-            backwardQueue.computeBestBucket(minCriterion, C - (gMinF + epsilon), C - dMinF, C - fMinF,
+            backwardQueue.computeBestBucket(C - (gMinF + epsilon), C - dMinF, C - fMinF,
                                             2.0 * C - bMinF, C - rdMinF, C - rfMinF);
             if (!backwardQueue.isBestBucketComputed()) break;
-
 
             double gMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinG() : C;
             double fMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinF() : C;
@@ -198,7 +100,7 @@ bool DBBS<state, action, environment, useB, useRC, priorityQueue>::UpdateC() {
             double rdMinB = backwardQueue.isBestBucketComputed() ? backwardQueue.getMinRD() : DBL_MAX;
 
             // forward queue limits
-            forwardQueue.computeBestBucket(minCriterion, C - (gMinB + epsilon), C - dMinB, C - fMinB,
+            forwardQueue.computeBestBucket(C - (gMinB + epsilon), C - dMinB, C - fMinB,
                                            2.0 * C - bMinB, C - rdMinB, C - rfMinB);
 
             if (!forwardQueue.isBestBucketComputed()) break;
@@ -234,8 +136,8 @@ bool DBBS<state, action, environment, useB, useRC, priorityQueue>::UpdateC() {
     return incrementedC;
 }
 
-template<class state, class action, class environment, bool useB, bool useRC, class priorityQueue>
-double DBBS<state, action, environment, useB, useRC, priorityQueue>::GetNextC() {
+template<class state, class action, class environment, MinCriterion criterion, class priorityQueue>
+double DBBS<state, action, environment, criterion, priorityQueue>::GetNextC() {
 
     // TODO figure out if using more bounds may make increasing C slower
 
@@ -318,106 +220,53 @@ double DBBS<state, action, environment, useB, useRC, priorityQueue>::GetNextC() 
     return result;
 }
 
-template<class state, class action, class environment, bool useB, bool useRC, class priorityQueue>
-bool DBBS<state, action, environment, useB, useRC, priorityQueue>::DoSingleSearchStep(std::vector <state> &thePath) {
+template<class state, class action, class environment, MinCriterion criterion, class priorityQueue>
+void DBBS<state, action, environment, criterion, priorityQueue>::RunAlgorithm() {
+    while (!forwardQueue.IsEmpty() && !backwardQueue.IsEmpty()) {
 
-    if (UpdateC()) {
-        // TODO think how we are going to parametrize the tie breaker
-    }
-
-    if (fgreatereq(C, currentCost)) { // optimal solution found
-        std::vector <state> pFor, pBack;
-        ExtractPath(backwardQueue, middleNode, pBack);
-        ExtractPath(forwardQueue, middleNode, pFor);
-        reverse(pFor.begin(), pFor.end());
-        thePath = pFor;
-        thePath.insert(thePath.end(), pBack.begin() + 1, pBack.end());
-        return true;
-    }
-
-    // TODO: parametrize better whether we want to alternate or to take a look at the open lists
-    if (alternating) { // alternate directions
-        if (expandForward) {
-            Expand(forwardQueue, backwardQueue, forwardHeuristic, backwardHeuristic, goal, start);
-            expandForward = false;
-        } else {
-            Expand(backwardQueue, forwardQueue, backwardHeuristic, forwardHeuristic, start, goal);
-            expandForward = true;
+        if (UpdateC()) {
+            // TODO think how we are going to parametrize the tie breaker
+            if (CheckSolution()) break; // optimality can be proven after updating C
         }
-    } else { // choose side with the fewest nodes with minimum g
 
-        double gNodesForward = forwardQueue.getExpandableNodes();
-        double gNodesBackward = backwardQueue.getExpandableNodes();
+        // TODO: parametrize better whether we want to alternate or to take a look at the open lists
+        if (alternating) { // alternate directions
+            if (expandForward) {
+                ExpandFromBestBucket(forwardQueue, backwardQueue, forwardHeuristic, backwardHeuristic, goal, start);
+                expandForward = false;
+            } else {
+                ExpandFromBestBucket(backwardQueue, forwardQueue, backwardHeuristic, forwardHeuristic, start, goal);
+                expandForward = true;
+            }
+        } else { // choose side with the fewest nodes with minimum g
 
-        if (gNodesForward <= gNodesBackward)
-            Expand(forwardQueue, backwardQueue, forwardHeuristic, backwardHeuristic, goal, start);
-        else
-            Expand(backwardQueue, forwardQueue, backwardHeuristic, forwardHeuristic, start, goal);
+            double gNodesForward = forwardQueue.getExpandableNodes();
+            double gNodesBackward = backwardQueue.getExpandableNodes();
+
+            if (gNodesForward <= gNodesBackward)
+                ExpandFromBestBucket(forwardQueue, backwardQueue, forwardHeuristic, backwardHeuristic, goal, start);
+            else
+                ExpandFromBestBucket(backwardQueue, forwardQueue, backwardHeuristic, forwardHeuristic, start, goal);
+        }
+
+        if (CheckSolution()) break; // a newer collision after expansion may prove optimality
     }
-
-    return false;
 }
 
-template<class state, class action, class environment, bool useB, bool useRC, class priorityQueue>
-void
-DBBS<state, action, environment, useB, useRC, priorityQueue>::Expand(priorityQueue &current, priorityQueue &opposite,
-                                                                     Heuristic <state> *heuristic,
-                                                                     Heuristic <state> *reverseHeuristic,
-                                                                     const state &target, const state &source) {
-
+template<class state, class action, class environment, MinCriterion criterion, class priorityQueue>
+void DBBS<state, action, environment, criterion, priorityQueue>::ExpandFromBestBucket(priorityQueue &current,
+                                                                                      priorityQueue &opposite,
+                                                                                      Heuristic <state> *heuristic,
+                                                                                      Heuristic <state> *reverseHeuristic,
+                                                                                      const state &target,
+                                                                                      const state &source) {
     auto nodePair = current.Pop();
 
     // despite apparently having expandable nodes, best candidates may be invalidated entries
-    if (nodePair.first == nullptr) {
-        return;
-    }
+    if (nodePair.first == nullptr) return;
 
-    const auto node = nodePair.first;
-    auto nodeG = nodePair.second;
-    nodesExpanded++;
-
-    counts[C] += 1;
-
-    std::vector <state> neighbors;
-    env->GetSuccessors(*node, neighbors);
-
-    for (auto &succ : neighbors) {
-
-        nodesTouched++;
-
-        double succG = nodeG + env->GCost(*node, succ);
-
-        double h = std::max(heuristic->HCost(succ, target), epsilon);
-
-        // ignore states with greater cost than best solution
-        // this can be either g + h
-        if (fgreatereq(succG + h, currentCost))
-            continue;
-
-        double h_nx = reverseHeuristic->HCost(succ, source);
-
-        // check if there is a collision
-        auto collision = opposite.getNodeG(succ, h_nx);
-        if (collision.first) {
-            auto gValue = collision.second;
-            double collisionCost = succG + gValue.second;
-            if (fless(collisionCost, currentCost)) {
-                currentCost = collisionCost;
-                middleNode = succ;
-
-                if (fgreatereq(C, currentCost)) {
-                    // add the node so the plan can be extracted
-                    current.AddOpenNode(succ, succG, h, h_nx, node);
-                    break; // step out, don't generate more nodes
-                }
-            } else if (gValue.first) {
-                continue; // if the g value is provably optimal and the collision value is geq, prune the node
-            }
-        }
-
-        // add it to the open list
-        current.AddOpenNode(succ, succG, h, h_nx, node);
-    }
+    Expand(nodePair.first, nodePair.second,
+           current, opposite, heuristic, reverseHeuristic, target, source);
 }
 
 #endif

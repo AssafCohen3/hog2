@@ -1,8 +1,6 @@
 #ifndef BTB_H
 #define BTB_H
 
-#include "BidirErrorBucketBasedList.h"
-#include "FPUtil.h"
 #include <unordered_set>
 #include <unordered_map>
 #include <iostream>
@@ -10,6 +8,8 @@
 #include <utility>
 #include <vector>
 #include <queue>
+#include "FrontToEnd.h"
+#include "BidirErrorBucketBasedList.h"
 
 struct PairsInfo {
 
@@ -50,126 +50,46 @@ enum BTBPolicy {
     Alternating, Smallest, MostConnected, VertexCover
 };
 
-template<class state, class action, class environment, bool useRC = true, class priorityQueue = BidirErrorBucketBasedList<state, environment, true, useRC, BucketNodeData<state>>>
-class BTB {
+template<class state, class action, class environment, class priorityQueue = BidirErrorBucketBasedList<state, environment, BucketNodeData<state>>>
+class BTB : public FrontToEnd<state, action, environment, priorityQueue> {
+
+    using FrontToEnd<state, action, environment, priorityQueue>::forwardQueue;
+    using FrontToEnd<state, action, environment, priorityQueue>::backwardQueue;
+    using FrontToEnd<state, action, environment, priorityQueue>::forwardHeuristic;
+    using FrontToEnd<state, action, environment, priorityQueue>::backwardHeuristic;
+    using FrontToEnd<state, action, environment, priorityQueue>::C;
+    using FrontToEnd<state, action, environment, priorityQueue>::epsilon;
+    using FrontToEnd<state, action, environment, priorityQueue>::start;
+    using FrontToEnd<state, action, environment, priorityQueue>::goal;
+
+    using FrontToEnd<state, action, environment, priorityQueue>::Expand;
+    using FrontToEnd<state, action, environment, priorityQueue>::ExpandBucket;
+    using FrontToEnd<state, action, environment, priorityQueue>::CheckSolution;
+
 public:
-    BTB(BTBPolicy policy_, double epsilon_ = 1.0) {
-        forwardHeuristic = 0;
-        backwardHeuristic = 0;
-        env = 0;
-        ResetNodeCount();
-        nodesExpanded = nodesTouched = 0;
-        currentCost = DBL_MAX;
-        epsilon = epsilon_;
-        policy = policy_;
-    }
+    BTB(BTBPolicy policy_, bool useRC_ = true, double epsilon_ = 1.0)
+            : FrontToEnd<state, action, environment, priorityQueue>(epsilon_), policy(policy_) ,useRC(useRC_) {}
 
-    ~BTB() {
-        forwardQueue.Reset();
-        backwardQueue.Reset();
-    }
+    ~BTB() {}
 
-    void GetPath(environment *env, const state &from, const state &to,
-                 Heuristic <state> *forward, Heuristic <state> *backward, std::vector <state> &thePath);
+protected:
 
-    bool InitializeSearch(environment *env, const state &from, const state &to, Heuristic <state> *forward,
-                          Heuristic <state> *backward, std::vector <state> &thePath);
-
-    bool CheckSolution(std::vector <state> &thePath) { return fgreatereq(C, currentCost); }
-
-    void ExpandBucket(bool forward, const BucketInfo &info);
-
-    virtual const char *GetName() { return "BTB"; }
-
-    void ResetNodeCount() {
-        nodesExpanded = nodesTouched = 0;
-        counts.clear();
-    }
-
-    inline const int GetNumForwardItems() { return forwardQueue.size(); }
-
-    inline const BucketNodeData<state> &GetForwardItem(unsigned int which) { return forwardQueue.Lookat(which); }
-
-    inline const int GetNumBackwardItems() { return backwardQueue.size(); }
-
-    inline const BucketNodeData<state> &GetBackwardItem(unsigned int which) { return backwardQueue.Lookat(which); }
-
-    uint64_t GetUniqueNodesExpanded() const { return nodesExpanded; }
-
-    uint64_t GetNodesExpanded() const { return nodesExpanded; }
-
-    uint64_t GetNodesTouched() const { return nodesTouched; }
-
-    uint64_t GetNecessaryExpansions() {
-        uint64_t necessary = 0;
-        for (const auto &count : counts) {
-            if (count.first < currentCost)
-                necessary += count.second;
-        }
-        return necessary;
-    }
-
-    void Reset() {
-        currentCost = DBL_MAX;
-        forwardQueue.Reset();
-        backwardQueue.Reset();
-        ResetNodeCount();
-    }
-
-private:
-
-    void ExtractPath(const priorityQueue &queue, state &collisionState, std::vector <state> &thePath) {
-        thePath.push_back(collisionState);
-        auto parent = queue.Lookup(collisionState).parent;
-        while (parent != nullptr) {
-            thePath.push_back(*parent);
-            parent = queue.Lookup(*parent).parent;
-        }
-    }
-
-    bool Expand(const state *currentState, double g,
-                priorityQueue &current, priorityQueue &opposite,
-                Heuristic <state> *heuristic, Heuristic <state> *reverseHeuristic,
-                const state &target, const state &source);
+    bool useRC;
+    BTBPolicy policy;
 
     std::pair<bool, PairsInfo> ComputePairs(bool computeVertexCover = false);
 
-    priorityQueue forwardQueue, backwardQueue;
-    state goal, start;
-
-    uint64_t nodesTouched, nodesExpanded;
-
-    std::map<double, int> counts;
-
-    state middleNode;
-    double currentCost;
-    double epsilon;
-
-    environment *env;
-    Heuristic <state> *forwardHeuristic;
-    Heuristic <state> *backwardHeuristic;
-
-    BTBPolicy policy;
-
-    double C = 0.0;
+    virtual void RunAlgorithm();
 
 };
 
-template<class state, class action, class environment, bool useRC, class priorityQueue>
-void BTB<state, action, environment, useRC, priorityQueue>::GetPath(environment *env,
-                                                                    const state &from,
-                                                                    const state &to,
-                                                                    Heuristic <state> *forward,
-                                                                    Heuristic <state> *backward,
-                                                                    std::vector <state> &thePath) {
-    if (!InitializeSearch(env, from, to, forward, backward, thePath))
-        return;
-
+template<class state, class action, class environment, class priorityQueue>
+void BTB<state, action, environment, priorityQueue>::RunAlgorithm() {
     while (!forwardQueue.IsEmpty() && !backwardQueue.IsEmpty()) {
         auto pairComputation = ComputePairs(policy == BTBPolicy::VertexCover);
         if (pairComputation.first) {
             // check solution after increasing C
-            if (CheckSolution(thePath)) break;
+            if (CheckSolution()) break;
 
             // TODO think how we are going to parametrize the tie breaker
         }
@@ -205,65 +125,14 @@ void BTB<state, action, environment, useRC, priorityQueue>::GetPath(environment 
             }
         } else { exit(0); }
 
-        if (CheckSolution(thePath)) break;
+        if (CheckSolution()) break;
 
     }
-
-    // reconstruct the solution path
-    std::vector <state> pFor, pBack;
-    ExtractPath(backwardQueue, middleNode, pBack);
-    ExtractPath(forwardQueue, middleNode, pFor);
-    reverse(pFor.begin(), pFor.end());
-    thePath = pFor;
-    thePath.insert(thePath.end(), pBack.begin() + 1, pBack.end());
 }
 
-template<class state, class action, class environment, bool useRC, class priorityQueue>
-void BTB<state, action, environment, useRC, priorityQueue>::ExpandBucket(bool forward, const BucketInfo &info) {
-    if (forward) {
-        while (!forwardQueue.RemoveIfEmpty(info.g, info.h, info.h_nx)) {
-            auto pop = forwardQueue.PopBucket(info.g, info.h, info.h_nx);
-            Expand(pop, info.g, forwardQueue, backwardQueue, forwardHeuristic, backwardHeuristic, goal, start);
-        }
-    } else {
-        while (!backwardQueue.RemoveIfEmpty(info.g, info.h, info.h_nx)) {
-            auto pop = backwardQueue.PopBucket(info.g, info.h, info.h_nx);
-            Expand(pop, info.g, backwardQueue, forwardQueue, backwardHeuristic, forwardHeuristic, start, goal);
-        }
-    }
-}
-
-template<class state, class action, class environment, bool useRC, class priorityQueue>
-bool BTB<state, action, environment, useRC, priorityQueue>::InitializeSearch(environment *env, const state &from,
-                                                                             const state &to,
-                                                                             Heuristic <state> *forward,
-                                                                             Heuristic <state> *backward,
-                                                                             std::vector <state> &thePath) {
-    this->env = env;
-    forwardHeuristic = forward;
-    backwardHeuristic = backward;
-    Reset();
-    start = from;
-    goal = to;
-    if (start == goal)
-        return false;
-
-    double forwardH = std::max(forwardHeuristic->HCost(start, goal), epsilon);
-    double backwardH = std::max(backwardHeuristic->HCost(goal, start), epsilon);
-
-    forwardQueue.setEnvironment(env);
-    forwardQueue.AddOpenNode(start, 0, forwardH, 0);
-    backwardQueue.setEnvironment(env);
-    backwardQueue.AddOpenNode(goal, 0, backwardH, 0);
-
-    C = std::max({forwardH, backwardH, epsilon});
-
-    return true;
-}
-
-template<class state, class action, class environment, bool useRC, class priorityQueue>
+template<class state, class action, class environment, class priorityQueue>
 std::pair<bool, PairsInfo>
-BTB<state, action, environment, useRC, priorityQueue>::ComputePairs(bool computeVertexCover) {
+BTB<state, action, environment, priorityQueue>::ComputePairs(bool computeVertexCover) {
 
     auto fwBuckets = forwardQueue.getBucketInfo();
     auto bwBuckets = backwardQueue.getBucketInfo();
@@ -278,7 +147,7 @@ BTB<state, action, environment, useRC, priorityQueue>::ComputePairs(bool compute
     std::pair <BucketInfo, BucketInfo> smallestBucketPair;
 
     // TODO split different techniques into different methods, too much code in here
-    std::priority_queue<MustExpandEdge, std::vector<MustExpandEdge>, EdgeCompare> edgeHeap;
+    std::priority_queue <MustExpandEdge, std::vector<MustExpandEdge>, EdgeCompare> edgeHeap;
 
     for (const auto &fwInfo: fwBuckets) {
         for (const auto &bwInfo: bwBuckets) {
@@ -300,7 +169,7 @@ BTB<state, action, environment, useRC, priorityQueue>::ComputePairs(bool compute
                 fwMostConnectedBuckets.clear();
                 bwMostConnectedBuckets.clear();
                 // heaps have no clear method, so reassign it
-                edgeHeap = std::priority_queue<MustExpandEdge, std::vector<MustExpandEdge>, EdgeCompare>();
+                edgeHeap = std::priority_queue < MustExpandEdge, std::vector < MustExpandEdge >, EdgeCompare > ();
                 smallestBucketPair = std::make_pair(BucketInfo(), BucketInfo());
             }
 
@@ -356,59 +225,5 @@ BTB<state, action, environment, useRC, priorityQueue>::ComputePairs(bool compute
     return std::make_pair(updatedC, PairsInfo(forward, mostConnected, smallestBucketPair, vertexCover));
 }
 
-template<class state, class action, class environment, bool useRC, class priorityQueue>
-bool BTB<state, action, environment, useRC, priorityQueue>::Expand(const state *currentState,
-                                                                   double g,
-                                                                   priorityQueue &current,
-                                                                   priorityQueue &opposite,
-                                                                   Heuristic <state> *heuristic,
-                                                                   Heuristic <state> *reverseHeuristic,
-                                                                   const state &target, const state &source) {
-    nodesExpanded++;
-    counts[C] += 1;
-
-    std::vector <state> neighbors;
-    env->GetSuccessors(*currentState, neighbors);
-
-    for (auto &succ : neighbors) {
-
-        nodesTouched++;
-
-        double succG = g + env->GCost(*currentState, succ);
-
-        double h = std::max(heuristic->HCost(succ, target), epsilon);
-
-        // ignore states with greater cost than best solution
-        // this can be either g + h
-        if (fgreatereq(succG + h, currentCost))
-            continue;
-
-        double h_nx = reverseHeuristic->HCost(succ, source);
-
-        // check if there is a collision
-        auto collision = opposite.getNodeG(succ, h_nx);
-        if (collision.first) {
-            auto gValue = collision.second;
-            double collisionCost = succG + gValue.second;
-            if (fless(collisionCost, currentCost)) {
-                currentCost = collisionCost;
-                middleNode = succ;
-
-                if (fgreatereq(C, currentCost)) {
-                    // add the node so the plan can be extracted
-                    current.AddOpenNode(succ, succG, h, h_nx, currentState);
-                    break; // step out, don't generate more nodes
-                }
-            } else if (gValue.first) {
-                continue; // if the g value is provably optimal and the collision value is geq, prune the node
-            }
-        }
-
-        // add it to the open list
-        current.AddOpenNode(succ, succG, h, h_nx, currentState);
-    }
-
-    return true;
-}
 
 #endif
