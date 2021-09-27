@@ -326,10 +326,35 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
             }
         }
 
+        // CDBBS
+        if (1) {
+            CDBBS<xyLoc, tDirection, MapEnvironment, MinCriterion::MinB> cdbbs(1.0, 0.5);
+            std::vector <xyLoc> path;
+            Timer timer;
+            timer.StartTimer();
+            cdbbs.GetPath(me, start, goal, me, me, path);
+            timer.EndTimer();
+            printf("CDBBS-p found path length %1.1f; %llu expanded; %llu necessary; %1.2fs elapsed\n",
+                   me->GetPathLength(path),
+                   cdbbs.GetNodesExpanded(), cdbbs.GetNecessaryExpansions(), timer.GetElapsedTime());
+
+            nodes_CDBBS += cdbbs.GetNodesExpanded();
+            nodes_CDBBSn += cdbbs.GetNecessaryExpansions();
+            if (cdbbs.GetNodesExpanded() == cdbbs.GetNecessaryExpansions()) notie_CDBBS++;
+
+            // test optimality
+            if (optimal_cost < 0.0) optimal_cost = me->GetPathLength(path);
+            else if (optimal_cost != me->GetPathLength(path)) {
+                printf("CDBBS reported bad value!! optimal %1.2f; reported %1.2f;\n",
+                       optimal_cost, me->GetPathLength(path));
+                exit(0);
+            }
+        }
+
         int tempBTBalt;
 
         // BTB alternating
-        if (1) {
+        if (0) {
             BTB<xyLoc, tDirection, MapEnvironment> btb(BTBPolicy::Alternating, 1.0);
             std::vector <xyLoc> path;
             Timer timer;
@@ -360,7 +385,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
         }
 
         // BTB smallest bucket
-        if (1) {
+        if (0) {
             BTB<xyLoc, tDirection, MapEnvironment> btb(BTBPolicy::Smallest, 1.0);
             std::vector <xyLoc> path;
             Timer timer;
@@ -389,7 +414,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
         }
 
         // BTB most connected bucket
-        if (1) {
+        if (0) {
             BTB<xyLoc, tDirection, MapEnvironment> btb(BTBPolicy::MostConnected, 1.0);
             std::vector <xyLoc> path;
             Timer timer;
@@ -418,7 +443,7 @@ void MapExperiment::runMap(const char *map, const char *scenario, double weight)
         }
 
         // BTB vertex
-        if (1) {
+        if (0) {
             BTB<xyLoc, tDirection, MapEnvironment> btb(BTBPolicy::VertexCover, 1.0);
             std::vector <xyLoc> path;
             Timer timer;

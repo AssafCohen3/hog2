@@ -5,7 +5,6 @@
 #include "MinCriterion.h"
 #include "FrontToEnd.h"
 #include "FPUtil.h"
-#include <unordered_map>
 #include <iostream>
 #include <math.h>
 
@@ -265,8 +264,7 @@ void DBBS<state, action, environment, criterion, priorityQueue>::ExpandFromBestB
     // despite apparently having expandable nodes, best candidates may be invalidated entries
     if (nodePair.first == nullptr) return;
 
-    Expand(nodePair.first, nodePair.second,
-           current, opposite, heuristic, reverseHeuristic, target, source);
+    Expand(nodePair.first, nodePair.second, current, opposite, heuristic, reverseHeuristic, target, source);
 }
 
 #endif

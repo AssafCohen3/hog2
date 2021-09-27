@@ -38,6 +38,13 @@ public:
 
         RunAlgorithm();
 
+        if (C > currentCost) {
+            std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+            exit(0);
+
+
+        }
+
         ReconstructSolution(thePath);
     }
 
@@ -212,11 +219,13 @@ void FrontToEnd<state, action, environment, priorityQueue>::ExpandBucket(bool fo
         while (!forwardQueue.RemoveIfEmpty(info.g, info.h, info.h_nx)) {
             auto pop = forwardQueue.PopBucket(info.g, info.h, info.h_nx);
             Expand(pop, info.g, forwardQueue, backwardQueue, forwardHeuristic, backwardHeuristic, goal, start);
+            if (CheckSolution()) break;
         }
     } else {
         while (!backwardQueue.RemoveIfEmpty(info.g, info.h, info.h_nx)) {
             auto pop = backwardQueue.PopBucket(info.g, info.h, info.h_nx);
             Expand(pop, info.g, backwardQueue, forwardQueue, backwardHeuristic, forwardHeuristic, start, goal);
+            if (CheckSolution()) break;
         }
     }
 }

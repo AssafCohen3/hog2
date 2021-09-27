@@ -13,6 +13,7 @@
 #include "Baseline.h"
 #include "GBFHS.h"
 #include "DBBS.h"
+#include "CDBBS.h"
 #include "BTB.h"
 #include "TemplateAStar.h"
 #include "BSStar.h"
@@ -40,7 +41,8 @@ class MapExperiment {
             nodes_BTB_small = 0, nodes_BTB_smalln = 0, notie_BTB_small = 0,
             nodes_BTB_conn = 0, nodes_BTB_connn = 0, notie_BTB_conn = 0,
             nodes_BTB_vc = 0, nodes_BTB_vcn = 0, notie_BTB_vc = 0,
-            nodes_DBBS = 0, nodes_DBBSn = 0, notie_DBBS = 0, nodes_DBBSp = 0, nodes_DBBSpn = 0, notie_DBBSp = 0;
+            nodes_DBBS = 0, nodes_DBBSn = 0, notie_DBBS = 0, nodes_DBBSp = 0, nodes_DBBSpn = 0, notie_DBBSp = 0,
+            nodes_CDBBS = 0, nodes_CDBBSn = 0, notie_CDBBS = 0;
 
     int experiments = 0;
 
@@ -63,7 +65,8 @@ public:
         nodes_GBFHSbest = 0, nodes_GBFHSbestn = 0, notie_GBFHSbest = 0,
         nodes_BAE = 0, nodes_BAEn = 0, notie_BAE = 0, nodes_BAEp = 0, nodes_BAEpn = 0, notie_BAEp = 0,
         nodes_DBS = 0, nodes_DBSn = 0, notie_DBS = 0, nodes_DBSp = 0, nodes_DBSpn = 0, notie_DBSp = 0,
-        nodes_DBBS = 0, nodes_DBBSn = 0, notie_DBBS = 0, nodes_DBBSp = 0, nodes_DBBSpn = 0, notie_DBBSp = 0;
+        nodes_DBBS = 0, nodes_DBBSn = 0, notie_DBBS = 0, nodes_DBBSp = 0, nodes_DBBSpn = 0, notie_DBBSp = 0,
+        nodes_CDBBS = 0, nodes_CDBBSn = 0, notie_CDBBS = 0;
 
         experiments = 0;
 
@@ -127,6 +130,9 @@ public:
         std::cout << "Maps" << " DBBS-p " << nodes_DBBSp / experiments << " expanded; "
                   << nodes_DBBSpn / experiments << " necessary; "
                   << notie_DBBSp / (float) experiments << " no last layer" << std::endl;
+        std::cout << "Maps" << " CDBBS " << nodes_CDBBS / experiments << " expanded; "
+                  << nodes_CDBBSn / experiments << " necessary; "
+                  << notie_CDBBS / (float) experiments << " no last layer" << std::endl;
         std::cout << "Maps" << " BTB alt " << nodes_BTB / experiments << " expanded; "
                   << nodes_BTBn / experiments << " necessary; "
                   << notie_BTB / (float) experiments << " no last layer" << std::endl;

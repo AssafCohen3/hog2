@@ -3,9 +3,6 @@
 
 #include <cassert>
 #include <vector>
-#include <map>
-#include <set>
-#include <unordered_map>
 #include <stdint.h>
 #include <limits>
 #include <climits>

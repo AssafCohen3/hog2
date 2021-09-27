@@ -13,6 +13,7 @@
 #include "Baseline.h"
 #include "GBFHS.h"
 #include "DBBS.h"
+#include "CDBBS.h"
 #include "BTB.h"
 #include "IDAStar.h"
 #include "MM.h"
@@ -43,6 +44,7 @@ void TestPancakeRandom() {
         std::vector <PancakePuzzleState<N>> gbfhsPath;
         std::vector <PancakePuzzleState<N>> dbsPath;
         std::vector <PancakePuzzleState<N>> dbbsPath;
+        std::vector <PancakePuzzleState<N>> cdbbsPath;
         std::vector <PancakePuzzleState<N>> btbPath;
         std::vector <PancakePuzzleState<N>> btbSmallestPath;
         std::vector <PancakePuzzleState<N>> btbConnectedPath;
@@ -74,7 +76,8 @@ void TestPancakeRandom() {
                 nodes_BTB_small = 0, nodes_BTB_smalln = 0, notie_BTB_small = 0,
                 nodes_BTB_conn = 0, nodes_BTB_connn = 0, notie_BTB_conn = 0,
                 nodes_BTB_vc = 0, nodes_BTB_vcn = 0, notie_BTB_vc = 0,
-                nodes_DBBS = 0, nodes_DBBSn = 0, notie_DBBS = 0, nodes_DBBSp = 0, nodes_DBBSpn = 0, notie_DBBSp = 0;
+                nodes_DBBS = 0, nodes_DBBSn = 0, notie_DBBS = 0, nodes_DBBSp = 0, nodes_DBBSpn = 0, notie_DBBSp = 0,
+                nodes_CDBBS = 0, nodes_CDBBSn = 0, notie_CDBBS = 0;
 
         for (int count = 0; count < INSTANCES; count++) {
 
@@ -106,6 +109,8 @@ void TestPancakeRandom() {
 //            original.puzzle[11] = 1;
 //            original.puzzle[12] = 0;
 //            original.puzzle[13] = 3;
+
+            if (count != 30 || gap != 1) continue;
 
             std::cout << "Pancake problem: " << (count) << " of " << INSTANCES << std::endl;
             std::cout << original << std::endl;
@@ -517,6 +522,32 @@ void TestPancakeRandom() {
                 else if (optimal_cost != pancake.GetPathLength(dbbsPath)) {
                     printf("GAP-%d DBBS-p reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
                            optimal_cost, pancake.GetPathLength(dbbsPath));
+                    exit(0);
+                }
+            }
+
+            // CDBBS
+            if (1) {
+                CDBBS<PancakePuzzleState < N>, PancakePuzzleAction, PancakePuzzle < N >, MinCriterion::MinB > cdbbs;
+                goal.Reset();
+                start = original;
+                t8.StartTimer();
+                cdbbs.GetPath(&pancake, start, goal, &pancake, &pancake2, cdbbsPath);
+                t8.EndTimer();
+                std::cout << "GAP-" << gap << " CDBBS found path length " << pancake.GetPathLength(cdbbsPath) << "; "
+                          << cdbbs.GetNodesExpanded() << " expanded; " << cdbbs.GetNecessaryExpansions()
+                          << " necessary; "
+                          << t8.GetElapsedTime() << "s elapsed" << std::endl;
+
+                nodes_CDBBS += cdbbs.GetNodesExpanded();
+                nodes_CDBBSn += cdbbs.GetNecessaryExpansions();
+                if (cdbbs.GetNodesExpanded() == cdbbs.GetNecessaryExpansions()) notie_CDBBS++;
+
+                // test optimality
+                if (optimal_cost < 0.0) optimal_cost = pancake.GetPathLength(cdbbsPath);
+                else if (optimal_cost != pancake.GetPathLength(cdbbsPath)) {
+                    printf("GAP-%d CDBBS reported bad value!! optimal %1.0f; reported %1.0f;\n", gap,
+                           optimal_cost, pancake.GetPathLength(cdbbsPath));
                     exit(0);
                 }
             }
