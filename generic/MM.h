@@ -222,7 +222,7 @@ bool MM<state, action, environment, priorityQueue>::DoSingleSearchStep(std::vect
 	{
 		return true;
 	}
-	
+
 //	if (forwardQueue.OpenSize() == 0)
 //		//Expand(backwardQueue, forwardQueue, backwardHeuristic, start, g_b, f_b);
 //		Expand(backwardQueue, forwardQueue, backwardHeuristic, start, b);
@@ -302,8 +302,8 @@ bool MM<state, action, environment, priorityQueue>::DoSingleSearchStep(std::vect
 		double minBackwardG = DBL_MAX;
 		double minForwardF = DBL_MAX;
 		double minBackwardF =  DBL_MAX;
-		double forwardP;
-		double backwardP;
+		double forwardP = currentCost + 1;
+		double backwardP = currentCost + 1;
 		
 		for (auto i = f.begin(); i != f.end(); i++)
 		{
@@ -331,10 +331,14 @@ bool MM<state, action, environment, priorityQueue>::DoSingleSearchStep(std::vect
 		}
 		
 		{
-			auto iB = backwardQueue.Lookat(backwardQueue.Peek());
-			backwardP = std::max(iB.g+iB.h, iB.g*2);
-			auto iF = forwardQueue.Lookat(forwardQueue.Peek());
-			forwardP = std::max(iF.g+iF.h, iF.g*2);
+			if(backwardQueue.OpenSize() != 0){
+				auto iB = backwardQueue.Lookat(backwardQueue.Peek());
+				backwardP = std::max(iB.g+iB.h, iB.g*2);
+			}
+			if(forwardQueue.OpenSize() != 0){
+				auto iF = forwardQueue.Lookat(forwardQueue.Peek());
+				forwardP = std::max(iF.g+iF.h, iF.g*2);
+			}
 		}
 		bool done = false;
 		if (minForwardF == DBL_MAX)
