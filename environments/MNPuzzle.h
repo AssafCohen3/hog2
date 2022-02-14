@@ -812,7 +812,7 @@ void MNPuzzle<width, height>::OpenGLDraw() const
 {
 }
 
-void DrawTile(float x, float y, char c1, char c2, int w, int h)
+inline void DrawTile(float x, float y, char c1, char c2, int w, int h)
 {
 	//glLineWidth(10.0);
 	int textWidth = 0;
@@ -847,7 +847,7 @@ void DrawTile(float x, float y, char c1, char c2, int w, int h)
 	glEnd();
 }
 
-void DrawFrame(int w, int h)
+inline void DrawFrame(int w, int h)
 {
 	// frame
 	glLineWidth(3.0);

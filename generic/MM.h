@@ -45,7 +45,7 @@ namespace std {
 template <class state, class action, class environment, class priorityQueue = AStarOpenClosed<state, MMCompare<state>> >
 class MM {
 public:
-	MM(double epsilon = 1.0):epsilon(epsilon) { forwardHeuristic = 0; backwardHeuristic = 0; env = 0; ResetNodeCount(); }
+	MM(double epsilon = 1.0):epsilon(epsilon) { forwardHeuristic = 0; backwardHeuristic = 0; env = 0; ResetNodeCount(); alternatingFlag = 0; alternationRateForward = 0; alternationRateBackward = 0; weight = 1;}
 	virtual ~MM() {}
 	void GetPath(environment *env, const state& from, const state& to,
 				 Heuristic<state> *forward, Heuristic<state> *backward, std::vector<state> &thePath);
@@ -56,7 +56,9 @@ public:
 	virtual const char *GetName() { return "MM"; }
 	
 	void ResetNodeCount() { nodesExpanded = nodesTouched = uniqueNodesExpanded = 0; }
-	
+	void setWeight(double w) { weight = w; }
+	void setAlternationRateForward(uint64_t rate) { alternationRateForward = rate; }
+	void setAlternationRateBackward(uint64_t rate) { alternationRateBackward = rate;}
 //	bool GetClosedListGCost(const state &val, double &gCost) const;
 //	unsigned int GetNumOpenItems() { return openClosedList.OpenSize(); }
 //	inline const AStarOpenClosedData<state> &GetOpenItem(unsigned int which) { return openClosedList.Lookat(openClosedList.GetOpenItem(which)); }
@@ -156,6 +158,11 @@ private:
 	double lastMinForwardG;
 	double lastMinBackwardG;
 	double epsilon;
+	// Assaf: mm variables
+	double weight;
+	uint64_t alternatingFlag;
+	uint64_t alternationRateForward;
+	uint64_t alternationRateBackward;
 
 	std::vector<state> neighbors;
 	environment *env;
@@ -199,8 +206,9 @@ bool MM<state, action, environment, priorityQueue>::InitializeSearch(environment
 	oldp1 = oldp2 = 0;
 	lastMinForwardG = 0;
 	lastMinBackwardG = 0;
-	forwardQueue.AddOpenNode(start, env->GetStateHash(start), 0, forwardHeuristic->HCost(start, goal));
-	backwardQueue.AddOpenNode(goal, env->GetStateHash(goal), 0, backwardHeuristic->HCost(goal, start));
+	// Assaf: added weight
+	forwardQueue.AddOpenNode(start, env->GetStateHash(start), 0, weight * forwardHeuristic->HCost(start, goal));
+	backwardQueue.AddOpenNode(goal, env->GetStateHash(goal), 0, weight * backwardHeuristic->HCost(goal, start));
 	f.clear();
 	b.clear();
 	recheckPath = false;
@@ -223,51 +231,66 @@ bool MM<state, action, environment, priorityQueue>::DoSingleSearchStep(std::vect
 //		//Expand(forwardQueue, backwardQueue, forwardHeuristic, goal, g_f, f_f);
 //		Expand(forwardQueue, backwardQueue, forwardHeuristic, goal, f);
 
-	uint64_t forward = forwardQueue.Peek();
-	uint64_t backward = backwardQueue.Peek();
-	
-	const AStarOpenClosedData<state> &nextForward = forwardQueue.Lookat(forward);
-	const AStarOpenClosedData<state> &nextBackward = backwardQueue.Lookat(backward);
+	if(alternationRateForward > 0 && alternationRateBackward > 0){
+		//Assaf: alternating version
+		if(alternatingFlag < alternationRateForward){
+			Expand(forwardQueue, backwardQueue, forwardHeuristic, goal, f);
+		}
+		else{
+			Expand(backwardQueue, forwardQueue, backwardHeuristic, start, b);		
+		}
+		alternatingFlag++;
+		if(alternatingFlag == alternationRateForward + alternationRateBackward){
+			alternatingFlag = 0;
+		}
+	}
+	else{
+		//Assaf: regular version
+		uint64_t forward = forwardQueue.Peek();
+		uint64_t backward = backwardQueue.Peek();
+		
+		const AStarOpenClosedData<state> &nextForward = forwardQueue.Lookat(forward);
+		const AStarOpenClosedData<state> &nextBackward = backwardQueue.Lookat(backward);
 
-	double p1 = std::max(nextForward.g+nextForward.h, nextForward.g*2);
-	double p2 = std::max(nextBackward.g+nextBackward.h, nextBackward.g*2);
-	if (p1 > oldp1)
-	{
-//		printf("Forward priority to %1.2f [%llu expanded - %1.2fs]\n", p1, GetNodesExpanded(), t.EndTimer());
-		oldp1 = p1;
-		//PrintOpenStats(f);
-	}
-	if (p2 > oldp2)
-	{
-//		printf("Backward priority to %1.2f [%llu expanded - %1.2fs]\n", p2, GetNodesExpanded(), t.EndTimer());
-		oldp2 = p2;
-		//PrintOpenStats(b);
-	}
-	
-	if (fless(p1, p2))
-	{
-		//Expand(forwardQueue, backwardQueue, forwardHeuristic, goal, g_f, f_f);
-		Expand(forwardQueue, backwardQueue, forwardHeuristic, goal, f);
-	}
-	else if (fless(p2, p1))
-	{
-		//Expand(backwardQueue, forwardQueue, backwardHeuristic, start, g_b, f_b);
-		Expand(backwardQueue, forwardQueue, backwardHeuristic, start, b);
-	}
-	else { // equal priority
-		if (fless(nextForward.g, nextBackward.g))
+		double p1 = std::max(nextForward.g+nextForward.h, nextForward.g*2);
+		double p2 = std::max(nextBackward.g+nextBackward.h, nextBackward.g*2);
+		if (p1 > oldp1)
+		{
+	//		printf("Forward priority to %1.2f [%llu expanded - %1.2fs]\n", p1, GetNodesExpanded(), t.EndTimer());
+			oldp1 = p1;
+			//PrintOpenStats(f);
+		}
+		if (p2 > oldp2)
+		{
+	//		printf("Backward priority to %1.2f [%llu expanded - %1.2fs]\n", p2, GetNodesExpanded(), t.EndTimer());
+			oldp2 = p2;
+			//PrintOpenStats(b);
+		}
+		if (fless(p1, p2))
 		{
 			//Expand(forwardQueue, backwardQueue, forwardHeuristic, goal, g_f, f_f);
 			Expand(forwardQueue, backwardQueue, forwardHeuristic, goal, f);
 		}
-		else if (fless(nextBackward.g, nextForward.g))
+		else if (fless(p2, p1))
 		{
 			//Expand(backwardQueue, forwardQueue, backwardHeuristic, start, g_b, f_b);
 			Expand(backwardQueue, forwardQueue, backwardHeuristic, start, b);
 		}
-		else {
-			Expand(forwardQueue, backwardQueue, forwardHeuristic, goal, f);
-			//Expand(forwardQueue, backwardQueue, forwardHeuristic, goal, g_f, f_f);
+		else { // equal priority
+			if (fless(nextForward.g, nextBackward.g))
+			{
+				//Expand(forwardQueue, backwardQueue, forwardHeuristic, goal, g_f, f_f);
+				Expand(forwardQueue, backwardQueue, forwardHeuristic, goal, f);
+			}
+			else if (fless(nextBackward.g, nextForward.g))
+			{
+				//Expand(backwardQueue, forwardQueue, backwardHeuristic, start, g_b, f_b);
+				Expand(backwardQueue, forwardQueue, backwardHeuristic, start, b);
+			}
+			else {
+				Expand(forwardQueue, backwardQueue, forwardHeuristic, goal, f);
+				//Expand(forwardQueue, backwardQueue, forwardHeuristic, goal, g_f, f_f);
+			}
 		}
 	}
 	// check if we can terminate
@@ -466,7 +489,8 @@ void MM<state, action, environment, priorityQueue>::Expand(priorityQueue &curren
 			case kNotFound:
 			{
 				double g = parentData.g+edgeCost;
-				double h = std::max(heuristic->HCost(succ, target), parentData.h-edgeCost);
+				// Assaf: added weight
+				double h = std::max(weight * heuristic->HCost(succ, target), parentData.h-edgeCost);
 
 				// Ignore nodes that don't have lower f-cost than the incumbant solution
 				if (!fless(g+h, currentCost))

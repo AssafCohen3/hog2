@@ -43,6 +43,7 @@
 #include "BidirPancake.h"
 #include "BidirTOH.h"
 #include "BidirMaps.h"
+#include "MyTest.h"
 
 void Test100Easy();
 
@@ -128,16 +129,17 @@ int main(int argc, char *argv[]) {
     InstallCommandLineHandler(MyCLHandler, "-problem", "-problem which", "Load the given problem");
     InstallCommandLineHandler(MyCLHandler, "-mazes", "-mazes", "Mazes benchmark");
     InstallCommandLineHandler(MyCLHandler, "-dao", "-dao", "DAO benchmark");
+    InstallCommandLineHandler(MyCLHandler, "-mytest", "-mytest <P> <alg> <W> <RF> <RB>", "Custom Test");
 
-    //2 8 1 3 17 0 4 8
-    std::cout << GetStringFromMove(2) << " ";
-    std::cout << GetStringFromMove(8) << " ";
-    std::cout << GetStringFromMove(1) << " ";
-    std::cout << GetStringFromMove(3) << " ";
-    std::cout << GetStringFromMove(17) << " ";
-    std::cout << GetStringFromMove(0) << " ";
-    std::cout << GetStringFromMove(4) << " ";
-    std::cout << GetStringFromMove(8) << "\n";
+    // //2 8 1 3 17 0 4 8
+    // std::cout << GetStringFromMove(2) << " ";
+    // std::cout << GetStringFromMove(8) << " ";
+    // std::cout << GetStringFromMove(1) << " ";
+    // std::cout << GetStringFromMove(3) << " ";
+    // std::cout << GetStringFromMove(17) << " ";
+    // std::cout << GetStringFromMove(0) << " ";
+    // std::cout << GetStringFromMove(4) << " ";
+    // std::cout << GetStringFromMove(8) << "\n";
 
     RunHOGGUI(argc, argv);
 }
@@ -359,6 +361,13 @@ int MyCLHandler(char *argument[], int maxNumArgs) {
         return 3;
     } else if (strcmp(argument[0], "-stp") == 0) {
         TestSTP();
+    } else if (strcmp(argument[0], "-mytest") == 0) {
+		uint64_t problemNumber = atoi(argument[1]);
+		uint64_t alg = atoi(argument[2]);
+		double weight = atof(argument[3]);
+		uint64_t alternationRateForward = atoi(argument[4]);
+		uint64_t alternationRateBackward = atoi(argument[5]);
+        MyTest(problemNumber, alg, weight, alternationRateForward, alternationRateBackward);
     } else if (maxNumArgs > 2 && strcmp(argument[0], "-nbs") == 0) {
         double weight = 1.0;
         if (maxNumArgs > 3)

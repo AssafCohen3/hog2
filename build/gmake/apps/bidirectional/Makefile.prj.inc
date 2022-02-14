@@ -71,6 +71,7 @@ default : all
 SRC_CPP = \
 	apps/bidirectional/GUICode.cpp \
 	apps/bidirectional/Driver.cpp \
+	apps/bidirectional/MyTest.cpp \
 	apps/bidirectional/BidirSTP.cpp \
 	apps/bidirectional/BidirTOH.cpp \
 	apps/bidirectional/BidirPancake.cpp \
