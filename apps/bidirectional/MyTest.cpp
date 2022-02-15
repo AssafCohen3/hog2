@@ -135,6 +135,7 @@ void MyTest(uint64_t pN, uint64_t alg, double weight, uint64_t alternationRateFo
 	if(alg == 1){
 		TemplateAStar <MNPuzzleState<4, 4>, slideDir, MNPuzzle<4, 4>> astar(false, 1.0);
 		astar.SetHeuristic(&mnp);
+		astar.SetWeight(weight);
 		timer.StartTimer();
 		astar.GetPath(&mnp, start, goal, solutionPath);
 		timer.EndTimer();
