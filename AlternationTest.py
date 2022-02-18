@@ -1,6 +1,7 @@
 import sqlite3
 import subprocess
 
+
 DB_PATH = 'results.sqlite'
 WEIGHTS = [1, 1.1, 2, 2.5, 5, 10, 20]
 ALTERNATION_EQUAL = [1, 2, 5, 10]
@@ -10,6 +11,15 @@ RETRY_LIMIT = 1
 ASTAR_ID = 1
 MM_ID = 2
 RETRY_KILLED = False
+
+
+PROBLEM_NUMBER_IDX = 0
+ALGORITHM_IDX = 1
+WEIGHT_IDX = 2
+ALTERNATION_RATE_FORWARD_IDX = 3
+ALTERNATION_RATE_BACKWARD_IDX = 4
+RESULT_IDX = 5
+EXPANDED_NODES_IDX = 6
 
 
 def get_connection():
@@ -36,8 +46,15 @@ def create_tables(conn):
 def save_result(conn, problem, alg, weight, result, expanded_nodes, time_elapsed, alternation_rate_forward=0, alternation_rate_backward=0):
     print(f'saving result ({problem=}, {alg=}, {weight=}, {alternation_rate_forward=}, {alternation_rate_backward=}, {result=}, {expanded_nodes=}, {time_elapsed=})...')
     conn.execute("""
-        insert into Result (problemNumber, algorithm, weight, alternationRateForward, alternationRateBackward, result, expandedNodes, timeElapsed) values (?, ?, ?, ?, ?, ?, ?, ?)""",
-                 [problem, alg, weight, alternation_rate_forward, alternation_rate_backward, result, expanded_nodes, time_elapsed])
+        insert into Result (problemNumber, algorithm, weight, alternationRateForward, alternationRateBackward, result, expandedNodes, timeElapsed, new) values (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                 [problem, alg, weight, alternation_rate_forward, alternation_rate_backward, result, expanded_nodes, time_elapsed, 1])
+    conn.commit()
+
+
+def update_result(conn, result_id, new_result, new_expanded_nodes, new_elapsed_time):
+    print(f'updating result ({result_id=}, {new_result=}, {new_expanded_nodes}, {new_elapsed_time})...')
+    conn.execute("""
+        update Result set result=?, expandedNodes=?, timeElapsed=? where id=?""", [new_result, new_expanded_nodes, new_elapsed_time, result_id])
     conn.commit()
 
 
@@ -73,7 +90,7 @@ def problems_to_calculate():
 def test_alternation():
     conn = get_connection()
     create_tables(conn)
-    computed_problems = conn.execute("""select problemNumber, algorithm, weight, alternationRateForward, alternationRateBackward from Result""").fetchall()
+    computed_problems = conn.execute("""select problemNumber, algorithm, weight, alternationRateForward, alternationRateBackward from Result WHERE new=1""").fetchall()
     print(f'allready benchmarked {len(computed_problems)} problems. remaining problems: {problems_to_calculate() - len(computed_problems)}')
     for w in WEIGHTS:
         print(f'************************** Weight: {w} *************************')
@@ -86,6 +103,18 @@ def test_alternation():
         for alternation_rate_forward, alternation_rate_backward in ALTERNATION_DIFFERENT:
             solve_problems(conn, computed_problems, MM_ID, w, alternation_rate_forward, alternation_rate_backward)
             solve_problems(conn, computed_problems, MM_ID, w, alternation_rate_backward, alternation_rate_forward)
+
+
+def retry_failed():
+    conn = get_connection()
+    create_tables(conn)
+    failed_problems = conn.execute("""select id, problemNumber, algorithm, weight, alternationRateForward, alternationRateBackward from Result where new=1 and result=-1""").fetchall()
+    print(f'{len(failed_problems)} failed problems. retrying...')
+    for result_id, problem_number, alg, weight, alternation_rate_forward, alternation_rate_backward in failed_problems:
+        print(f'computing ({result_id=}, {problem_number=}, {alg=}, {weight=}, {alternation_rate_forward=}, {alternation_rate_backward=})...')
+        res, nodes_expanded, time_elapsed = solve_problem(problem_number, alg, weight, alternation_rate_forward, alternation_rate_backward)
+        if res != -1:
+            update_result(conn, result_id, res, nodes_expanded, time_elapsed)
 
 
 if __name__ == '__main__':

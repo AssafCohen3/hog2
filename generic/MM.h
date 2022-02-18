@@ -434,7 +434,8 @@ void MM<state, action, environment, priorityQueue>::Expand(priorityQueue &curren
 			case kClosedList: // ignore
 				if (fless(parentData.g+edgeCost, childData.g))
 				{
-					childData.h = std::max(childData.h, parentData.h-edgeCost);
+					// Assaf: added weight
+					childData.h = std::max(childData.h, parentData.h - weight * edgeCost);
 					childData.parentID = nextID;
 					childData.g = parentData.g+edgeCost;
 					count[{childData.g,childData.h}]++;
@@ -445,14 +446,17 @@ void MM<state, action, environment, priorityQueue>::Expand(priorityQueue &curren
 			case kOpenList: // update cost if needed
 			{
 				// 1-step BPMX
-				parentData.h = std::max(childData.h-edgeCost, parentData.h);
+				// Assaf: added weight
+				parentData.h = std::max(childData.h- weight * edgeCost, parentData.h);
 
-				if (fgreater(parentData.h-edgeCost, childData.h))
+				// Assaf: added weight
+				if (fgreater(parentData.h - weight * edgeCost, childData.h))
 				{
 					count[{childData.g,childData.h}]--;
 					dist[{childData.g,childData.h}]--;
 					//minf[childData.g+childData.h]--;
-					childData.h = parentData.h-edgeCost;
+					// Assaf: added weight
+					childData.h = parentData.h- weight * edgeCost;
 					//minf[childData.g+childData.h]++;
 					count[{childData.g,childData.h}]++;
 					dist[{childData.g,childData.h}]++;
@@ -494,7 +498,7 @@ void MM<state, action, environment, priorityQueue>::Expand(priorityQueue &curren
 			{
 				double g = parentData.g+edgeCost;
 				// Assaf: added weight
-				double h = std::max(weight * heuristic->HCost(succ, target), parentData.h-edgeCost);
+				double h = std::max(weight * heuristic->HCost(succ, target), parentData.h- weight * edgeCost);
 
 				// Ignore nodes that don't have lower f-cost than the incumbant solution
 				if (!fless(g+h, currentCost))
@@ -504,7 +508,7 @@ void MM<state, action, environment, priorityQueue>::Expand(priorityQueue &curren
 				count[{g,h}]++;
 				dist[{g,h}]++;
 				// 1-step BPMX
-				parentData.h = std::max(h-edgeCost, parentData.h);
+				parentData.h = std::max(h-weight * edgeCost, parentData.h);
 
 				current.AddOpenNode(succ, // This may invalidate our references
 									hash,

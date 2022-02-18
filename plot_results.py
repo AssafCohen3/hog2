@@ -1,7 +1,8 @@
 import sqlite3
+from collections import defaultdict
+from pathlib import Path
 import matplotlib.pyplot as plt
-import itertools
-
+PLOTS_PATH = 'plots/'
 DB_PATH = 'results.sqlite'
 OPTIMAL_COSTS = [57, 55, 59, 56, 56, 52, 52, 50, 46, 59,
                  57, 45, 46, 59, 62, 42, 66, 55, 46, 52,
@@ -20,30 +21,47 @@ def get_connection():
     return sqlite3.connect(DB_PATH)
 
 
-def plot_problem(problem_number, variations_results):
+def group_by(lst, key):
+    to_ret = defaultdict(list)
+    for i in lst:
+        to_ret[key(i)].append(i)
+    return to_ret
+
+
+def plot_problem(plot_name, problem_number, variations_results):
     fig, ax = plt.subplots()
-    for variation, variation_results in variations_results:
-        variation_name = 'A*' if variation[0] == 1 else f'MM({variation[2]}, {variation[3]})'
-        relative_costs = [p[5] / OPTIMAL_COSTS[problem_number] for p in variation_results]
+    for variation, variation_results in variations_results.items():
+        variation_name = 'A*' if variation[0] == 1 else f'MM({variation[1]}, {variation[2]})'
+        relative_costs = [OPTIMAL_COSTS[problem_number] / p[5] for p in variation_results]
         expanded_nodes = [p[6] for p in variation_results]
-        ax.plot(expanded_nodes, relative_costs, marker='o', label=variation_name)
-        for r in variation_results:
-            ax.annotate(r[2], (r[6], r[5] / OPTIMAL_COSTS[problem_number]))
+        ax.plot(expanded_nodes, relative_costs, marker='o', label=variation_name, alpha=0.7)
+        # for r in variation_results:
+        #     ax.annotate(r[2], (r[6], r[5] / OPTIMAL_COSTS[problem_number]))
     ax.set_ylabel('Relative quality')
     ax.set_xlabel('Expanded nodes')
+    ax.set_xscale('log')
     ax.set_title(f'Problem {problem_number + 1}')
-    ax.legend()
-    fig.show()
+    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    fig.tight_layout()
+    path = f'{PLOTS_PATH}problem_{problem_number + 1}/'
+    Path(path).mkdir(parents=True, exist_ok=True)
+    fig.savefig(path + plot_name + '.png')
+    plt.close(fig)
 
 
 def plot():
     conn = get_connection()
-    plt.style.use('fivethirtyeight')
-    computed_problems = conn.execute("""select problemNumber, algorithm, weight, alternationRateForward, alternationRateBackward, result, expandedNodes from Result where result <> -1""").fetchall()
-    problems_grouped = itertools.groupby(computed_problems, key=lambda p: p[0])
-    for problem_number, problem_benchmarks in problems_grouped:
-        variations_results = itertools.groupby(problem_benchmarks, key=lambda p: (p[1], p[3], p[4]))
-        plot_problem(problem_number, variations_results)
+    computed_problems = conn.execute("""
+                    with WITH_MIN_RESULTS as (
+                        select problemNumber, algorithm, weight, alternationRateForward, alternationRateBackward, result, expandedNodes, 
+                            min(result) over (partition by problemNumber, algorithm, alternationRateForward, alternationRateBackward) as minimumVariationResult 
+                        from Result where new=1
+                    )
+                    select problemNumber, algorithm, weight, alternationRateForward, alternationRateBackward, result, expandedNodes from WITH_MIN_RESULTS where minimumVariationResult > 0 order by problemNumber, algorithm, alternationRateForward, alternationRateForward, expandedNodes""").fetchall()
+    problems_grouped = group_by(computed_problems, lambda p: p[0])
+    for problem_number, problem_benchmarks in problems_grouped.items():
+        variations_results = group_by(problem_benchmarks, lambda p: (p[1], p[3], p[4]))
+        plot_problem('all_variations', problem_number, variations_results)
 
 
 if __name__ == '__main__':
